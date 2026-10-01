@@ -17,7 +17,9 @@ out="$2"
 
 ids=()
 while IFS= read -r -d '' entry; do
-  [ -d "$catalog/$entry" ] && [ ! -L "$catalog/$entry" ] || ci_die "$entry is not a plain directory"
+  if [ ! -d "$catalog/$entry" ] || [ -L "$catalog/$entry" ]; then
+    ci_die "$entry is not a plain directory"
+  fi
   ids+=("$entry")
 done < <(ci_entries "$catalog")
 
