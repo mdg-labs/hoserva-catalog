@@ -1,0 +1,40 @@
+# Written from https://docs.linuxserver.io/images/docker-lidarr/ and https://wiki.servarr.com/docker-guide (D19).
+# Icon: https://github.com/Lidarr/Lidarr/blob/develop/Logo/256.png, GPL-3.0 (the license of that repository), none. The repository's SVG (Logo/Lidarr.svg) is about 55 KB, over this catalog's icon size limit, so its 256 px PNG is used.
+#
+# One mount at /data holds the downloads and the library, so hardlinks and
+# instant moves work. In Lidarr set the root folder to /data/media/music and,
+# in the download client, use the paths under /data/torrents. The image
+# documentation's separate /music and /downloads mounts are not used.
+services:
+  lidarr:
+    image: lscr.io/linuxserver/lidarr:3.1.0.4875-ls42
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/lidarr:/config
+      - ${DATA}:/data
+    ports:
+      - ${WEBUI_PORT}:8686
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: lidarr
+  revision: 1
+  title: Lidarr
+  categories: [media, automation]
+  icon: icon.png
+  docs: https://docs.linuxserver.io/images/docker-lidarr/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    DATA:
+      kind: path
+      role: share
+      default: /mnt/user/data
+      label: Data folder
+      description: The folder that holds both downloads (torrents) and the media library (media). Use the same folder for every media app so hardlinks and instant moves work.
+    WEBUI_PORT: { kind: port, default: 8686, label: Web UI port }
+    TZ:         { kind: timezone }

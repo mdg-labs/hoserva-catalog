@@ -1,0 +1,50 @@
+# Written from https://www.audiobookshelf.org/docs/documentation/install/docker/ and https://github.com/advplyr/audiobookshelf/blob/master/docker-compose.yml (D19).
+# Icon: https://github.com/advplyr/audiobookshelf/blob/master/client/static/icon.svg, GPL-3.0 (the license of that repository), none
+#
+# The documentation says Audiobookshelf does not use PUID or PGID variables
+# and to run it as another user with the user key, set here to 99:100. The
+# /config folder holds the SQLite database and must be on a local disk, not a
+# network share; /metadata holds covers, logs and backups. Both sit under the
+# appdata folder, as separate folders because the documentation asks that no
+# mount point be inside another. In Audiobookshelf add libraries from
+# /audiobooks and /podcasts.
+services:
+  audiobookshelf:
+    image: ghcr.io/advplyr/audiobookshelf:2.37.1
+    user: "99:100"
+    environment:
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/audiobookshelf/config:/config
+      - ${APPDATA}/audiobookshelf/metadata:/metadata
+      - ${AUDIOBOOKS}:/audiobooks
+      - ${PODCASTS}:/podcasts
+    ports:
+      - ${WEBUI_PORT}:80
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: audiobookshelf
+  revision: 1
+  title: Audiobookshelf
+  categories: [media]
+  icon: icon.svg
+  docs: https://www.audiobookshelf.org/docs/documentation/install/docker/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    AUDIOBOOKS:
+      kind: path
+      role: media
+      default: /mnt/user/data/media/audiobooks
+      label: Audiobooks
+      description: The folder that holds your audiobooks. It is mounted at /audiobooks in Audiobookshelf, so add the library from there.
+    PODCASTS:
+      kind: path
+      role: media
+      default: /mnt/user/data/media/podcasts
+      label: Podcasts
+      description: The folder that holds your podcasts. It is mounted at /podcasts in Audiobookshelf, so add the library from there.
+    WEBUI_PORT: { kind: port, default: 13378, label: Web UI port }
+    TZ:         { kind: timezone }

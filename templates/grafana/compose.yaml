@@ -1,0 +1,46 @@
+# Written from https://grafana.com/docs/grafana/latest/setup-grafana/installation/docker/, https://grafana.com/docs/grafana/latest/setup-grafana/configure-docker/ and https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/ (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/grafana.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none. The logo is a trademark of Grafana Labs, used here only to identify the application.
+#
+# The image is grafana/grafana, the open source edition: the documentation says
+# the grafana/grafana-oss repository is no longer updated from release 12.4.0
+# and that both carry the same open source images. The documentation's bind
+# mount instructions require starting the container with a user that can write
+# the data folder, so it runs as 99:100, the owner of the appdata folder; the
+# image makes its own data, log and plugin folders writable for any user.
+# The administrator is admin with the ADMIN_PASSWORD input as its password,
+# which Grafana applies only on its first start: change it afterwards in
+# Grafana. The input TZ sets the default time zone of user preferences
+# (default_timezone in the configuration, set as an environment variable as the
+# documentation describes). No data source or dashboard is set up: add
+# Prometheus or another data source in Grafana, with an address that this
+# container reaches, for example http://<host>:9090.
+services:
+  grafana:
+    image: grafana/grafana:13.2.3
+    user: "99:100"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      GF_DATE_FORMATS_DEFAULT_TIMEZONE: ${TZ}
+    volumes:
+      - ${APPDATA}/grafana:/var/lib/grafana
+    ports:
+      - ${WEBUI_PORT}:3000
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: grafana
+  revision: 1
+  title: Grafana
+  categories: [monitoring]
+  icon: icon.svg
+  docs: https://grafana.com/docs/grafana/latest/setup-grafana/installation/docker/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    ADMIN_PASSWORD:
+      kind: secret
+      label: Administrator password
+      description: The password of the Grafana administrator (user admin). Leave it empty to have one generated; it is kept in the stack's .env file. Grafana applies it only on its first start.
+    WEBUI_PORT: { kind: port, default: 3000, label: Web UI port }
+    TZ:         { kind: timezone }
