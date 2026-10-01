@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# Stand-in for docker in the tooling tests: no test touches a registry or a
+# daemon. Every call is appended to $STUB_LOG.
+#   STUB_COMPOSE_FAIL=1   `docker compose ... config` fails
+#   STUB_MISSING=<image>  the manifest query reports the image missing
+#   STUB_BLIP=<image>     the manifest query always fails with a network error
+#   STUB_FLAKY=<image>:<n> the first n manifest queries fail with a network error
+set -euo pipefail
+
+printf 'docker %s\n' "$*" >>"$STUB_LOG"
+
+args=("$@")
+compose_file="" env_file="" mode=""
+for ((i = 0; i < ${#args[@]}; i++)); do
+  case "${args[$i]}" in
+    -f) compose_file="${args[$((i + 1))]}" ;;
+    --env-file) env_file="${args[$((i + 1))]}" ;;
+    --images) mode=images ;;
+    inspect) mode=inspect ;;
+  esac
+done
+
+if [ "$mode" = inspect ]; then
+  image="${args[${#args[@]} - 1]}"
+  if [ "${STUB_MISSING:-}" = "$image" ]; then
+    echo "ERROR: $image: not found" >&2
+    exit 1
+  fi
+  if [ "${STUB_BLIP:-}" = "$image" ]; then
+    echo "ERROR: Get \"https://registry.example/v2/\": dial tcp: connection refused" >&2
+    exit 1
+  fi
+  if [ "${STUB_FLAKY:-}" != "" ] && [ "${STUB_FLAKY%:*}" = "$image" ]; then
+    counter="$STUB_LOG.flaky"
+    seen="$(cat "$counter" 2>/dev/null || echo 0)"
+    echo "$((seen + 1))" >"$counter"
+    if [ "$seen" -lt "${STUB_FLAKY##*:}" ]; then
+      echo "ERROR: Get \"https://registry.example/v2/\": i/o timeout" >&2
+      exit 1
+    fi
+  fi
+  exit 0
+fi
+
+[ "${STUB_COMPOSE_FAIL:-}" != 1 ] || {
+  echo "validating $compose_file: services.x invalid" >&2
+  exit 1
+}
+{
+  echo "env-file $env_file:"
+  cat -- "$env_file"
+} >>"$STUB_LOG"
+if [ "$mode" = images ]; then
+  sed -n 's/^ *image: *//p' "$compose_file"
+fi

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Stand-in for go in the tooling tests: records the call in $STUB_LOG and
+# exits with $STUB_LINT_EXIT (default 0), like `hoserva template lint`.
+printf 'go %s\n' "$*" >>"$STUB_LOG"
+exit "${STUB_LINT_EXIT:-0}"

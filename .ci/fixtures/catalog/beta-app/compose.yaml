@@ -1,0 +1,24 @@
+services:
+  beta:
+    image: registry.example/beta/beta:4.5.6
+    env_file: .env
+    volumes:
+      - ${APPDATA}/beta:/config
+      - ${MEDIA}:/media
+    ports:
+      - ${WEBUI_PORT}:3000
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: beta-app
+  revision: 1
+  title: Beta App
+  categories: [media, tools]
+  icon: logo.png
+  docs: https://docs.example/beta/
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    MEDIA:      { kind: path, role: media, label: Media library }
+    WEBUI_PORT: { kind: port, default: 3000 }
+    API_SECRET: { kind: secret }

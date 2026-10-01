@@ -1,0 +1,24 @@
+services:
+  alpha:
+    image: registry.example/alpha/alpha:1.2.3
+    environment:
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/alpha:/config
+    ports:
+      - ${WEBUI_PORT}:8080
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: alpha
+  revision: 2
+  title: Alpha
+  categories: [tools]
+  icon: icon.svg
+  docs: https://docs.example/alpha/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    WEBUI_PORT: { kind: port, default: 8080 }
+    TZ:         { kind: timezone }
