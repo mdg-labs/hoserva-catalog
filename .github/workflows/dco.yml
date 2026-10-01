@@ -1,0 +1,85 @@
+name: DCO
+
+# Rejects any commit without a Signed-off-by trailer (CONTRIBUTING.md,
+# Q2, Q35), on every pull request and every push to dev. The same check as
+# the hoserva repository's `dco` job.
+#
+# ! Repository setting the maintainer must apply by hand: the `dco` job only
+# ! reports pass/fail on the commit. Making it a *required* check
+# ! (Settings -> Rules -> Rulesets) is a manual pick, possible only once
+# ! GitHub has seen it report at least once. Require it on the `dev`
+# ! ruleset, where contributor pull requests land, and on `main`'s, so the
+# ! dev -> main promotion pull request cannot merge unchecked.
+#
+# This workflow triggers on `pull_request`, never `pull_request_target`, and
+# holds no secret.
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [dev, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dco:
+    name: DCO sign-off
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # fetch-depth: 0 — the script needs the base commit itself, not just
+      # the range, to exist locally.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      # A fork pull request's checkout is its own merge commit, so its copy
+      # of .ci/check-dco.sh is attacker-controlled: a contributor could
+      # rewrite it to always exit 0. A pull request therefore runs the base
+      # branch's copy, which it cannot change. Only a pull request from this
+      # repository (the maintainer's dev -> main promotion, before main has
+      # the script) may fall back to its own copy; a fork's never does. A
+      # push runs the pushed commit's copy: it is already in the branch.
+      - name: Resolve a trusted copy of check-dco.sh
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          trusted="$RUNNER_TEMP/check-dco.sh"
+          if [ "$EVENT" = pull_request ]; then
+            if git cat-file -e "$BASE_SHA:.ci/check-dco.sh" 2>/dev/null; then
+              git show "$BASE_SHA:.ci/check-dco.sh" >"$trusted"
+            elif [ "$HEAD_REPO" = "$REPO" ]; then
+              cp .ci/check-dco.sh "$trusted"
+            else
+              echo "the base branch has no .ci/check-dco.sh and this pull request is from a fork" >&2
+              exit 1
+            fi
+          else
+            cp .ci/check-dco.sh "$trusted"
+          fi
+          chmod +x "$trusted"
+      # A pull request's own github.sha is a synthetic merge commit nobody
+      # signed: check its real base and head. A push checks its before/after
+      # range; an all-zero `before` (a new branch) makes the script check
+      # every commit reachable from the head. A manual run has neither, so
+      # it checks the whole history of the ref it runs on.
+      - name: Check every commit in the range
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          SHA: ${{ github.sha }}
+        run: |
+          case "$EVENT" in
+            pull_request) base="$PR_BASE" head="$PR_HEAD" ;;
+            push) base="$PUSH_BEFORE" head="$SHA" ;;
+            *) base=0000000000000000000000000000000000000000 head="$SHA" ;;
+          esac
+          "$RUNNER_TEMP/check-dco.sh" "$base" "$head"

@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Stand-in for gh in the tooling tests: nothing reaches GitHub. Every call is
+# appended to $STUB_LOG.
+#   STUB_TIP=<sha>           `gh api .../git/ref/heads/<branch>` answers this commit
+#   STUB_LOOKUP_FAIL=1       every `gh api` call fails with a server error
+#   STUB_TAGS=<tag>[,<tag>]  these tags exist; any other tag lookup is HTTP 404
+#   STUB_RELEASE_FAIL=1      `gh release create` fails
+set -euo pipefail
+
+printf 'gh %s\n' "$*" >>"$STUB_LOG"
+
+case "${1:-}" in
+  api)
+    if [ "${STUB_LOOKUP_FAIL:-}" = 1 ]; then
+      echo "gh: Server Error (HTTP 500)" >&2
+      exit 1
+    fi
+    case "${2:-}" in
+      */git/ref/heads/*)
+        printf '%s\n' "${STUB_TIP:?}"
+        ;;
+      */git/ref/tags/*)
+        tag="${2##*/}"
+        case ",${STUB_TAGS:-}," in
+          *",$tag,"*) echo '{"ref":"refs/tags/'"$tag"'"}' ;;
+          *)
+            echo "gh: Not Found (HTTP 404)" >&2
+            exit 1
+            ;;
+        esac
+        ;;
+      *)
+        echo "gh stub: unexpected api call: $*" >&2
+        exit 2
+        ;;
+    esac
+    ;;
+  release)
+    [ "${2:-}" = create ] || {
+      echo "gh stub: unexpected release call: $*" >&2
+      exit 2
+    }
+    [ "${STUB_RELEASE_FAIL:-}" != 1 ] || {
+      echo "gh: release failed" >&2
+      exit 1
+    }
+    ;;
+  *)
+    echo "gh stub: unexpected call: $*" >&2
+    exit 2
+    ;;
+esac

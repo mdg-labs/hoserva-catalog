@@ -1,0 +1,44 @@
+# Written from https://docs.linuxserver.io/images/docker-jellyfin/ (D19).
+# Icon: https://github.com/jellyfin/jellyfin-ux/blob/master/logos/SVG/jellyfin-icon--color-on-light.svg, CC-BY-SA-4.0 (the license of that repository), none
+#
+# The optional discovery ports of the image documentation (7359/udp for client
+# discovery, 1900/udp for DLNA) and the HTTPS port 8920 are not mapped: add
+# clients by the server's address.
+services:
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:12.1ubu2604-ls51
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/jellyfin:/config
+      - ${MEDIA}:/data/media
+    ports:
+      - ${WEBUI_PORT}:8096
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: jellyfin
+  revision: 1
+  title: Jellyfin
+  categories: [media]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-jellyfin/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    MEDIA:
+      kind: path
+      role: media
+      default: /mnt/user/data/media
+      label: Media library
+      description: The folder that holds your media, for example tv and movies subfolders. It is mounted at /data/media in Jellyfin, so add libraries from there.
+    WEBUI_PORT: { kind: port, default: 8096, label: Web UI port }
+    TZ:         { kind: timezone }
+    TRANSCODE_GPU:
+      kind: device
+      role: gpu
+      label: Hardware transcoding
+      description: Optional. An Intel or AMD GPU that Jellyfin may use to transcode video.

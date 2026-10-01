@@ -1,0 +1,50 @@
+# Written from https://docs.linuxserver.io/images/docker-qbittorrent/ and https://wiki.servarr.com/docker-guide (D19).
+# Icon: https://github.com/qbittorrent/qBittorrent/blob/master/dist/unix/menuicons/scalable/apps/qbittorrent.svg, GPL-3.0-or-later (COPYING of that repository: its images are GPLv3+ assets), none
+#
+# The web UI user is admin; a temporary password is printed to the container
+# log on the first start, and a new one on every start until it is changed in
+# the settings. One mount at /data holds the downloads and the library, so
+# hardlinks and instant moves work: set the default save path to
+# /data/torrents in the settings. The image documentation's /downloads mount
+# is not used.
+#
+# Both ports are also given to qBittorrent as WEBUI_PORT and TORRENTING_PORT,
+# which the image documentation requires whenever they are changed.
+services:
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:5.2.4_v2.0.15-ls479
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+      WEBUI_PORT: ${WEBUI_PORT}
+      TORRENTING_PORT: ${TORRENTING_PORT}
+    volumes:
+      - ${APPDATA}/qbittorrent:/config
+      - ${DATA}:/data
+    ports:
+      - ${WEBUI_PORT}:${WEBUI_PORT}
+      - ${TORRENTING_PORT}:${TORRENTING_PORT}
+      - ${TORRENTING_PORT}:${TORRENTING_PORT}/udp
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: qbittorrent
+  revision: 1
+  title: qBittorrent
+  categories: [downloads]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-qbittorrent/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    DATA:
+      kind: path
+      role: share
+      default: /mnt/user/data
+      label: Data folder
+      description: The folder that holds both downloads (torrents) and the media library (media). Use the same folder for every media app so hardlinks and instant moves work.
+    WEBUI_PORT:      { kind: port, default: 8080, label: Web UI port }
+    TORRENTING_PORT: { kind: port, default: 6881, label: Torrent connection port }
+    TZ:              { kind: timezone }

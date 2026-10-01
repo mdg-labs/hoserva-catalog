@@ -1,0 +1,40 @@
+# Written from https://docs.linuxserver.io/images/docker-bazarr/ and https://wiki.servarr.com/docker-guide (D19).
+# Icon: https://github.com/morpheus65535/bazarr/blob/master/frontend/public/images/logo128.png, GPL-3.0 (the license of that repository), none
+#
+# One mount at /data, the same as Sonarr and Radarr use, so the library paths
+# Bazarr reads are the paths those apps report. In Bazarr the series are under
+# /data/media/tv and the movies under /data/media/movies. The image
+# documentation's separate /tv and /movies mounts are not used.
+services:
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:v1.6.2-ls366
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/bazarr:/config
+      - ${DATA}:/data
+    ports:
+      - ${WEBUI_PORT}:6767
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: bazarr
+  revision: 1
+  title: Bazarr
+  categories: [media, automation]
+  icon: icon.png
+  docs: https://docs.linuxserver.io/images/docker-bazarr/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    DATA:
+      kind: path
+      role: share
+      default: /mnt/user/data
+      label: Data folder
+      description: The folder that holds the media library (media). Use the same folder as Sonarr and Radarr so the paths they report are the paths Bazarr reads.
+    WEBUI_PORT: { kind: port, default: 6767, label: Web UI port }
+    TZ:         { kind: timezone }

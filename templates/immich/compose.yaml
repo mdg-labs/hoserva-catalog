@@ -1,0 +1,74 @@
+# Written from https://docs.immich.app/install/docker-compose and https://docs.immich.app/install/environment-variables, with the docker-compose.yml and example.env of release v3.2.4 (https://github.com/immich-app/immich/releases/tag/v3.2.4) that the installation page points to (D19).
+# Icon: https://github.com/immich-app/immich/blob/main/design/immich-logo.svg, AGPL-3.0 (the license of that repository), none
+#
+# The documented four services. The server and the machine-learning service
+# must run the same release, so both are pinned to v3.2.4. Machine learning
+# is the CPU variant; the hardware-accelerated variants are not used. The
+# cache and the database image are pinned by digest as upstream pins them.
+#
+# The database folder is on the appdata (cache) path and never on the pool:
+# upstream's example.env says network shares are not supported for the
+# database. Only the uploaded library goes on the pool.
+#
+# The image documentation describes no PUID or PGID setting, so Immich writes
+# the library with the image's own user.
+services:
+  immich-server:
+    image: ghcr.io/immich-app/immich-server:v3.2.4
+    depends_on:
+      - redis
+      - database
+    environment:
+      TZ: ${TZ}
+      DB_USERNAME: postgres
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DATABASE_NAME: immich
+    volumes:
+      - ${LIBRARY}:/data
+    ports:
+      - ${WEBUI_PORT}:2283
+    restart: unless-stopped
+  immich-machine-learning:
+    image: ghcr.io/immich-app/immich-machine-learning:v3.2.4
+    environment:
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/immich/model-cache:/cache
+    restart: unless-stopped
+  redis:
+    image: docker.io/valkey/valkey:9@sha256:70739f85ad2ee01a726a965584a0f94895f01b0c60b3cc8b0aeef11eaa6888cf
+    volumes:
+      - ${APPDATA}/immich/redis:/data
+    restart: unless-stopped
+  database:
+    image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0@sha256:bcf63357191b76a916ae5eb93464d65c07511da41e3bf7a8416db519b40b1c23
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: immich
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+    volumes:
+      - ${APPDATA}/immich/postgres:/var/lib/postgresql/data
+    shm_size: 128mb
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: immich
+  revision: 1
+  title: Immich
+  categories: [photos, media]
+  icon: icon.svg
+  docs: https://docs.immich.app/install/docker-compose
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    LIBRARY:
+      kind: path
+      role: share
+      default: /mnt/user/immich
+      label: Photo and video library
+      description: The folder that holds the uploaded photos and videos. Choose one with enough free space; the database stays on the cache.
+    DB_PASSWORD: { kind: secret, label: Database password }
+    WEBUI_PORT:  { kind: port, default: 2283, label: Web UI port }
+    TZ:          { kind: timezone }

@@ -1,0 +1,40 @@
+# Written from https://docs.linuxserver.io/images/docker-radarr/ and https://wiki.servarr.com/docker-guide (D19).
+# Icon: https://github.com/Radarr/Radarr/blob/develop/Logo/Radarr.svg, GPL-3.0 (the license of that repository), none
+#
+# One mount at /data holds the downloads and the library, so hardlinks and
+# instant moves work. In Radarr set the root folder to /data/media/movies and,
+# in the download client, use the paths under /data/torrents. The image
+# documentation's separate /movies and /downloads mounts are not used.
+services:
+  radarr:
+    image: lscr.io/linuxserver/radarr:6.4.4.10685-ls318
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/radarr:/config
+      - ${DATA}:/data
+    ports:
+      - ${WEBUI_PORT}:7878
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: radarr
+  revision: 1
+  title: Radarr
+  categories: [media, automation]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-radarr/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    DATA:
+      kind: path
+      role: share
+      default: /mnt/user/data
+      label: Data folder
+      description: The folder that holds both downloads (torrents) and the media library (media). Use the same folder for every media app so hardlinks and instant moves work.
+    WEBUI_PORT: { kind: port, default: 7878, label: Web UI port }
+    TZ:         { kind: timezone }

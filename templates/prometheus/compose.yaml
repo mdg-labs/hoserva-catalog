@@ -1,0 +1,37 @@
+# Written from https://prometheus.io/docs/prometheus/latest/installation/, https://prometheus.io/docs/prometheus/latest/storage/ and https://github.com/prometheus/prometheus/blob/v3.15.0/Dockerfile (D19).
+# Icon: https://github.com/prometheus/prometheus/blob/main/documentation/images/prometheus-logo.svg, Apache-2.0 (LICENSE of that repository), none. The logo is a trademark of The Linux Foundation, used here only to identify the application.
+#
+# The metrics are stored in /prometheus, which the installation page says to
+# keep outside the container. The image runs as nobody, so the container runs
+# as 99:100, the owner of the appdata folder, to be able to write it. The
+# storage page says network file systems such as NFS are not supported for the
+# data: keep the appdata folder on a local disk.
+#
+# No configuration file is shipped, so the image's own sample configuration is
+# used; it makes Prometheus scrape only itself. To scrape other targets, put a
+# prometheus.yml with a scrape_configs entry for each of them somewhere on the
+# host and bind-mount it at /etc/prometheus/prometheus.yml, as the
+# installation page describes, by adding to the volumes of this service:
+#   - /path/to/prometheus.yml:/etc/prometheus/prometheus.yml
+services:
+  prometheus:
+    image: prom/prometheus:v3.15.0
+    user: "99:100"
+    volumes:
+      - ${APPDATA}/prometheus:/prometheus
+    ports:
+      - ${WEBUI_PORT}:9090
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: prometheus
+  revision: 1
+  title: Prometheus
+  categories: [monitoring]
+  icon: icon.svg
+  docs: https://prometheus.io/docs/prometheus/latest/installation/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    WEBUI_PORT: { kind: port, default: 9090, label: Web UI port }

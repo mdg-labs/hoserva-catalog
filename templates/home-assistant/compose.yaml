@@ -1,0 +1,36 @@
+# Written from https://www.home-assistant.io/installation/linux/ and https://www.home-assistant.io/integrations/cast/ (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/home-assistant.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none
+#
+# Host networking is kept: the installation page runs the container on the
+# host network, and the Google Cast integration page says that Home Assistant
+# in Docker must run in host network mode, that running without it is not
+# supported and that discovery of devices fails. The web interface is then on
+# port 8123 of the server, and the port cannot be remapped here.
+#
+# The installation page also runs the container privileged and mounts
+# /run/dbus for Bluetooth. Both are left out: its "Exposing devices" section
+# shows how to give the container a Zigbee or other USB device with a devices
+# entry, which is what to add to this file when one is needed.
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:2026.9.4
+    environment:
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/home-assistant:/config
+    network_mode: host
+    stop_grace_period: 60s
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: home-assistant
+  revision: 1
+  title: Home Assistant
+  categories: [home-automation]
+  icon: icon.svg
+  docs: https://www.home-assistant.io/installation/linux/
+  webui: http://{host}:8123
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    TZ:      { kind: timezone }
