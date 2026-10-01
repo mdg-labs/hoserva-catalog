@@ -1,0 +1,53 @@
+# Written from https://docs.linuxserver.io/images/docker-syncthing/ and https://github.com/syncthing/syncthing/blob/main/README-Docker.md (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/syncthing.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none
+#
+# The image documentation advises setting a user and password for the web UI
+# (Actions, Settings), because it listens on every address.
+#
+# Folders to sync are added in Syncthing under /data1, which is the sync
+# folder below. Syncthing's own Docker notes strongly recommend host
+# networking, because in Docker's default network mode the container only sees
+# its internal address, which breaks LAN connections and gives poor transfer
+# rates unless the local device addresses are configured manually. This
+# template keeps the image documentation's port mappings instead, so enter
+# the other device's address in Syncthing when connecting devices on the
+# local network.
+services:
+  syncthing:
+    image: lscr.io/linuxserver/syncthing:v2.1.5-ls230
+    hostname: syncthing
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/syncthing:/config
+      - ${SYNC}:/data1
+    ports:
+      - ${WEBUI_PORT}:8384
+      - ${SYNC_PORT}:22000/tcp
+      - ${SYNC_PORT}:22000/udp
+      - ${DISCOVERY_PORT}:21027/udp
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: syncthing
+  revision: 1
+  title: Syncthing
+  categories: [files, sync]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-syncthing/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    SYNC:
+      kind: path
+      role: share
+      default: /mnt/user/syncthing
+      label: Sync folder
+      description: The folder that holds the files Syncthing synchronises. It is mounted at /data1 in Syncthing, so add folders from there.
+    WEBUI_PORT:     { kind: port, default: 8384, label: Web UI port }
+    SYNC_PORT:      { kind: port, default: 22000, label: Sync port (TCP and UDP) }
+    DISCOVERY_PORT: { kind: port, default: 21027, label: Local discovery port (UDP) }
+    TZ:             { kind: timezone }

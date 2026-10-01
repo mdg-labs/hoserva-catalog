@@ -1,0 +1,85 @@
+# Written from https://docs.paperless-ngx.com/setup/, https://docs.paperless-ngx.com/configuration/ and the docker-compose.postgres.yml and docker-compose.env of https://github.com/paperless-ngx/paperless-ngx/tree/main/docker/compose (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/paperless-ngx.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none
+#
+# The documented PostgreSQL setup: the web server, a Valkey broker and
+# PostgreSQL. The optional Tika and Gotenberg services for office documents
+# are not included. The database and the broker keep their data under the
+# appdata folder, never on the pool; the application data (search index and
+# classifier) is appdata too, while the documents sit on the pool.
+#
+# Put files in the consume folder to have them imported. The export folder is
+# where the document exporter writes. On the first visit Paperless-ngx asks
+# you to create the superuser account.
+#
+# USERMAP_UID and USERMAP_GID are the image's own equivalent of PUID and PGID.
+services:
+  broker:
+    image: docker.io/valkey/valkey:9-alpine
+    volumes:
+      - ${APPDATA}/paperless-ngx/redis:/data
+    restart: unless-stopped
+  db:
+    image: docker.io/library/postgres:18
+    environment:
+      POSTGRES_DB: paperless
+      POSTGRES_USER: paperless
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ${APPDATA}/paperless-ngx/db:/var/lib/postgresql
+    restart: unless-stopped
+  webserver:
+    image: ghcr.io/paperless-ngx/paperless-ngx:3.2.1
+    depends_on:
+      - db
+      - broker
+    environment:
+      USERMAP_UID: "99"
+      USERMAP_GID: "100"
+      PAPERLESS_REDIS: redis://broker:6379
+      PAPERLESS_DBENGINE: postgresql
+      PAPERLESS_DBHOST: db
+      PAPERLESS_DBPASS: ${DB_PASSWORD}
+      PAPERLESS_SECRET_KEY: ${SECRET_KEY}
+      PAPERLESS_TIME_ZONE: ${TZ}
+    volumes:
+      - ${APPDATA}/paperless-ngx/data:/usr/src/paperless/data
+      - ${MEDIA}:/usr/src/paperless/media
+      - ${EXPORT}:/usr/src/paperless/export
+      - ${CONSUME}:/usr/src/paperless/consume
+    ports:
+      - ${WEBUI_PORT}:8000
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: paperless-ngx
+  revision: 1
+  title: Paperless-ngx
+  categories: [documents, productivity]
+  icon: icon.svg
+  docs: https://docs.paperless-ngx.com/setup/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    MEDIA:
+      kind: path
+      role: share
+      default: /mnt/user/paperless/media
+      label: Document library
+      description: The folder that holds the stored documents, the originals and their archived versions.
+    CONSUME:
+      kind: path
+      role: share
+      default: /mnt/user/paperless/consume
+      label: Consume folder
+      description: Files put in this folder are imported into Paperless-ngx and then removed from it.
+    EXPORT:
+      kind: path
+      role: share
+      default: /mnt/user/paperless/export
+      label: Export folder
+      description: The folder the document exporter writes to.
+    DB_PASSWORD: { kind: secret, label: Database password }
+    SECRET_KEY:  { kind: secret, label: Secret key }
+    WEBUI_PORT:  { kind: port, default: 8000, label: Web UI port }
+    TZ:          { kind: timezone }
