@@ -41,6 +41,24 @@ assert_eq "$(index "$archive" | jq -c '.templates[1] | del(.contentHash)')" \
 assert_eq "$(index "$archive" | jq -r '.templates[0].contentHash')" "$(expected_hash "$fixtures/catalog/alpha")" "alpha content hash"
 assert_eq "$(index "$archive" | jq -r '.templates[1].contentHash')" "$(expected_hash "$fixtures/catalog/beta-app")" "beta-app content hash"
 
+# The repository layout keeps templates under templates/, but the archive is
+# unchanged: <id>/ at the archive root, never templates/<id>/, and the same
+# content hashes as the same templates built from a bare catalog directory.
+mkdir -p "$T/repo/templates"
+cp -R "$fixtures/catalog/." "$T/repo/templates/"
+printf 'x' >"$T/repo/README.md"
+expect_ok "$ci_root/build.sh" "$T/repo/templates" "$T/out-repo"
+assert_eq "$(listing "$T/out-repo/catalog.tar.zst")" "$(listing "$archive")" "archive entries from the templates/ layout"
+assert_eq "$(listing "$T/out-repo/catalog.tar.zst" | grep -c '^templates' || true)" 0 "archive entries under templates/"
+assert_eq "$(index "$T/out-repo/catalog.tar.zst" | jq -c '.templates')" "$(index "$archive" | jq -c '.templates')" "index templates from the templates/ layout"
+
+# A missing templates directory builds an archive with no templates.
+expect_ok "$ci_root/build.sh" "$T/no-such-templates" "$T/out-missing"
+assert_eq "$(listing "$T/out-missing/catalog.tar.zst")" "index.json" "missing templates entries"
+assert_eq "$(index "$T/out-missing/catalog.tar.zst" | jq -c .templates)" "[]" "missing templates index"
+printf 'x' >"$T/a-file"
+expect_fail "$ci_root/build.sh" "$T/a-file" "$T/out-file"
+
 # Normalised owner, mode and mtime.
 zstd -dc -- "$archive" | TZ=UTC tar --numeric-owner --full-time -tv >"$T/verbose"
 bad="$(grep -vcE "^(-rw-r--r--|drwxr-xr-x) 0/0 +[0-9]+ $(date -u -d "@$serial" '+%Y-%m-%d %H:%M:%S')" "$T/verbose" || true)"

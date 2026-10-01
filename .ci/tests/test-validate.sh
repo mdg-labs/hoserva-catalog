@@ -41,6 +41,23 @@ printf 'x' >"$T/empty/README.md"
 expect_ok "$ci_root/validate.sh" "$T/empty"
 assert_eq "$(wc -c <"$STUB_LOG")" 0 "tools run on an empty catalog"
 
+# A templates/ folder that is missing is an empty catalog; one that is a file
+# is refused.
+reset
+expect_ok "$ci_root/validate.sh" "$T/no-such-templates"
+assert_eq "$(wc -c <"$STUB_LOG")" 0 "tools run on a missing templates directory"
+printf 'x' >"$T/a-file"
+expect_fail "$ci_root/validate.sh" "$T/a-file"
+
+# Without an argument validate.sh checks templates/ of its own checkout, so
+# the committed templates are what runs and the repository root is not.
+reset
+mkdir -p "$T/repo/.ci" "$T/repo/templates"
+cp -R "$ci_root/." "$T/repo/.ci/"
+cp -R "$fixtures/catalog/." "$T/repo/templates/"
+expect_ok "$T/repo/.ci/validate.sh"
+assert_eq "$(grep '^go ' "$STUB_LOG")" "go run github.com/mdg-labs/hoserva/cmd/hoserva@$pin template lint $T/repo/.ci/../templates" "default lint target"
+
 # A template directory means lint always runs, and a lint failure stops
 # everything before docker is called.
 reset

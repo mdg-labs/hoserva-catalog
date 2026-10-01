@@ -111,7 +111,11 @@ def runs(job):
 
 check(".ci/tests/run.sh" in runs("tooling-tests"), "tooling-tests does not run the tooling tests")
 check(".ci/validate.sh" in runs("validate"), "validate does not run validate.sh")
+check(re.search(r"\.ci/validate\.sh templates\s*$", runs("validate"), re.M) is not None, "validate.sh is not run on templates/")
+check(".ci/check-layout.sh" in runs("validate"), "validate does not run check-layout.sh")
+check(runs("validate").find(".ci/check-layout.sh") < runs("validate").find(".ci/validate.sh"), "check-layout.sh does not run before validate.sh")
 check(".ci/build.sh" in runs("build"), "build does not run build.sh")
+check(re.search(r"\.ci/build\.sh templates dist\s*$", runs("build"), re.M) is not None, "build.sh is not run on templates/ into dist")
 check(".ci/sign.sh" in runs("build"), "build does not run sign.sh")
 check(".ci/check-key.sh" in runs("build"), "build does not run check-key.sh")
 check(".ci/release.sh" in runs("release"), "release does not run release.sh")

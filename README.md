@@ -15,21 +15,25 @@ the CI that publishes it.
 
 | Path | Holds |
 |---|---|
-| `<id>/compose.yaml`, `<id>/<icon>` | one template per directory, named by its id |
+| `templates/<id>/compose.yaml`, `templates/<id>/<icon>` | one template per directory, named by its id |
 | `signing-key.pub.pem` | the catalog's Ed25519 public key |
 | `.ci/` | the build, signing and validation scripts, their tests and fixtures |
 | `.github/workflows/catalog.yml` | the CI |
 
-Tooling and fixtures live under `.ci/` because `hoserva template lint` treats
-every top-level directory that does not start with a dot as a template.
+Templates live in `templates/` so the repository's first page stays short as the
+catalog grows. CI validates and builds `templates/` only, and
+`.ci/check-layout.sh` fails when a template directory sits anywhere else at the
+repository root. Tooling and fixtures live under `.ci/` because
+`hoserva template lint` treats every top-level directory of the folder it is
+given that does not start with a dot as a template.
 
 ## Adding a template
 
-1. Create `<id>/` at the repository root. The id is lowercase letters, digits and
+1. Create `templates/<id>/`. The id is lowercase letters, digits and
    single hyphens, and the directory name equals `x-hoserva.id`.
-2. Write `<id>/compose.yaml` as a valid Compose file with an `x-hoserva` block
-   (the format is in `docs/internal/04-containers.md` §7 in the Hoserva
-   repository), and put the icon it names next to it.
+2. Write `templates/<id>/compose.yaml` as a valid Compose file with an
+   `x-hoserva` block (the format is in `docs/internal/04-containers.md` §7 in
+   the Hoserva repository), and put the icon it names next to it.
 3. Write the template from the application's upstream documentation, link that
    documentation in `x-hoserva.docs`, and pin an image tag rather than `latest`
    where upstream publishes versions. See [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -40,10 +44,11 @@ every top-level directory that does not start with a dot as a template.
 
 On every pull request and push, the `Validate` job runs:
 
-- `hoserva template lint` from the Hoserva version pinned in
+- `.ci/check-layout.sh`: no template directory outside `templates/`.
+- `hoserva template lint templates` from the Hoserva version pinned in
   `.ci/hoserva-version` (a full commit SHA), through
   `go run github.com/mdg-labs/hoserva/cmd/hoserva@<pin>`. Bumping the pin is a
-  normal commit. A catalog with no template directory skips this step.
+  normal commit. A catalog with an empty or missing `templates/` skips this step.
 - `docker compose config` for each template, with every `${VAR}` set from the
   `x-hoserva.inputs` defaults (a placeholder where an input has none).
 - That every image in each template exists, with a manifest query
@@ -71,8 +76,10 @@ template that fails validation never reaches a published archive.
 ## The archive
 
 `catalog.tar.zst` is a zstd-compressed tar containing `index.json` and every
-template directory (`<id>/compose.yaml` and its icon), and nothing else.
-Entries are sorted by name, with owner `0:0`, mode `0644` for files (whatever
+template directory (`<id>/compose.yaml` and its icon), and nothing else. The
+archive layout does not follow the repository layout: the contents of
+`templates/` sit at the archive root, so an entry is `<id>/compose.yaml`, never
+`templates/<id>/compose.yaml`. Entries are sorted by name, with owner `0:0`, mode `0644` for files (whatever
 mode the checkout gave them) and `0755` for directories, and mtime equal to the
 serial.
 

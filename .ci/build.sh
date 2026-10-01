@@ -1,19 +1,23 @@
 #!/usr/bin/env bash
-# Builds <out-dir>/catalog.tar.zst from the template directories of a
-# catalog checkout: index.json plus every <id>/ directory, sorted, with
-# owner, mode and mtime normalised. The serial is the build's Unix time.
-# Run only after validate.sh has passed.
+# Builds <out-dir>/catalog.tar.zst from the template directories in
+# <templates-dir> (templates/ of the checkout): index.json plus every <id>/
+# directory at the archive root, sorted, with owner, mode and mtime
+# normalised. The archive never contains the templates/ folder itself. A
+# missing templates directory builds an archive with no templates. The
+# serial is the build's Unix time. Run only after validate.sh has passed.
 #
-# usage: build.sh <catalog-dir> <out-dir>
+# usage: build.sh <templates-dir> <out-dir>
 set -euo pipefail
 
 # shellcheck source=lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
-[ $# -eq 2 ] || ci_die "usage: build.sh <catalog-dir> <out-dir>"
+[ $# -eq 2 ] || ci_die "usage: build.sh <templates-dir> <out-dir>"
 catalog="$1"
 out="$2"
-[ -d "$catalog" ] || ci_die "not a directory: $catalog"
+if [ -e "$catalog" ] || [ -L "$catalog" ]; then
+  [ -d "$catalog" ] || ci_die "not a directory: $catalog"
+fi
 
 ids=()
 while IFS= read -r -d '' entry; do

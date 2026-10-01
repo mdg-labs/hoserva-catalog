@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
-# Validates a catalog checkout: `hoserva template lint` from the pinned
-# Hoserva version, then per template `docker compose config` and a manifest
-# query for every image. Exits non-zero on the first failing stage; an
-# empty catalog (no template directory at all) skips lint, which would
-# otherwise report "no template directories found".
+# Validates the templates directory of a catalog checkout: `hoserva template
+# lint` from the pinned Hoserva version, then per template `docker compose
+# config` and a manifest query for every image. Exits non-zero on the first
+# failing stage; an empty or missing templates directory skips lint, which
+# would otherwise report "no template directories found" (git does not keep
+# an empty directory, so a catalog without templates has none).
 #
-# usage: validate.sh [catalog-dir]
+# usage: validate.sh [templates-dir]   (default: templates/ of this checkout)
+#
+# check-layout.sh is the separate check that nothing else at the repository
+# root is a template directory.
 #
 # CATALOG_IMAGE_ATTEMPTS (default 3) and CATALOG_IMAGE_RETRY_SLEEP
 # (default 5, seconds) bound the manifest query's retries.
@@ -14,11 +18,13 @@ set -euo pipefail
 # shellcheck source=lib.sh
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
-catalog="${1:-.}"
+catalog="${1:-$ci_dir/../templates}"
 attempts="${CATALOG_IMAGE_ATTEMPTS:-3}"
 retry_sleep="${CATALOG_IMAGE_RETRY_SLEEP:-5}"
 
-[ -d "$catalog" ] || ci_die "not a directory: $catalog"
+if [ -e "$catalog" ] || [ -L "$catalog" ]; then
+  [ -d "$catalog" ] || ci_die "not a directory: $catalog"
+fi
 
 IFS= read -r version <"$ci_dir/hoserva-version" || [ -n "$version" ] || ci_die "cannot read $ci_dir/hoserva-version"
 case "$version" in

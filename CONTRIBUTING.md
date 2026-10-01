@@ -43,7 +43,9 @@ documentation you wrote it from in `x-hoserva.docs`.
 - Set sane defaults: appdata on the cache, media on the pool, no unnecessary
   privileges, `PUID=99` and `PGID=100` where the image supports them.
 - Increase `x-hoserva.revision` with every change to a template.
-- The id is the directory's name. Put the icon next to `compose.yaml`.
+- A template is the directory `templates/<id>/`; the id is the directory's name.
+  Put the icon next to `compose.yaml`. A template directory anywhere else at the
+  repository root fails CI.
 - Start `compose.yaml` with a comment `# Written from <URL> (D19).` naming every
   page the template was written from.
 
@@ -85,9 +87,9 @@ used only to identify the application.
   `# Icon: <source URL>, <license>, <changes or none>`.
 
 The steps are in [README.md](README.md#adding-a-template). Before opening a pull
-request, run the checks CI runs: `hoserva template lint` from the version in
-`.ci/hoserva-version`, and `.ci/validate.sh` (needs Docker, and queries the
-registries for each image).
+request, run the checks CI runs: `.ci/check-layout.sh`, `hoserva template lint
+templates` from the version in `.ci/hoserva-version`, and `.ci/validate.sh
+templates` (needs Docker, and queries the registries for each image).
 
 ### Changing the CI
 
