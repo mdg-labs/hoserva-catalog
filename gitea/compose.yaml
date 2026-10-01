@@ -1,0 +1,45 @@
+# Written from https://docs.gitea.com/installation/install-with-docker and https://docs.gitea.com/administration/config-cheat-sheet (D19).
+# Icon: https://github.com/go-gitea/gitea/blob/main/assets/logo.svg, MIT (LICENSE of that repository), none
+#
+# The default setup of the documentation: the rootful image with its built-in
+# SQLite database, in one service. In the first-run wizard keep the SQLite
+# database and set the base URL to the address you open Gitea on, with the
+# web port. The documentation's mounts of the host's /etc/timezone and
+# /etc/localtime are left out: the TZ input sets the time zone. The SSH port is
+# shown in clone URLs through the server.SSH_PORT setting (the cheat sheet).
+# SSH_LISTEN_PORT defaults to SSH_PORT there, so it is pinned to the
+# container's own port 22. Gitea creates its secret keys itself at install.
+services:
+  gitea:
+    image: docker.gitea.com/gitea:28.0.0
+    environment:
+      USER_UID: "99"
+      USER_GID: "100"
+      TZ: ${TZ}
+      GITEA__server__SSH_PORT: ${SSH_PORT}
+      GITEA__server__SSH_LISTEN_PORT: "22"
+    volumes:
+      - ${APPDATA}/gitea:/data
+    ports:
+      - ${WEBUI_PORT}:3000
+      - ${SSH_PORT}:22
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: gitea
+  revision: 1
+  title: Gitea
+  categories: [development]
+  icon: icon.svg
+  docs: https://docs.gitea.com/installation/install-with-docker
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    WEBUI_PORT: { kind: port, default: 3000, label: Web UI port }
+    SSH_PORT:
+      kind: port
+      default: 2222
+      label: Git over SSH port
+      description: The port for cloning and pushing over SSH. It is mapped to the container's SSH server, so it does not collide with this server's own SSH on port 22.
+    TZ: { kind: timezone }

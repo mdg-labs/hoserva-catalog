@@ -1,0 +1,49 @@
+# Written from https://nginxproxymanager.com/setup/ and https://nginxproxymanager.com/advanced-config/ (D19).
+# Icon: https://github.com/NginxProxyManager/nginx-proxy-manager/blob/develop/frontend/public/images/logo-no-text.svg, MIT (LICENSE of that repository), none
+#
+# The default setup of the documentation: the built-in SQLite database, kept in
+# /data. PUID and PGID make the services run as that user; the documentation
+# warns this can stop the container binding port 80 on some systems, and Docker
+# lets container processes bind low ports (moby sets
+# net.ipv4.ip_unprivileged_port_start to 0), so it is set here. If the
+# container does not start, remove both variables to run it as root.
+# Stream (TCP/UDP forwarding) ports are not published: add the ones you use.
+services:
+  app:
+    image: jc21/nginx-proxy-manager:2.16.0
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/nginx-proxy-manager/data:/data
+      - ${APPDATA}/nginx-proxy-manager/letsencrypt:/etc/letsencrypt
+    ports:
+      - ${HTTP_PORT}:80
+      - ${HTTPS_PORT}:443
+      - ${ADMIN_PORT}:81
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: nginx-proxy-manager
+  revision: 1
+  title: Nginx Proxy Manager
+  categories: [network, proxy]
+  icon: icon.svg
+  docs: https://nginxproxymanager.com/setup/
+  webui: http://{host}:${ADMIN_PORT}
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    HTTP_PORT:
+      kind: port
+      default: 80
+      label: HTTP port
+      description: The port the proxy answers plain web requests on. Forward port 80 of your router here to serve sites from the internet.
+    HTTPS_PORT:
+      kind: port
+      default: 443
+      label: HTTPS port
+      description: The port the proxy answers secure web requests on. Forward port 443 of your router here to serve sites from the internet.
+    ADMIN_PORT: { kind: port, default: 81, label: Admin web UI port }
+    TZ: { kind: timezone }

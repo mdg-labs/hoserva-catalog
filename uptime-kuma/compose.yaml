@@ -1,0 +1,32 @@
+# Written from https://github.com/louislam/uptime-kuma#-how-to-install, https://github.com/louislam/uptime-kuma/wiki/%F0%9F%94%A7-How-to-Install and https://github.com/louislam/uptime-kuma/wiki/Docker-Tags (D19).
+# Icon: https://github.com/louislam/uptime-kuma/blob/master/public/icon.svg, MIT (LICENSE of that repository), none
+#
+# The data folder holds an SQLite database, so it must be on a local disk, not
+# a network share (the documentation warns against NFS). The Docker socket
+# that the optional container monitoring needs is not mounted. The image
+# documents no user or group variables and runs as root; the rootless tags it
+# publishes are warned to lack some features, so they are not used.
+services:
+  uptime-kuma:
+    image: louislam/uptime-kuma:2.5.5
+    environment:
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/uptime-kuma:/app/data
+    ports:
+      - ${WEBUI_PORT}:3001
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: uptime-kuma
+  revision: 1
+  title: Uptime Kuma
+  categories: [monitoring]
+  icon: icon.svg
+  docs: https://github.com/louislam/uptime-kuma/wiki/%F0%9F%94%A7-How-to-Install
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    WEBUI_PORT: { kind: port, default: 3001, label: Web UI port }
+    TZ:         { kind: timezone }
