@@ -31,6 +31,7 @@ files = glob.glob(wf_dir + "/*.yml") + glob.glob(wf_dir + "/*.yaml")
 check(len(files) > 0, "no workflow files")
 
 catalog = None
+dco = None
 for path in files:
     text = open(path, encoding="utf-8").read()
     doc = yaml.safe_load(text)
@@ -39,6 +40,31 @@ for path in files:
     check("pull_request_target" not in (doc.get("on") or doc.get(True) or {}), f"{path}: uses pull_request_target")
     if "build" in doc["jobs"] and "deploy" in doc["jobs"]:
         catalog = (path, text, doc)
+    if "dco" in doc["jobs"]:
+        dco = (path, text, doc)
+
+# The DCO check runs on every pull request and every dev push, runs the
+# pull request's base copy of the script (a pull request cannot change the
+# script that checks it), checks the real base and head, and holds no secret.
+check(dco is not None, "no workflow with a dco job")
+if dco is not None:
+    _, dco_text, dco_doc = dco
+    dco_on = dco_doc.get("on") or dco_doc.get(True)
+    dco_job = dco_doc["jobs"]["dco"]
+    dco_steps = dco_job["steps"]
+    dco_runs = "\n".join(s.get("run", "") for s in dco_steps)
+    check("pull_request" in dco_on and set(dco_on["pull_request"]["branches"]) == {"dev", "main"}, "dco does not run on pull requests to dev and main")
+    check("push" in dco_on and dco_on["push"]["branches"] == ["dev"], "dco does not run on pushes to dev")
+    check("pull_request_target" not in dco_on, "dco uses pull_request_target")
+    check("if" not in dco_job, "the dco job is conditional")
+    check(dco_doc["permissions"] == {"contents": "read"}, "dco permissions are not read-only")
+    check("secrets." not in dco_text, "the dco workflow reads a secret")
+    checkout = [s for s in dco_steps if str(s.get("uses", "")).startswith("actions/checkout@")]
+    check(len(checkout) == 1 and checkout[0].get("with", {}).get("fetch-depth") == 0, "dco checkout is not a full-depth one")
+    check("git show \"$BASE_SHA:.ci/check-dco.sh\"" in dco_runs, "dco does not take the base branch's copy of the script")
+    check("github.event.pull_request.base.sha" in dco_text and "github.event.pull_request.head.sha" in dco_text and "github.event.before" in dco_text, "dco does not use the real pull request base and head and the push range")
+    check(".ci/check-dco.sh" in dco_runs and "check-dco.sh\" \"$base\" \"$head\"" in dco_runs, "dco does not run check-dco.sh on a base and head")
+    check("${{" not in dco_runs, "dco interpolates an expression into a run script")
 
 check(catalog is not None, "no workflow with build and deploy jobs")
 if catalog is None:

@@ -16,7 +16,11 @@ Signed-off-by: Jane Doe <jane@example.com>
 ```
 
 `git commit -s` adds it. A pull request carrying a commit without one is not
-accepted. There is no Contributor License Agreement.
+accepted: the `dco` check (`.github/workflows/dco.yml`) runs on every pull
+request and every push to `dev`, and fails on a commit with no `Signed-off-by:`
+trailer matching its author's email. To fix a failing pull request, add the
+trailer to each commit it names, for example `git rebase --signoff dev`, and
+push again. There is no Contributor License Agreement.
 
 ### The branch flow
 
