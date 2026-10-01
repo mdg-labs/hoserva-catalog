@@ -44,6 +44,45 @@ documentation you wrote it from in `x-hoserva.docs`.
   privileges, `PUID=99` and `PGID=100` where the image supports them.
 - Increase `x-hoserva.revision` with every change to a template.
 - The id is the directory's name. Put the icon next to `compose.yaml`.
+- Start `compose.yaml` with a comment `# Written from <URL> (D19).` naming every
+  page the template was written from.
+
+#### Media data layout
+
+The apps that fetch, import or read the media library share one layout, so
+downloads and the library sit on one filesystem and hardlinks and atomic moves
+work (the image documentation of the Sonarr and Radarr images explains why
+separate `/tv`, `/movies` and `/downloads` mounts lose them):
+
+- Sonarr, Radarr, Bazarr, qBittorrent and later download clients and library
+  managers take one `DATA` input (`kind: path`, `role: share`, default
+  `/mnt/user/data`) and mount it at `/data`. Downloads go under
+  `/data/torrents`, the library under `/data/media` with `tv`, `movies` and
+  `music` below it.
+- Media servers such as Jellyfin and Plex take a `MEDIA` input (`kind: path`,
+  `role: media`, default `/mnt/user/data/media`) and mount it at `/data/media`,
+  so a default install lines up with the apps above.
+- Apps that need neither take an `APPDATA` input only.
+
+#### Icons
+
+Every template has an icon next to `compose.yaml`, named by `x-hoserva.icon`,
+used only to identify the application.
+
+- Use the application's own logo from its upstream repository or website where
+  that source's stated license permits redistribution, and the SVG over a PNG.
+  Copy the file unchanged unless the license asks for more.
+- Otherwise use the application's file from
+  [selfhst/icons](https://github.com/selfhst/icons), which is licensed
+  CC-BY-4.0 (the repository's `LICENSE`). The logos stay the trademarks of
+  their projects.
+- Never use an image whose license is not stated, and never one from the
+  linuxserver.io API (`project_logo`). If no source is usable, leave the
+  template for a later change.
+- Keep the file under about 32 KB.
+- Record where it came from in a comment in `compose.yaml`, which ships in the
+  archive so the attribution travels with the icon:
+  `# Icon: <source URL>, <license>, <changes or none>`.
 
 The steps are in [README.md](README.md#adding-a-template). Before opening a pull
 request, run the checks CI runs: `hoserva template lint` from the version in

@@ -1,0 +1,28 @@
+# Written from https://docs.linuxserver.io/images/docker-prowlarr/ (D19).
+# Icon: https://github.com/Prowlarr/Prowlarr/blob/develop/Logo/Prowlarr.svg, GPL-3.0 (the license of that repository), none
+services:
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:2.6.5.5623-ls162
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/prowlarr:/config
+    ports:
+      - ${WEBUI_PORT}:9696
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: prowlarr
+  revision: 1
+  title: Prowlarr
+  categories: [media, automation]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-prowlarr/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    WEBUI_PORT: { kind: port, default: 9696, label: Web UI port }
+    TZ:         { kind: timezone }

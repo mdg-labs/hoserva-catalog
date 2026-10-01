@@ -1,0 +1,54 @@
+# Written from https://docs.linuxserver.io/images/docker-plex/ (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/plex.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none
+#
+# Bridge networking instead of the host networking the image documentation
+# recommends, so Plex does not share the server's network. It costs what the
+# image documentation lists as optional ports: only 32400 is mapped, so the
+# discovery of Plex on the local network (32410-32414/udp and 5353/udp), DLNA
+# (1900/udp and 32469) and the companion port 8324 are not available. Players
+# find the server through the Plex account or by its address. With bridge
+# networking an unclaimed server needs PLEX_CLAIM on its first start.
+services:
+  plex:
+    image: lscr.io/linuxserver/plex:1.43.4.10903-e5521bd8c-ls326
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+      VERSION: docker
+      PLEX_CLAIM: ${PLEX_CLAIM}
+    volumes:
+      - ${APPDATA}/plex:/config
+      - ${MEDIA}:/data/media
+    ports:
+      - ${WEBUI_PORT}:32400
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: plex
+  revision: 1
+  title: Plex
+  categories: [media]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-plex/
+  webui: http://{host}:${WEBUI_PORT}/web
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    MEDIA:
+      kind: path
+      role: media
+      default: /mnt/user/data/media
+      label: Media library
+      description: The folder that holds your media, for example tv and movies subfolders. It is mounted at /data/media in Plex, so add libraries from there.
+    WEBUI_PORT: { kind: port, default: 32400, label: Web UI port }
+    TZ:         { kind: timezone }
+    PLEX_CLAIM:
+      kind: string
+      label: Plex claim token
+      description: Get a token at https://plex.tv/claim right before you install; it expires within four minutes. It links the new server to your Plex account.
+    TRANSCODE_GPU:
+      kind: device
+      role: gpu
+      label: Hardware transcoding
+      description: Optional. An Intel or AMD GPU that Plex may use for hardware transcoding.
