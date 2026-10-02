@@ -1,0 +1,44 @@
+# Written from https://github.com/alexta69/metube#readme and the Dockerfile and docker-entrypoint.sh of https://github.com/alexta69/metube (D19).
+# Icon: https://github.com/alexta69/metube/blob/master/ui/src/assets/icons/android-chrome-384x384.png, AGPL-3.0 (the license of that repository), none
+#
+# MeTube keeps its queue, history and subscriptions in the appdata folder
+# (STATE_DIR set to /state) instead of the README's default, a hidden .metube
+# folder inside the download folder. Downloads go straight to the download
+# folder, which defaults to a folder of the media library so Jellyfin or Plex
+# can show them: add it there as a library.
+#
+# On every start the image makes 99:100 the owner of everything in the
+# download folder (CHOWN_DIRS in the README). MeTube publishes a new image for
+# every yt-dlp release, and sites change often: keep the app updated.
+services:
+  metube:
+    image: ghcr.io/alexta69/metube:2026.09.29
+    environment:
+      PUID: "99"
+      PGID: "100"
+      STATE_DIR: /state
+    volumes:
+      - ${APPDATA}/metube:/state
+      - ${DOWNLOADS}:/downloads
+    ports:
+      - ${WEBUI_PORT}:8081
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: metube
+  revision: 1
+  title: MeTube
+  categories: [downloads, media]
+  icon: icon.png
+  docs: https://github.com/alexta69/metube#readme
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    DOWNLOADS:
+      kind: path
+      role: downloads
+      default: /mnt/user/data/media/videos
+      label: Download folder
+      description: The folder downloaded videos and audio are saved to. The default sits in the media library, so a media server pointed at that library sees them.
+    WEBUI_PORT: { kind: port, default: 8081, label: Web UI port }
