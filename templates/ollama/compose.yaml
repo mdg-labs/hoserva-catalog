@@ -1,0 +1,63 @@
+# Written from https://docs.ollama.com/docker, https://docs.ollama.com/faq and https://hub.docker.com/r/ollama/ollama (D19).
+# Icon: https://github.com/ollama/ollama/blob/main/docs/ollama-logo.svg, MIT (the license of that repository), none
+#
+# Ollama serves an API on the API port and has no web interface of its own:
+# pull and run models with "docker exec -it <container> ollama run llama3.2"
+# or from an app such as Open WebUI. The API has no login. Anyone who can
+# reach the port can run, pull and delete models, so it is meant for a trusted
+# home network and must never be forwarded from the router. It is published on
+# the server's network, as the documentation does, so that Hoserva and apps in
+# other stacks reach it at http://<host>:11434.
+#
+# Models are several gigabytes each, written once when pulled and read when
+# loaded into memory, so they get their own folder on the pool (OLLAMA_MODELS,
+# from the FAQ) instead of the documentation's single /root/.ollama volume;
+# pick a folder on the cache instead for faster loading if it has the room.
+# The rest of /root/.ollama (the server's key) stays in appdata. The image
+# documents no user or group variables and runs as root.
+#
+# The image runs on the CPU by default. A GPU chosen below maps its render
+# device, which the bundled Vulkan support uses on Intel and AMD GPUs. The
+# ROCm build for AMD GPUs is the 0.35.0-rocm tag with /dev/kfd and /dev/dri
+# added under devices. An NVIDIA GPU needs the NVIDIA Container Toolkit on the
+# server and the Compose form of --gpus=all: under deploy, resources,
+# reservations, devices, an entry with driver nvidia, count all and
+# capabilities [gpu]. Neither is set up here.
+services:
+  ollama:
+    image: docker.io/ollama/ollama:0.35.0
+    environment:
+      OLLAMA_MODELS: /models
+    volumes:
+      - ${APPDATA}/ollama:/root/.ollama
+      - ${MODELS}:/models
+    ports:
+      - ${API_PORT}:11434
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: ollama
+  revision: 1
+  title: Ollama
+  categories: [ai]
+  icon: icon.svg
+  docs: https://docs.ollama.com/docker
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    MODELS:
+      kind: path
+      role: share
+      default: /mnt/user/ollama
+      label: Models folder
+      description: The folder that holds the downloaded models, several gigabytes each. Ollama reads a model from here when it loads it into memory.
+    API_PORT:
+      kind: port
+      default: 11434
+      label: API port
+      description: The port apps such as Open WebUI use to reach Ollama. It has no login, so keep it on your home network.
+    GPU:
+      kind: device
+      role: gpu
+      label: GPU acceleration
+      description: Optional. An Intel or AMD GPU that Ollama may use through Vulkan to run models faster. Leave it empty to run on the CPU.
