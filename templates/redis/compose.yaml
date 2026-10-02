@@ -1,0 +1,67 @@
+# Written from https://hub.docker.com/_/redis (the image documentation, https://github.com/docker-library/docs/blob/master/redis/README.md), https://redis.io/docs/latest/operate/oss_and_stack/management/persistence/, https://redis.io/docs/latest/operate/oss_and_stack/management/security/ and https://redis.io/docs/latest/operate/oss_and_stack/management/config/ (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/redis.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none. The logo is a trademark of Redis Ltd., used here only to identify the application.
+#
+# A standalone Redis server for other apps and your own projects. Connect to
+# the server's address on the Redis port and authenticate with the
+# REDIS_PASSWORD input, kept in the stack's .env file (for example
+# redis://:<password>@<host>:<port>).
+#
+# The port is mapped because this server's clients are apps in other stacks
+# and programs outside Docker. The image documentation says protected mode is
+# off in this image, so an exposed port is open to anyone without a password,
+# and highly recommends setting one. It describes doing that with a
+# configuration file; Redis's configuration documentation says every setting
+# can also be passed on the command line, so requirepass is set there instead
+# and no file needs to be written. The password reaches the command through
+# Compose's own substitution from the .env file, not through a shell, and is
+# visible to anyone who can inspect the container.
+#
+# Persistence is the image documentation's snapshot every 60 seconds after at
+# least one write, plus the append-only file, which Redis's persistence
+# documentation recommends combining with snapshots for data safety. Both are
+# written to /data, under the appdata folder, never on the pool. The image
+# runs Redis as its own redis user and fixes the folder's ownership itself; it
+# documents no PUID or PGID setting and no time zone setting.
+#
+# Valkey (docker.io/valkey/valkey) is a compatible alternative, and the
+# broker that some other templates in this catalog bundle; this template runs
+# Redis itself.
+services:
+  redis:
+    image: docker.io/library/redis:8.10.2-alpine
+    command:
+      - redis-server
+      - --save
+      - "60"
+      - "1"
+      - --appendonly
+      - "yes"
+      - --loglevel
+      - warning
+      - --requirepass
+      - ${REDIS_PASSWORD}
+    volumes:
+      - ${APPDATA}/redis:/data
+    ports:
+      - ${REDIS_PORT}:6379
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: redis
+  revision: 1
+  title: Redis
+  categories: [database, development]
+  icon: icon.svg
+  docs: https://hub.docker.com/_/redis
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    REDIS_PASSWORD:
+      kind: secret
+      label: Password
+      description: The password clients send to Redis (requirepass). Leave it empty to have one generated; it is kept in the stack's .env file.
+    REDIS_PORT:
+      kind: port
+      default: 6379
+      label: Redis port
+      description: The port apps and programs connect to. 6379 is the usual Redis port; pick another if something on this server already uses it.
