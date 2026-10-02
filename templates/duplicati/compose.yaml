@@ -1,0 +1,77 @@
+# Written from https://docs.linuxserver.io/images/docker-duplicati/, https://docs.duplicati.com/platform-specific-guides/using-duplicati-from-docker and https://docs.duplicati.com/configuration-and-management/duplicati-access-password (D19).
+# Icon: https://github.com/duplicati/duplicati/blob/master/Assets/application%20icon/application_icon.svg, MIT (the license of that repository), none
+#
+# The folder to back up is mounted read-only at /source, so Duplicati cannot
+# change or delete what it backs up. The default is the whole pool
+# (/mnt/user). The appdata folder, this app's own settings included, is on
+# the cache at /mnt/cache/appdata and not part of it; Hoserva's appdata
+# backup covers it. If the pool has an appdata share (a server moved from
+# Unraid often does), exclude /source/appdata in the backup.
+#
+# The local backup folder is mounted read-write at /backups; in Duplicati
+# pick /backups as a local destination. With the default folders it is also
+# visible as /source/backups: exclude that from every backup, or the backup
+# copies itself. Restore into /backups (for example /backups/restore), the
+# one folder Duplicati can write to, and move the files back from there. A
+# backup kept on this server does not survive losing the server: add a
+# remote destination too, or a USB disk mounted under /mnt/disks.
+#
+# Duplicati runs as user 99 and group 100, so it backs up the files that
+# user can read; a file only another user may read is reported in the
+# backup log. SETTINGS_ENCRYPTION_KEY encrypts the secrets Duplicati stores
+# in its settings database. The passphrase of each backup is chosen in
+# Duplicati: keep a copy of it away from this server, since the backup
+# cannot be restored without it. Duplicati answers requests to the server's
+# IP address; to open it by host name, set
+# DUPLICATI__WEBSERVICE_ALLOWED_HOSTNAMES as the Duplicati documentation
+# describes.
+services:
+  duplicati:
+    image: lscr.io/linuxserver/duplicati:v2.4.0.0_stable_2026-09-03-ls310
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+      SETTINGS_ENCRYPTION_KEY: ${SETTINGS_ENCRYPTION_KEY}
+      DUPLICATI__WEBSERVICE_PASSWORD: ${WEBUI_PASSWORD}
+    volumes:
+      - ${APPDATA}/duplicati:/config
+      - ${SOURCE}:/source:ro
+      - ${DESTINATION}:/backups
+    ports:
+      - ${WEBUI_PORT}:8200
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: duplicati
+  revision: 1
+  title: Duplicati
+  categories: [backup]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-duplicati/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    SOURCE:
+      kind: path
+      role: share
+      default: /mnt/user
+      label: Folder to back up
+      description: The folder the app backs up, mounted read-only at /source. The default is the whole pool; appdata on the cache is not part of it.
+    DESTINATION:
+      kind: path
+      role: share
+      default: /mnt/user/backups
+      label: Local backup and restore folder
+      description: The folder the app writes to, mounted at /backups, for backups kept on this server or on a USB disk (a folder under /mnt/disks) and for restored files. Exclude it from the backup when it is inside the folder to back up.
+    SETTINGS_ENCRYPTION_KEY:
+      kind: secret
+      label: Settings encryption key
+      description: Encrypts the secrets Duplicati keeps in its settings database. Leave it empty to have one generated; it is kept in the stack's .env file.
+    WEBUI_PASSWORD:
+      kind: secret
+      label: Web UI password
+      description: The password for the Duplicati web UI. Leave it empty to have one generated; it is kept in the stack's .env file.
+    WEBUI_PORT: { kind: port, default: 8200, label: Web UI port }
+    TZ:         { kind: timezone }
