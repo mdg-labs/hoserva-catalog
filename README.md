@@ -19,6 +19,7 @@ the CI that publishes it.
 | `signing-key.pub.pem` | the catalog's Ed25519 public key |
 | `.ci/` | the build, signing and validation scripts, their tests and fixtures |
 | `.github/workflows/catalog.yml` | the CI |
+| `WRITING-TEMPLATES.md` | the guide to writing a template |
 
 Templates live in `templates/` so the repository's first page stays short as the
 catalog grows. CI validates and builds `templates/` only, and
@@ -29,14 +30,16 @@ given that does not start with a dot as a template.
 
 ## Adding a template
 
+[WRITING-TEMPLATES.md](WRITING-TEMPLATES.md) walks through it step by step.
+In short:
+
 1. Create `templates/<id>/`. The id is lowercase letters, digits and
    single hyphens, and the directory name equals `x-hoserva.id`.
 2. Write `templates/<id>/compose.yaml` as a valid Compose file with an
-   `x-hoserva` block (the format is in `docs/internal/04-containers.md` §7 in
-   the Hoserva repository), and put the icon it names next to it.
+   `x-hoserva` block, and put the icon it names next to it.
 3. Write the template from the application's upstream documentation, link that
    documentation in `x-hoserva.docs`, and pin an image tag rather than `latest`
-   where upstream publishes versions. See [CONTRIBUTING.md](CONTRIBUTING.md).
+   where upstream publishes versions.
 4. Increase `x-hoserva.revision` with every later change to the template.
 5. Open a pull request against `dev`. CI runs the checks below.
 

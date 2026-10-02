@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: A problem with Hoserva itself
+    url: https://github.com/mdg-labs/hoserva/issues/new/choose
+    about: The app store, installing or updating apps, or anything outside a single template belongs in the Hoserva repository.
+  - name: Ask a question
+    url: https://github.com/mdg-labs/hoserva/discussions
+    about: Questions and ideas are welcome in Hoserva's discussions.
+  - name: Write a template yourself
+    url: https://github.com/mdg-labs/hoserva-catalog/blob/main/WRITING-TEMPLATES.md
+    about: A step-by-step guide to writing a template, with every field and convention.
