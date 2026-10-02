@@ -1,0 +1,69 @@
+# Written from https://docs.tdarr.io/docs/installation/docker/run-compose, https://docs.tdarr.io/docs/installation/variables, https://docs.tdarr.io/docs/installation/docker/volume-mapping and https://docs.tdarr.io/docs/installation/docker/hardware-transcoding (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/png/tdarr.png, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), resized from 511x512 to 128x128 to stay under the size limit. The Tdarr repository's own logo is under its EULA, which forbids redistribution.
+#
+# The tdarr image with the server and its internal node in one container
+# (internalNode=true), as in the documentation's Compose example. The server
+# port 8266 is only for separate nodes and is not mapped, so another machine's
+# node cannot join; the internal node reaches the server inside the container.
+# The documentation's NVIDIA settings are not used: the optional GPU input
+# gives the container an Intel or AMD GPU for VAAPI or QSV transcoding.
+#
+# The media library is mounted at /data/media, the same path Jellyfin and Plex
+# use, instead of /media: add libraries from /data/media in Tdarr. Tdarr
+# replaces files in the library with their transcoded versions. The
+# transcode cache (/temp), where each file is written while it is processed,
+# is in the appdata folder on the cache, not on the pool. A library scan walks
+# its whole folder and wakes the pool's disks.
+services:
+  tdarr:
+    image: ghcr.io/haveagitgat/tdarr:2.93.01
+    environment:
+      TZ: ${TZ}
+      PUID: "99"
+      PGID: "100"
+      UMASK_SET: "002"
+      serverIP: 0.0.0.0
+      serverPort: "8266"
+      webUIPort: "8265"
+      internalNode: "true"
+      inContainer: "true"
+      ffmpegVersion: "7"
+      nodeName: MyInternalNode
+      auth: "false"
+      openBrowser: "true"
+      maxLogSizeMB: "10"
+      cronPluginUpdate: ""
+    volumes:
+      - ${APPDATA}/tdarr/server:/app/server
+      - ${APPDATA}/tdarr/configs:/app/configs
+      - ${APPDATA}/tdarr/logs:/app/logs
+      - ${APPDATA}/tdarr/cache:/temp
+      - ${MEDIA}:/data/media
+    ports:
+      - ${WEBUI_PORT}:8265
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: tdarr
+  revision: 1
+  title: Tdarr
+  categories: [media, automation]
+  icon: icon.png
+  docs: https://docs.tdarr.io/docs/installation/docker/run-compose
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    MEDIA:
+      kind: path
+      role: media
+      default: /mnt/user/data/media
+      label: Media library
+      description: The folder that holds your media, for example tv and movies subfolders. It is mounted at /data/media in Tdarr, so add libraries from there.
+    WEBUI_PORT: { kind: port, default: 8265, label: Web UI port }
+    TZ:         { kind: timezone }
+    TRANSCODE_GPU:
+      kind: device
+      role: gpu
+      label: Hardware transcoding
+      description: Optional. An Intel or AMD GPU that Tdarr may use to transcode video.
