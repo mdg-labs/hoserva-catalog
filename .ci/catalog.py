@@ -65,7 +65,7 @@ def index(catalog_dir, serial, ids):
     for template_id in sorted(ids):
         template_dir = os.path.join(catalog_dir, template_id)
         b = block(os.path.join(template_dir, "compose.yaml"))
-        templates.append({
+        entry = {
             "id": b["id"],
             "revision": b["revision"],
             "title": b["title"],
@@ -73,7 +73,11 @@ def index(catalog_dir, serial, ids):
             "icon": b["icon"],
             "docs": b["docs"],
             "contentHash": content_hash(template_dir),
-        })
+        }
+        for key in ("maintainer", "description"):
+            if b.get(key):
+                entry[key] = b[key]
+        templates.append(entry)
     generated = datetime.datetime.fromtimestamp(serial, datetime.timezone.utc)
     json.dump(
         {

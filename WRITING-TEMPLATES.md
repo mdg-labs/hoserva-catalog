@@ -148,6 +148,10 @@ points below.
 | `docs` | yes | The main upstream documentation page the template was written from (`http://` or `https://`). |
 | `webui` | no | Address of the app's web interface. `{host}` stands for the server's address, `${NAME}` for an input: `http://{host}:${WEBUI_PORT}/web`. |
 | `inputs` | no | The values the install form asks for, described below. |
+| `maintainer` | no | Who maintains the template or the app: 1 to 100 characters on one line. It is shown on the catalog list and is what the catalog's maintainer filter uses. |
+| `description` | no | A longer plain text of at most 2000 characters, line breaks kept and never read as markup. It is shown on the catalog list and on the template's page. |
+| `screenshots` | no | One to eight unique image files inside the template folder, as paths relative to `compose.yaml`, in the order the page shows them. Each path segment starts with a letter or digit, and the extension is `png`, `webp`, `jpg` or `jpeg`. Each file is at most 4 MiB. |
+| `links` | no | `project`, `support` and `donate`, each an absolute `https` address of at most 2048 bytes with a host, no user name or password, and no whitespace. Set any of the three. |
 
 ### Inputs
 
@@ -290,7 +294,7 @@ The `x-hoserva` format and the checker that enforces it live in the
 [Hoserva repository](https://github.com/mdg-labs/hoserva) (`internal/template/`),
 and CI runs the version pinned in `.ci/hoserva-version`. This guide describes
 that version, and so does its JSON Schema:
-[`internal/template/schema/v1.json`](https://github.com/mdg-labs/hoserva/blob/629408e5e79d16397a34731dea940040796f720b/internal/template/schema/v1.json).
+[`internal/template/schema/v1.json`](https://github.com/mdg-labs/hoserva/blob/3da8344b0bace51f77069ef83c779bc1f5011fe1/internal/template/schema/v1.json).
 An editor that understands JSON Schema can use it to check the `x-hoserva`
 block as you type. When the pin moves, this link moves with it. If lint and this
 guide ever disagree, lint is right — and please open an issue so the guide gets
