@@ -1,0 +1,55 @@
+# Written from https://hub.docker.com/_/mariadb (the image documentation, https://github.com/docker-library/docs/blob/master/mariadb/README.md) and https://mariadb.com/docs/server/server-management/automated-mariadb-deployment-and-administration/docker-and-mariadb/mariadb-server-docker-official-image-environment-variables (the environment variable list it points to) (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/mariadb.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none. The logo is a trademark of the MariaDB Foundation, used here only to identify the application.
+#
+# A standalone MariaDB server, compatible with MySQL clients, for other apps
+# and your own projects. The administrator is root with the ROOT_PASSWORD
+# input as its password, kept in the stack's .env file; the image applies it
+# only when it creates the database on the first start. Connect to the
+# server's address on the database port; create a separate user and database
+# for each app rather than sharing root.
+#
+# The image is the official mariadb image, pinned to 12.3, the release line
+# its lts tag points to. The port is mapped because this server's clients are
+# apps in other stacks and programs outside Docker; containers in this stack
+# would not need it.
+#
+# MARIADB_AUTO_UPGRADE makes the image run mariadb-upgrade when a newer image
+# starts on existing data, after backing up the system tables into the data
+# folder, so a template update to a newer MariaDB release finishes without a
+# manual step. The data is under the appdata folder, never on the pool. The
+# image documents no PUID or PGID setting: the files are owned by the user
+# the image runs MariaDB as. TZ sets the time zone of the server, as the
+# environment variable list describes.
+services:
+  mariadb:
+    image: docker.io/library/mariadb:12.3.3
+    environment:
+      MARIADB_ROOT_PASSWORD: ${ROOT_PASSWORD}
+      MARIADB_AUTO_UPGRADE: "1"
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/mariadb:/var/lib/mysql
+    ports:
+      - ${DB_PORT}:3306
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: mariadb
+  revision: 1
+  title: MariaDB
+  categories: [database, development]
+  icon: icon.svg
+  docs: https://hub.docker.com/_/mariadb
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    ROOT_PASSWORD:
+      kind: secret
+      label: Root password
+      description: The password of the MariaDB root user. Leave it empty to have one generated; it is kept in the stack's .env file. MariaDB applies it only on its first start.
+    DB_PORT:
+      kind: port
+      default: 3306
+      label: Database port
+      description: The port apps and programs connect to. 3306 is the usual MariaDB and MySQL port; pick another if something on this server already uses it.
+    TZ: { kind: timezone }
