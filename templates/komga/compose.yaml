@@ -1,0 +1,43 @@
+# Written from https://komga.org/docs/installation/docker (D19).
+# Icon: https://github.com/gotson/komga/blob/master/komga-webui/src/assets/logo.svg, MIT (the license of that repository), none
+#
+# Komga runs as the user set with the user key, here 99:100, which must own
+# the config folder; it has no PUID or PGID variables. The documentation asks
+# for /config on a local disk, never a network share, so it sits in the
+# appdata folder. In Komga add libraries from /data, for example
+# /data/comics and /data/manga. The Java process is limited to about 1 GB of
+# memory by default; if the logs show OutOfMemory errors, add
+# JAVA_TOOL_OPTIONS: -Xmx4g (or another size) to the environment, as the
+# documentation describes.
+services:
+  komga:
+    image: gotson/komga:1.28.1
+    user: "99:100"
+    environment:
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/komga:/config
+      - ${BOOKS}:/data
+    ports:
+      - ${WEBUI_PORT}:25600
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: komga
+  revision: 1
+  title: Komga
+  categories: [media, books]
+  icon: icon.svg
+  docs: https://komga.org/docs/installation/docker
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    BOOKS:
+      kind: path
+      role: media
+      default: /mnt/user/data/media/books
+      label: Book library
+      description: The folder that holds your comics, manga and ebooks, for example in comics, manga and ebooks subfolders. It is mounted at /data in Komga, so add libraries from there.
+    WEBUI_PORT: { kind: port, default: 25600, label: Web UI port }
+    TZ:         { kind: timezone }
