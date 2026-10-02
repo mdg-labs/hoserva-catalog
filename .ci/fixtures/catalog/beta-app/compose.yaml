@@ -17,6 +17,11 @@ x-hoserva:
   categories: [media, tools]
   icon: logo.png
   docs: https://docs.example/beta/
+  maintainer: Beta Maintainers
+  description: |-
+    A beta application.
+
+    Second paragraph.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     MEDIA:      { kind: path, role: media, label: Media library }

@@ -37,9 +37,20 @@ assert_eq "$(index "$archive" | jq -r '.templates | map(.id) | join(",")')" "alp
 assert_eq "$(index "$archive" | jq -c '.templates[0] | del(.contentHash)')" \
   '{"id":"alpha","revision":2,"title":"Alpha","categories":["tools"],"icon":"icon.svg","docs":"https://docs.example/alpha/"}' "alpha entry"
 assert_eq "$(index "$archive" | jq -c '.templates[1] | del(.contentHash)')" \
-  '{"id":"beta-app","revision":1,"title":"Beta App","categories":["media","tools"],"icon":"logo.png","docs":"https://docs.example/beta/"}' "beta-app entry"
+  '{"id":"beta-app","revision":1,"title":"Beta App","categories":["media","tools"],"icon":"logo.png","docs":"https://docs.example/beta/","maintainer":"Beta Maintainers","description":"A beta application.\n\nSecond paragraph."}' "beta-app entry"
 assert_eq "$(index "$archive" | jq -r '.templates[0].contentHash')" "$(expected_hash "$fixtures/catalog/alpha")" "alpha content hash"
 assert_eq "$(index "$archive" | jq -r '.templates[1].contentHash')" "$(expected_hash "$fixtures/catalog/beta-app")" "beta-app content hash"
+
+# maintainer and description are copied when the block sets them and the key
+# is left out, never null or empty, when it does not.
+cp -R "$fixtures/catalog" "$T/meta"
+sed -i 's|^  docs: https://docs.example/alpha/$|&\n  description: Only a description.|' "$T/meta/alpha/compose.yaml"
+sed -i '/^  maintainer: /d; /^  description: |-$/,/^    Second paragraph\.$/d' "$T/meta/beta-app/compose.yaml"
+expect_ok "$ci_root/build.sh" "$T/meta" "$T/out-meta"
+assert_eq "$(index "$T/out-meta/catalog.tar.zst" | jq -c '[.templates[] | del(.contentHash) | {id, maintainer, description}]')" \
+  '[{"id":"alpha","maintainer":null,"description":"Only a description."},{"id":"beta-app","maintainer":null,"description":null}]' "entries with one or no field"
+assert_eq "$(index "$T/out-meta/catalog.tar.zst" | jq -c '[.templates[] | keys | map(select(. == "maintainer" or . == "description"))]')" \
+  '[["description"],[]]' "keys present in entries with one or no field"
 
 # The repository layout keeps templates under templates/, but the archive is
 # unchanged: <id>/ at the archive root, never templates/<id>/, and the same
