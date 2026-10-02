@@ -1,0 +1,87 @@
+# Written from https://docs.frigate.video/frigate/installation, https://docs.frigate.video/guides/getting_started, https://docs.frigate.video/configuration/authentication, https://docs.frigate.video/configuration/tls, https://docs.frigate.video/configuration/live and https://docs.frigate.video/configuration/hardware_acceleration_video (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/frigate.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none. The logo is a trademark of Frigate, Inc. (https://github.com/blakeblackshear/frigate/blob/dev/TRADEMARK.md), used here only to represent the application.
+#
+# Frigate creates a basic configuration in the appdata folder on its first
+# start, and prints the password of the generated admin user in its log: log
+# in with it at the web UI and change it under Settings > Users. Then add
+# cameras under Settings > Camera management. The web UI port is the
+# authenticated one, served over HTTPS with a self-signed certificate, so the
+# browser warns on the first visit. Port 5000, the unauthenticated UI and API,
+# is not mapped, as the documentation advises limiting access to it.
+#
+# Recordings, snapshots and exports go to the recordings folder. With
+# continuous recording Frigate writes there all the time, which keeps the
+# disk under it spinning: give it a share kept on one dedicated disk so the
+# others can spin down. New segments are first written to a 1 GB in-memory
+# cache. The shared memory of 512 MB is the documentation's example; raise
+# shm_size if Frigate exits with "Bus error" (the documentation's shm
+# calculator gives the size for your cameras).
+#
+# Live view uses MSE and needs no extra setup. WebRTC, which two-way talk
+# needs, also requires the server's address as a WebRTC candidate in the
+# go2rtc section of the configuration. The RTSP restream is unauthenticated
+# unless go2rtc is configured otherwise.
+#
+# The documentation's example runs the container privileged and notes that
+# this may not be necessary; it is left out. An Intel or AMD GPU picked below
+# is mapped in for video decoding; if the log says no hardware acceleration
+# was detected, set the ffmpeg hwaccel_args to preset-vaapi. A Coral TPU or an
+# NVIDIA GPU is not set up: add the devices entry for the Coral (/dev/bus/usb
+# for USB, /dev/apex_0 for PCIe) or the NVIDIA GPU reservation, as the
+# installation page shows. This tag is the amd64 image; on arm64 use the
+# -standard-arm64 tag of the same release.
+services:
+  frigate:
+    image: ghcr.io/blakeblackshear/frigate:0.18.0
+    shm_size: 512mb
+    stop_grace_period: 30s
+    environment:
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/frigate:/config
+      - ${RECORDINGS}:/media/frigate
+      - type: tmpfs
+        target: /tmp/cache
+        tmpfs:
+          size: 1000000000
+    ports:
+      - ${WEBUI_PORT}:8971
+      - ${RTSP_PORT}:8554
+      - ${WEBRTC_PORT}:8555/tcp
+      - ${WEBRTC_PORT}:8555/udp
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: frigate
+  revision: 1
+  title: Frigate
+  categories: [security, home-automation]
+  icon: icon.svg
+  docs: https://docs.frigate.video/frigate/installation
+  webui: https://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    RECORDINGS:
+      kind: path
+      role: share
+      default: /mnt/user/frigate
+      label: Recordings folder
+      description: Where Frigate keeps recordings, snapshots and exports. Continuous recording writes here all the time and keeps the disk awake, so a share kept on one dedicated disk is best.
+    WEBUI_PORT: { kind: port, default: 8971, label: Web UI port }
+    RTSP_PORT:
+      kind: port
+      default: 8554
+      label: RTSP restream port
+      description: The port of the camera streams Frigate passes on over RTSP, for example to Home Assistant.
+    WEBRTC_PORT:
+      kind: port
+      default: 8555
+      label: WebRTC port
+      description: The port for WebRTC live view and two-way talk, over TCP and UDP.
+    TZ: { kind: timezone }
+    GPU:
+      kind: device
+      role: gpu
+      label: Hardware video decoding
+      description: Optional. An Intel or AMD GPU that Frigate may use to decode the camera streams.
