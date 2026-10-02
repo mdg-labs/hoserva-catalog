@@ -1,0 +1,46 @@
+# Written from https://wiki.servarr.com/whisparr/installation/docker, https://hotio.dev/containers/whisparr/, the README of https://github.com/Whisparr/Whisparr and https://wiki.servarr.com/docker-guide (D19).
+# Icon: https://github.com/Whisparr/Whisparr/blob/eros/Logo/Whisparr.svg, GPL-3.0 (the license of that repository), none
+#
+# Whisparr publishes no image of its own; the Servarr wiki documents the hotio
+# image. This is Whisparr v3 (scenes and movies), the version the project's
+# README points Docker users to, pinned to a v3 release tag; hotio's latest
+# tag is v2. The image's optional VPN feature is not set up.
+#
+# One mount at /data holds the downloads and the library, so hardlinks and
+# instant moves work. In Whisparr set the root folder to a folder of its own
+# under the library, for example /data/media/whisparr, and in the download
+# client use the paths under /data/torrents or /data/usenet.
+services:
+  whisparr:
+    image: ghcr.io/hotio/whisparr:v3-3.6.2-release.1727
+    environment:
+      PUID: "99"
+      PGID: "100"
+      UMASK: "002"
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/whisparr:/config
+      - ${DATA}:/data
+    ports:
+      - ${WEBUI_PORT}:6969
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: whisparr
+  revision: 1
+  title: Whisparr
+  categories: [media, automation]
+  icon: icon.svg
+  docs: https://wiki.servarr.com/whisparr/installation/docker
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    DATA:
+      kind: path
+      role: share
+      default: /mnt/user/data
+      label: Data folder
+      description: The folder that holds both downloads (torrents, usenet) and the media library (media). Use the same folder for every media app so hardlinks and instant moves work.
+    WEBUI_PORT: { kind: port, default: 6969, label: Web UI port }
+    TZ:         { kind: timezone }
