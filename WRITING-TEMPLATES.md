@@ -287,8 +287,11 @@ used only to identify the application.
 ## Where the format is defined
 
 The `x-hoserva` format and the checker that enforces it live in the
-[Hoserva repository](https://github.com/mdg-labs/hoserva) (`internal/template/`,
-with a published JSON Schema), and CI runs the version pinned in
-`.ci/hoserva-version`. This guide describes that version. If lint and this
+[Hoserva repository](https://github.com/mdg-labs/hoserva) (`internal/template/`),
+and CI runs the version pinned in `.ci/hoserva-version`. This guide describes
+that version, and so does its JSON Schema:
+[`internal/template/schema/v1.json`](https://github.com/mdg-labs/hoserva/blob/629408e5e79d16397a34731dea940040796f720b/internal/template/schema/v1.json).
+An editor that understands JSON Schema can use it to check the `x-hoserva`
+block as you type. When the pin moves, this link moves with it. If lint and this
 guide ever disagree, lint is right — and please open an issue so the guide gets
 fixed.
