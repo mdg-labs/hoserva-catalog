@@ -1,0 +1,89 @@
+# Written from https://hub.docker.com/_/eclipse-mosquitto, https://mosquitto.org/man/mosquitto-conf-5.html and https://mosquitto.org/man/mosquitto_passwd-1.html (D19).
+# Icon: https://github.com/eclipse-mosquitto/mosquitto/blob/master/logo/mosquitto-logo-only.svg, EPL-2.0 OR BSD-3-Clause (LICENSE.txt of that repository), none
+#
+# Mosquitto 2 accepts only local connections until a listener and
+# authentication are configured, and a template cannot ship a configuration
+# file, so the start command writes one. On the first start it creates
+# mosquitto.conf in the appdata folder with an MQTT listener on 1883, an MQTT
+# over WebSockets listener on 9001, password authentication (no anonymous
+# clients) and persistence in the data folder. Edit that file afterwards to
+# change it; it is never overwritten. On every start the MQTT_USER account is
+# set to the MQTT_PASSWORD input in the password file, with mosquitto_passwd;
+# other accounts added to that file are kept. Clients such as Home Assistant
+# and Zigbee2MQTT connect to the server's address on the MQTT port with that
+# user and password.
+#
+# The image starts as root and Mosquitto drops to its own mosquitto user
+# (uid 1883). mosquitto_passwd wants a password file only root can read, the
+# broker one only its user can read, so the file changes owner around it.
+# The log goes to the container log rather than a file in appdata. No TLS is
+# set up: the listeners are plain MQTT, for use on the home network.
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2.1.2-alpine
+    environment:
+      TZ: ${TZ}
+      MQTT_USER: ${MQTT_USER}
+      MQTT_PASSWORD: ${MQTT_PASSWORD}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -e
+        conf=/mosquitto/config/mosquitto.conf
+        passwd=/mosquitto/config/passwd
+        if [ ! -f "$$conf" ]; then
+          cat > "$$conf" <<EOF
+        listener 1883
+        listener 9001
+        protocol websockets
+        allow_anonymous false
+        password_file $$passwd
+        persistence true
+        persistence_location /mosquitto/data/
+        EOF
+        fi
+        touch "$$passwd"
+        chown root:root "$$passwd"
+        chmod 0600 "$$passwd"
+        mosquitto_passwd -b "$$passwd" "$$MQTT_USER" "$$MQTT_PASSWORD"
+        chown mosquitto:mosquitto "$$passwd"
+        exec /docker-entrypoint.sh /usr/sbin/mosquitto -c "$$conf"
+    volumes:
+      - ${APPDATA}/mosquitto/config:/mosquitto/config
+      - ${APPDATA}/mosquitto/data:/mosquitto/data
+    ports:
+      - ${MQTT_PORT}:1883
+      - ${WEBSOCKETS_PORT}:9001
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: mosquitto
+  revision: 1
+  title: Mosquitto
+  categories: [home-automation, network]
+  icon: icon.svg
+  docs: https://hub.docker.com/_/eclipse-mosquitto
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    MQTT_USER:
+      kind: string
+      default: mqtt
+      label: MQTT user name
+      description: The user name that MQTT clients such as Home Assistant and Zigbee2MQTT log in with. It must not contain a colon.
+    MQTT_PASSWORD:
+      kind: secret
+      label: MQTT password
+      description: The password of that user. Leave it empty to have one generated; it is kept in the stack's .env file. Changing it here and restarting the app updates the password file.
+    MQTT_PORT:
+      kind: port
+      default: 1883
+      label: MQTT port
+      description: The port MQTT clients connect to. Devices and apps use 1883 unless you change it in their settings.
+    WEBSOCKETS_PORT:
+      kind: port
+      default: 9001
+      label: MQTT over WebSockets port
+      description: The port for MQTT over WebSockets, which browser-based MQTT clients use.
+    TZ: { kind: timezone }

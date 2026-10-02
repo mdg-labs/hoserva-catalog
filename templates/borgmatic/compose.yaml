@@ -1,0 +1,83 @@
+# Written from https://github.com/borgmatic-collective/docker-borgmatic#readme, https://torsion.org/borgmatic/how-to/set-up-backups/ and https://torsion.org/borgmatic/how-to/extract-a-backup/ (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/borgmatic.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none
+#
+# The folder to back up is mounted read-only at /source, so borgmatic cannot
+# change or delete what it backs up. The default is the whole pool
+# (/mnt/user). The appdata folder, this app's own settings included, is on
+# the cache at /mnt/cache/appdata and not part of it; Hoserva's appdata
+# backup covers it. If the pool has an appdata share (a server moved from
+# Unraid often does), add /source/appdata to exclude_patterns.
+#
+# The local backup folder is mounted read-write at /backups; a repository
+# there has a path such as /backups/borg. With the default folders it is
+# also visible as /source/backups: exclude that from every backup, or the
+# backup copies itself. Restore into /backups, the one folder borgmatic can
+# write to, with borgmatic extract --archive latest --destination
+# /backups/restore, and move the files back from there. A backup kept on this
+# server does not survive losing the server: add a remote repository (over
+# SSH) too, or one on a USB disk mounted under /mnt/disks.
+#
+# borgmatic has no web UI. Its configuration is a YAML file in the appdata
+# folder's borgmatic.d, mounted at /etc/borgmatic.d, which starts empty and so
+# hides the image's example files. In the container, run
+# borgmatic config generate -d /etc/borgmatic.d/config.yaml, set
+# source_directories and repositories in that file, then create the
+# repository with borgmatic repo-create --encryption repokey-blake2. The
+# image's cron runs the backup daily at 01:00; a crontab.txt in borgmatic.d
+# replaces that schedule (see the image documentation). SSH keys for a remote
+# repository go in the appdata folder's ssh folder, which is /root/.ssh.
+#
+# The README's /mnt/source and /mnt/borg-repository mounts are named /source
+# and /backups here, like the other backup apps in this catalog. The host name
+# is fixed so archive names stay the same across container rebuilds, which
+# pruning relies on. The image runs as root, so it reads every file in the
+# folder to back up, and restored files belong to root. BORG_PASSPHRASE
+# encrypts the repository; keep a copy of it, and of the Borg keys in the
+# appdata folder's borg-config, away from this server: the backup cannot be
+# restored without them. stop_grace_period gives a running backup time to
+# finish and release its lock when the app stops, as the README advises.
+services:
+  borgmatic:
+    image: ghcr.io/borgmatic-collective/borgmatic:2.1.9
+    hostname: borgmatic
+    environment:
+      TZ: ${TZ}
+      BORG_PASSPHRASE: ${BORG_PASSPHRASE}
+    volumes:
+      - ${APPDATA}/borgmatic/borgmatic.d:/etc/borgmatic.d
+      - ${APPDATA}/borgmatic/borg-config:/root/.config/borg
+      - ${APPDATA}/borgmatic/ssh:/root/.ssh
+      - ${APPDATA}/borgmatic/borg-cache:/root/.cache/borg
+      - ${APPDATA}/borgmatic/state:/root/.local/state/borgmatic
+      - ${SOURCE}:/source:ro
+      - ${DESTINATION}:/backups
+    stop_grace_period: 10m
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: borgmatic
+  revision: 1
+  title: borgmatic
+  categories: [backup]
+  icon: icon.svg
+  docs: https://github.com/borgmatic-collective/docker-borgmatic#readme
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    SOURCE:
+      kind: path
+      role: share
+      default: /mnt/user
+      label: Folder to back up
+      description: The folder the app backs up, mounted read-only at /source. The default is the whole pool; appdata on the cache is not part of it.
+    DESTINATION:
+      kind: path
+      role: share
+      default: /mnt/user/backups
+      label: Local backup and restore folder
+      description: The folder the app writes to, mounted at /backups, for backups kept on this server or on a USB disk (a folder under /mnt/disks) and for restored files. Exclude it from the backup when it is inside the folder to back up.
+    BORG_PASSPHRASE:
+      kind: secret
+      label: Repository passphrase
+      description: Encrypts the Borg repository. Leave it empty to have one generated; it is kept in the stack's .env file. Keep a copy away from this server.
+    TZ: { kind: timezone }

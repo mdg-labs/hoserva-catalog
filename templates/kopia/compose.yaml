@@ -1,0 +1,102 @@
+# Written from https://kopia.io/docs/installation/#docker-images and https://github.com/kopia/kopia/blob/master/tools/docker/Dockerfile (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/kopia.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none
+#
+# The folder to back up is mounted read-only at /source, so Kopia cannot
+# change or delete what it backs up. The default is the whole pool
+# (/mnt/user). The appdata folder, this app's own settings included, is on
+# the cache at /mnt/cache/appdata and not part of it; Hoserva's appdata
+# backup covers it. If the pool has an appdata share (a server moved from
+# Unraid often does), exclude /source/appdata in the snapshot policy.
+#
+# The local backup folder is mounted read-write at /backups; a filesystem
+# repository there goes in a folder such as /backups/kopia. With the default
+# folders it is also visible as /source/backups: exclude that from every
+# snapshot, or the backup copies itself. Restore into /backups (for example
+# /backups/restore), the one folder Kopia can write to, and move the files
+# back from there. A backup kept on this server does not survive losing the
+# server: add a remote repository too, or one on a USB disk mounted under
+# /mnt/disks.
+#
+# Kopia runs in server mode with the web UI, as in the documentation's
+# example: plain HTTP (--insecure) on the Web UI port, signed in with the
+# username and password below. They are passed as KOPIA_SERVER_USERNAME and
+# KOPIA_SERVER_PASSWORD, the variables the server's --server-username and
+# --server-password flags read, so the password stays off the command line.
+# The documentation's /data and /repository mounts are named /source and
+# /backups here, like the other backup apps in this catalog. The /tmp mount
+# for browsing mounted snapshots is left out:
+# mounting a snapshot needs FUSE privileges this template does not ask for,
+# so restore files instead. The image does not keep the repository password
+# after connecting (KOPIA_PERSIST_CREDENTIALS_ON_CONNECT=false in its
+# Dockerfile) and reads it from KOPIA_PASSWORD, so when creating or
+# connecting the repository in the web UI enter the repository password from
+# this form; it is in the stack's .env file. Keep a copy of it away from this
+# server: the backup cannot be restored without it. The host name and user
+# are fixed, as the documentation recommends, because Kopia records them
+# with every snapshot. The image runs as root, so it reads every file in the
+# folder to back up, and restored files belong to root.
+services:
+  kopia:
+    image: docker.io/kopia/kopia:0.23.1
+    hostname: kopia
+    command:
+      - server
+      - start
+      - --disable-csrf-token-checks
+      - --insecure
+      - --address=0.0.0.0:51515
+    environment:
+      KOPIA_SERVER_USERNAME: ${WEBUI_USER}
+      KOPIA_SERVER_PASSWORD: ${WEBUI_PASSWORD}
+      KOPIA_PASSWORD: ${REPOSITORY_PASSWORD}
+      USER: kopia
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/kopia/config:/app/config
+      - ${APPDATA}/kopia/cache:/app/cache
+      - ${APPDATA}/kopia/logs:/app/logs
+      - ${APPDATA}/kopia/rclone:/app/rclone
+      - ${SOURCE}:/source:ro
+      - ${DESTINATION}:/backups
+    ports:
+      - ${WEBUI_PORT}:51515
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: kopia
+  revision: 1
+  title: Kopia
+  categories: [backup]
+  icon: icon.svg
+  docs: https://kopia.io/docs/installation/#docker-images
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    SOURCE:
+      kind: path
+      role: share
+      default: /mnt/user
+      label: Folder to back up
+      description: The folder the app backs up, mounted read-only at /source. The default is the whole pool; appdata on the cache is not part of it.
+    DESTINATION:
+      kind: path
+      role: share
+      default: /mnt/user/backups
+      label: Local backup and restore folder
+      description: The folder the app writes to, mounted at /backups, for backups kept on this server or on a USB disk (a folder under /mnt/disks) and for restored files. Exclude it from the backup when it is inside the folder to back up.
+    WEBUI_USER:
+      kind: string
+      default: kopia
+      label: Web UI username
+      description: The username for signing in to the web UI.
+    WEBUI_PASSWORD:
+      kind: secret
+      label: Web UI password
+      description: The password for signing in to the web UI. Leave it empty to have one generated; it is kept in the stack's .env file.
+    REPOSITORY_PASSWORD:
+      kind: secret
+      label: Repository password
+      description: Encrypts the backups. Enter the same password when creating the repository in Kopia. Leave it empty to have one generated; it is kept in the stack's .env file.
+    WEBUI_PORT: { kind: port, default: 51515, label: Web UI port }
+    TZ:         { kind: timezone }

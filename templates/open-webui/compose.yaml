@@ -1,0 +1,54 @@
+# Written from https://docs.openwebui.com/getting-started/quick-start/, https://docs.openwebui.com/getting-started/quick-start/connect-a-provider/starting-with-ollama and https://docs.openwebui.com/reference/env-configuration/ (D19).
+# Icon: https://github.com/open-webui/open-webui/blob/main/backend/open_webui/static/favicon.svg, Open WebUI License (BSD-3-Clause with a branding clause; LICENSE of that repository), none. The logo is copied unchanged and used only to identify the application.
+#
+# The first account created becomes the administrator, and sign-up then turns
+# itself off: let others join under Settings > Admin > Authentication. The
+# data folder holds the users, chats and settings in an SQLite database and
+# the downloaded embedding and speech models, so it stays in appdata.
+#
+# Open WebUI has no models of its own. Ollama runs as its own app, reached
+# through the server's address: host.docker.internal is mapped to the server
+# (extra_hosts, as the documentation does), so the default Ollama address
+# finds an Ollama installed on this server on its usual port. Change it for
+# Ollama on another port or machine; it can also be changed later under
+# Settings > Admin > Connections, where hosted providers are added too.
+#
+# WEBUI_SECRET_KEY is set because the documentation recommends a fixed key:
+# the generated one is kept inside the container, so recreating it, as an
+# update does, would log everyone out. The standard image is used, not the
+# slim one, so documents, knowledge and voice work without extra services.
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:v0.11.4
+    environment:
+      OLLAMA_BASE_URL: ${OLLAMA_URL}
+      WEBUI_SECRET_KEY: ${SECRET_KEY}
+    volumes:
+      - ${APPDATA}/open-webui:/app/backend/data
+    ports:
+      - ${WEBUI_PORT}:8080
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: open-webui
+  revision: 1
+  title: Open WebUI
+  categories: [ai]
+  icon: icon.svg
+  docs: https://docs.openwebui.com/getting-started/quick-start/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    OLLAMA_URL:
+      kind: string
+      default: http://host.docker.internal:11434
+      label: Ollama address
+      description: Where Open WebUI reaches Ollama. The default is Ollama installed on this server on port 11434; for Ollama on another machine enter its address, for example http://192.168.1.20:11434.
+    SECRET_KEY:
+      kind: secret
+      label: Secret key
+      description: Signs logins and encrypts stored tokens. Leave it empty to have one generated; it is kept in the stack's .env file.
+    WEBUI_PORT: { kind: port, default: 3000, label: Web UI port }

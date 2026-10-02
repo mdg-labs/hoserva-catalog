@@ -1,0 +1,48 @@
+# Written from https://docs.seerr.dev/getting-started/docker and https://github.com/seerr-team/seerr (D19).
+# Icon: https://github.com/seerr-team/seerr/blob/develop/public/os_icon.svg, MIT (the license of that repository), none
+#
+# The documented container, with its init process, health check, dropped
+# capabilities and no-new-privileges. The documentation's LOG_LEVEL=debug is
+# left out, so Seerr logs at its default level. The image runs as UID 1000
+# unless a user is given; the documentation allows any user, so it runs as
+# 99:100, the owner of the appdata folder.
+#
+# On the first visit a setup wizard connects Seerr to Jellyfin, Plex or Emby
+# and then to Sonarr and Radarr. Each of those runs in its own stack, so enter
+# them by the server's address, for example http://<server>:8989 for Sonarr.
+services:
+  seerr:
+    image: ghcr.io/seerr-team/seerr:v3.5.0
+    init: true
+    user: "99:100"
+    environment:
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/seerr:/app/config
+    ports:
+      - ${WEBUI_PORT}:5055
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/settings/public || exit 1
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+      retries: 3
+    security_opt:
+      - no-new-privileges
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: seerr
+  revision: 1
+  title: Seerr
+  categories: [media]
+  icon: icon.svg
+  docs: https://docs.seerr.dev/getting-started/docker
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    WEBUI_PORT: { kind: port, default: 5055, label: Web UI port }
+    TZ:         { kind: timezone }

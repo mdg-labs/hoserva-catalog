@@ -1,0 +1,44 @@
+# Written from https://gethomepage.dev/installation/docker/ and https://gethomepage.dev/installation/#homepage_allowed_hosts (D19).
+# Icon: https://github.com/gethomepage/homepage/blob/main/public/android-chrome-192x192.png, GPL-3.0 (the license of that repository), none
+#
+# Homepage answers only on the addresses listed in HOMEPAGE_ALLOWED_HOSTS
+# (localhost:3000 is always allowed), so the ALLOWED_HOSTS input must hold the
+# address you open it at, exactly as the browser shows it, port included. If
+# the page shows a host validation error, the log names the host to add.
+#
+# Homepage creates example configuration files in the appdata folder; edit
+# services.yaml, widgets.yaml and the others there to build the dashboard.
+# The Docker socket, which the documentation mounts as optional for its Docker
+# integration, is not mounted: it gives control over every container on the
+# server. Services and widgets work without it. The page has no login: the
+# optional password gate is configured with HOMEPAGE_AUTH_* variables, as the
+# installation page describes.
+services:
+  homepage:
+    image: ghcr.io/gethomepage/homepage:v2.4.0
+    environment:
+      PUID: "99"
+      PGID: "100"
+      HOMEPAGE_ALLOWED_HOSTS: ${ALLOWED_HOSTS}
+    volumes:
+      - ${APPDATA}/homepage:/app/config
+    ports:
+      - ${WEBUI_PORT}:3000
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: homepage
+  revision: 1
+  title: Homepage
+  categories: [productivity, monitoring]
+  icon: icon.png
+  docs: https://gethomepage.dev/installation/docker/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    ALLOWED_HOSTS:
+      kind: string
+      label: Allowed addresses
+      description: The address you open Homepage at, with the port, for example 192.168.1.10:3000 or myserver.local:3000. List several separated by commas, without spaces.
+    WEBUI_PORT: { kind: port, default: 3000, label: Web UI port }

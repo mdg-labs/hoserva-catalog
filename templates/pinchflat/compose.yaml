@@ -1,0 +1,45 @@
+# Written from https://github.com/kieraneglin/pinchflat#readme, https://github.com/kieraneglin/pinchflat/wiki/Installation, https://github.com/kieraneglin/pinchflat/wiki/Frequently-Asked-Questions and docker/selfhosted.Dockerfile of https://github.com/kieraneglin/pinchflat (D19).
+# Icon: https://github.com/kieraneglin/pinchflat/blob/master/priv/static/images/icon-2024-03-20.png, AGPL-3.0 (the license of that repository), none
+#
+# The documentation recommends not running the container as root, so it runs
+# as 99:100, the owner of the appdata and media folders; the image makes the
+# folders it writes outside /config and /downloads writable for any user. The
+# SQLite database stays in the appdata folder on the cache, as the
+# documentation prefers a local disk for it.
+#
+# The download folder defaults to a youtube folder of the media library. To
+# have Jellyfin or Plex pick the videos up, create a Media Profile with the
+# "Media Center" preset in Pinchflat and add the folder as a TV show library
+# in the media server (Pinchflat's FAQ).
+services:
+  pinchflat:
+    image: ghcr.io/kieraneglin/pinchflat:v2025.6.6
+    user: "99:100"
+    environment:
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/pinchflat:/config
+      - ${DOWNLOADS}:/downloads
+    ports:
+      - ${WEBUI_PORT}:8945
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: pinchflat
+  revision: 1
+  title: Pinchflat
+  categories: [downloads, media, automation]
+  icon: icon.png
+  docs: https://github.com/kieraneglin/pinchflat#readme
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    DOWNLOADS:
+      kind: path
+      role: media
+      default: /mnt/user/data/media/youtube
+      label: Download folder
+      description: The folder Pinchflat saves downloaded videos to. The default sits in the media library, so a media server pointed at that library sees them.
+    WEBUI_PORT: { kind: port, default: 8945, label: Web UI port }
+    TZ:         { kind: timezone }

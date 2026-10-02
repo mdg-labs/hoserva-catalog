@@ -1,0 +1,39 @@
+# Written from https://www.navidrome.org/docs/installation/docker/ and https://www.navidrome.org/docs/usage/configuration/options/ (D19).
+# Icon: https://github.com/navidrome/website/blob/master/static/brand/navidrome-logo.svg, the Navidrome name and logo guidelines (https://www.navidrome.org/brand/), which allow packages of Navidrome to ship its logo unmodified, none
+#
+# The documentation says Navidrome ignores PUID and PGID and to run it with
+# the user key instead, set here to 99:100, which must own the data folder
+# and be able to read the music folder. /data holds the database and cache,
+# in the appdata folder. The music folder is mounted read-only at /music, as
+# in the documentation, which says Navidrome only needs to read it. The
+# documentation's host networking for the discovery of the Jellyfin API on
+# the local network is not used: add clients by the server's address.
+services:
+  navidrome:
+    image: docker.io/deluan/navidrome:0.64.2
+    user: "99:100"
+    volumes:
+      - ${APPDATA}/navidrome:/data
+      - ${MUSIC}:/music:ro
+    ports:
+      - ${WEBUI_PORT}:4533
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: navidrome
+  revision: 1
+  title: Navidrome
+  categories: [media]
+  icon: icon.svg
+  docs: https://www.navidrome.org/docs/installation/docker/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    MUSIC:
+      kind: path
+      role: media
+      default: /mnt/user/data/media/music
+      label: Music library
+      description: The folder that holds your music. Navidrome reads it at /music and never changes it.
+    WEBUI_PORT: { kind: port, default: 4533, label: Web UI port }

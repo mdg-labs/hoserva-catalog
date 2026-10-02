@@ -1,0 +1,82 @@
+# Written from https://docs.n8n.io/deploy/host-n8n/install-options/install-with-docker, https://docs.n8n.io/deploy/host-n8n/install-options/install-using-docker-compose, https://docs.n8n.io/deploy/host-n8n/configure-n8n/set-up-task-runners, https://docs.n8n.io/deploy/host-n8n/configure-n8n/basic-configuration/use-environment-variables/deployment, https://docs.n8n.io/deploy/host-n8n/configure-n8n/basic-configuration/use-environment-variables/endpoints, https://docs.n8n.io/deploy/host-n8n/configure-n8n/basic-configuration/use-environment-variables/security, https://docs.n8n.io/deploy/host-n8n/configure-n8n/basic-configuration/configuration-examples/configure-webhook-urls-with-reverse-proxy, https://docs.n8n.io/deploy/host-n8n/configure-n8n/basic-configuration/configuration-examples/specify-user-folder-path and the image README at https://github.com/n8n-io/n8n/tree/master/docker/images/n8n (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/n8n.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none. The logo is a trademark of n8n, used here only to identify the application.
+#
+# n8n with its default SQLite database in the appdata folder, which also holds
+# the encryption key n8n generates on its first start to protect stored
+# credentials: keep that folder, or the credentials cannot be decrypted. On
+# the first visit n8n asks you to create the owner account.
+#
+# Code node scripts run in the documented task runner sidecar (external mode),
+# which the documentation recommends over the deprecated internal mode; its
+# version must match n8n's. The optional n8n Assistant sandbox and web search
+# services of the Compose guide are not included: their runner is privileged.
+#
+# The image runs as its own user (uid 1000). It runs as 99:100 instead, the
+# owner of the appdata folder, and N8N_USER_FOLDER keeps the data in the
+# mounted /home/node/.n8n, because that user has no home folder in the image;
+# the cache n8n builds its static files in on every start is an in-memory
+# folder that user can write, since /home/node belongs to uid 1000.
+# n8n listens on 0.0.0.0 rather than its default ::, which fails to start on
+# a server with IPv6 turned off; the port mapping reaches it over IPv4.
+#
+# N8N_SECURE_COOKIE is false so that logging in works over plain http at the
+# server's address; the documentation's default sends the login cookie only
+# over HTTPS. Behind a reverse proxy that serves HTTPS, set it to "true", set
+# the public address below and add N8N_PROXY_HOPS: "1". Webhooks that outside
+# services call need that public address.
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:2.41.6
+    user: "99:100"
+    environment:
+      GENERIC_TIMEZONE: ${TZ}
+      TZ: ${TZ}
+      N8N_USER_FOLDER: /home/node
+      N8N_LISTEN_ADDRESS: 0.0.0.0
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+      N8N_SECURE_COOKIE: "false"
+      N8N_WEBHOOK_URL: ${WEBHOOK_URL}
+      N8N_RUNNERS_MODE: external
+      N8N_RUNNERS_BROKER_LISTEN_ADDRESS: 0.0.0.0
+      N8N_RUNNERS_AUTH_TOKEN: ${RUNNERS_TOKEN}
+    volumes:
+      - ${APPDATA}/n8n:/home/node/.n8n
+      - type: tmpfs
+        target: /home/node/.cache
+        tmpfs:
+          mode: 01777
+    ports:
+      - ${WEBUI_PORT}:5678
+    restart: unless-stopped
+  runners:
+    image: docker.io/n8nio/runners:2.41.6
+    depends_on:
+      - n8n
+    environment:
+      TZ: ${TZ}
+      N8N_RUNNERS_TASK_BROKER_URI: http://n8n:5679
+      N8N_RUNNERS_AUTH_TOKEN: ${RUNNERS_TOKEN}
+      N8N_RUNNERS_AUTO_SHUTDOWN_TIMEOUT: "15"
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: n8n
+  revision: 1
+  title: n8n
+  categories: [automation, productivity]
+  icon: icon.svg
+  docs: https://docs.n8n.io/deploy/host-n8n/install-options/install-with-docker
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    WEBHOOK_URL:
+      kind: string
+      label: Public address
+      description: Optional. The https address a reverse proxy serves n8n on, for example https://n8n.example.com/. n8n shows webhook addresses with it and registers them with outside services. Leave it empty to use n8n only on your home network.
+    RUNNERS_TOKEN:
+      kind: secret
+      label: Task runner token
+      description: The shared secret n8n and its task runner use to connect. Leave it empty to have one generated; it is kept in the stack's .env file.
+    WEBUI_PORT: { kind: port, default: 5678, label: Web UI port }
+    TZ:         { kind: timezone }

@@ -1,0 +1,56 @@
+# Written from https://docs.stashapp.cc/installation/docker/ and the docker/production/docker-compose.yml of https://github.com/stashapp/stash that it points to (D19).
+# Icon: https://github.com/stashapp/stash/blob/develop/ui/v2.5/public/stash_icon.svg, AGPL-3.0 (the license of that repository), none
+#
+# The documented single container. Configuration, database, metadata, cache,
+# blobs (scene covers and images) and generated files (previews, sprites,
+# transcodes, which can grow large) stay in the appdata folder on the cache;
+# only the collection is on the pool, mounted at /data. In the setup wizard
+# keep the suggested folders, and choose /blobs if it asks where to store
+# blobs.
+#
+# The documentation states that the official image has no hardware
+# acceleration, so the template offers no GPU. It describes no PUID or PGID
+# setting either, so Stash runs as the image's own user (root). The
+# documented port 9999 is used; DLNA, which needs host networking, is not set
+# up. The documentation's read-only mount of the server's /etc/localtime is
+# left out, so the template reaches no host folder outside the pool and the
+# cache; Stash then shows times in UTC. The image has no time zone database,
+# so a TZ variable would not work instead.
+services:
+  stash:
+    image: stashapp/stash:v0.31.1
+    environment:
+      STASH_STASH: /data/
+      STASH_GENERATED: /generated/
+      STASH_METADATA: /metadata/
+      STASH_CACHE: /cache/
+      STASH_PORT: "9999"
+    volumes:
+      - ${APPDATA}/stash/config:/root/.stash
+      - ${APPDATA}/stash/metadata:/metadata
+      - ${APPDATA}/stash/cache:/cache
+      - ${APPDATA}/stash/blobs:/blobs
+      - ${APPDATA}/stash/generated:/generated
+      - ${LIBRARY}:/data
+    ports:
+      - ${WEBUI_PORT}:9999
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: stash
+  revision: 1
+  title: Stash
+  categories: [media]
+  icon: icon.svg
+  docs: https://docs.stashapp.cc/installation/docker/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    LIBRARY:
+      kind: path
+      role: media
+      default: /mnt/user/stash
+      label: Collection folder
+      description: The folder that holds your video and image collection. It is mounted at /data in Stash, so add it from there.
+    WEBUI_PORT: { kind: port, default: 9999, label: Web UI port }

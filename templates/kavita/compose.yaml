@@ -1,0 +1,42 @@
+# Written from https://wiki.kavitareader.com/installation/docker/lsio/, https://wiki.kavitareader.com/installation/docker/ and https://docs.linuxserver.io/images/docker-kavita/ (D19).
+# Icon: https://github.com/Kareadita/Kavita/blob/develop/UI/Web/src/assets/images/logo.svg, GPL-3.0 (the license of that repository), none
+#
+# The linuxserver.io image, which the Kavita documentation lists as one of
+# its published images; it keeps the configuration in /config. On the first
+# visit follow Kavita's setup wizard, then add libraries from /data, for
+# example /data/comics, /data/manga and /data/ebooks. The image
+# documentation's alternative of separate /manga, /comics and /books mounts is
+# not used: one folder holds the whole book library.
+services:
+  kavita:
+    image: lscr.io/linuxserver/kavita:v0.9.1.4-ls126
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/kavita:/config
+      - ${BOOKS}:/data
+    ports:
+      - ${WEBUI_PORT}:5000
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: kavita
+  revision: 1
+  title: Kavita
+  categories: [media, books]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-kavita/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    BOOKS:
+      kind: path
+      role: media
+      default: /mnt/user/data/media/books
+      label: Book library
+      description: The folder that holds your comics, manga and ebooks, for example in comics, manga and ebooks subfolders. It is mounted at /data in Kavita, so add libraries from there.
+    WEBUI_PORT: { kind: port, default: 5000, label: Web UI port }
+    TZ:         { kind: timezone }

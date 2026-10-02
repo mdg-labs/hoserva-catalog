@@ -1,0 +1,75 @@
+# Written from https://github.com/garethgeorge/backrest#readme and https://garethgeorge.github.io/backrest/introduction/getting-started (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/backrest.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none
+#
+# The folder to back up is mounted read-only at /source, so Backrest cannot
+# change or delete what it backs up. The default is the whole pool
+# (/mnt/user). The appdata folder, this app's own settings included, is on
+# the cache at /mnt/cache/appdata and not part of it; Hoserva's appdata
+# backup covers it. If the pool has an appdata share (a server moved from
+# Unraid often does), exclude /source/appdata in the backup plan.
+#
+# The local backup folder is mounted read-write at /backups; a repository
+# there has a URI such as /backups/restic. With the default folders it is
+# also visible as /source/backups: exclude that from every plan, or the
+# backup copies itself. Restore into /backups (for example
+# /backups/restore), the one folder Backrest can write to, and move the
+# files back from there. A backup kept on this server does not survive
+# losing the server: add a remote repository too, or one on a USB disk
+# mounted under /mnt/disks.
+#
+# The README's /userdata and /repos mounts are named /source and /backups
+# here, like the other backup apps in this catalog. Backrest's configuration,
+# data, restic cache, temporary files and rclone configuration all live in
+# the appdata folder, as the README's paths lay them out. The image has no
+# user setting and runs as root, so it reads every file in the folder to back
+# up, and restored files belong to root. On the first visit Backrest asks
+# for an instance ID, which cannot be changed later, and a username and
+# password. Keep a copy of each repository's password away from this server:
+# the backup cannot be restored without it.
+services:
+  backrest:
+    image: docker.io/garethgeorge/backrest:v1.14.1
+    hostname: backrest
+    environment:
+      BACKREST_DATA: /data
+      BACKREST_CONFIG: /config/config.json
+      XDG_CACHE_HOME: /cache
+      TMPDIR: /tmp
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/backrest/data:/data
+      - ${APPDATA}/backrest/config:/config
+      - ${APPDATA}/backrest/cache:/cache
+      - ${APPDATA}/backrest/tmp:/tmp
+      - ${APPDATA}/backrest/rclone:/root/.config/rclone
+      - ${SOURCE}:/source:ro
+      - ${DESTINATION}:/backups
+    ports:
+      - ${WEBUI_PORT}:9898
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: backrest
+  revision: 1
+  title: Backrest
+  categories: [backup]
+  icon: icon.svg
+  docs: https://github.com/garethgeorge/backrest#readme
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    SOURCE:
+      kind: path
+      role: share
+      default: /mnt/user
+      label: Folder to back up
+      description: The folder the app backs up, mounted read-only at /source. The default is the whole pool; appdata on the cache is not part of it.
+    DESTINATION:
+      kind: path
+      role: share
+      default: /mnt/user/backups
+      label: Local backup and restore folder
+      description: The folder the app writes to, mounted at /backups, for backups kept on this server or on a USB disk (a folder under /mnt/disks) and for restored files. Exclude it from the backup when it is inside the folder to back up.
+    WEBUI_PORT: { kind: port, default: 9898, label: Web UI port }
+    TZ:         { kind: timezone }

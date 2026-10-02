@@ -1,0 +1,90 @@
+# Written from https://rclone.org/install/#docker, https://rclone.org/gui/, https://rclone.org/rc/, https://rclone.org/commands/rclone_rcd/ and https://rclone.org/docs/#environment-variables (D19).
+# Icon: https://github.com/rclone/rclone/blob/master/graphics/logo/svg/logo_symbol_color.svg, MIT (the license of that repository; graphics/logo/README.md names Andreas Chlupka as the logo's designer), none
+#
+# The folder to back up is mounted read-only at /source, so rclone cannot
+# change or delete what it copies. The default is the whole pool
+# (/mnt/user). The appdata folder, this app's own settings included, is on
+# the cache at /mnt/cache/appdata and not part of it; Hoserva's appdata
+# backup covers it. If the pool has an appdata share (a server moved from
+# Unraid often does), exclude /source/appdata when copying.
+#
+# The local backup folder is mounted read-write at /backups. With the default
+# folders it is also visible as /source/backups: exclude that from every
+# copy, or the backup copies itself. Restore into /backups (for example
+# /backups/restore), the one folder rclone can write to, and move the files
+# back from there. A copy kept on this server does not survive losing the
+# server: copy to a remote too, or to a USB disk mounted under /mnt/disks.
+#
+# rclone runs as the remote control server with its web GUI (rclone rcd
+# --rc-web-gui), listening on every address of the container so the Web UI
+# port reaches it, as the installation page says. The username and password
+# are passed as RCLONE_RC_USER and RCLONE_RC_PASS. Anyone signed in can run
+# commands and read every file and stored credential rclone can reach (rc
+# documentation), so keep the port on the local network. On its first start
+# rclone downloads the web GUI from GitHub into its cache, which is in the
+# appdata folder. Remotes are added in the GUI and stored in the appdata
+# folder's rclone/rclone.conf. rclone copies when you start a transfer; it
+# has no schedule of its own. Mounting a remote is left out: it needs FUSE
+# privileges this template does not ask for.
+#
+# rclone runs as user 99 and group 100, the owner of the appdata folder, as
+# the installation page describes for config and data that root does not
+# own; it copies the files that user can read. The installation page's /data
+# mount is named /source and /backups here, like the other backup apps in
+# this catalog.
+services:
+  rclone:
+    image: docker.io/rclone/rclone:1.75.1
+    user: "99:100"
+    command:
+      - rcd
+      - --rc-web-gui
+      - --rc-web-gui-no-open-browser
+      - --rc-addr=:5572
+      - --cache-dir=/config/cache
+    environment:
+      RCLONE_RC_USER: ${WEBUI_USER}
+      RCLONE_RC_PASS: ${WEBUI_PASSWORD}
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/rclone:/config
+      - ${SOURCE}:/source:ro
+      - ${DESTINATION}:/backups
+    ports:
+      - ${WEBUI_PORT}:5572
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: rclone
+  revision: 1
+  title: rclone
+  categories: [backup, sync]
+  icon: icon.svg
+  docs: https://rclone.org/install/#docker
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    SOURCE:
+      kind: path
+      role: share
+      default: /mnt/user
+      label: Folder to back up
+      description: The folder the app backs up, mounted read-only at /source. The default is the whole pool; appdata on the cache is not part of it.
+    DESTINATION:
+      kind: path
+      role: share
+      default: /mnt/user/backups
+      label: Local backup and restore folder
+      description: The folder the app writes to, mounted at /backups, for backups kept on this server or on a USB disk (a folder under /mnt/disks) and for restored files. Exclude it from the backup when it is inside the folder to back up.
+    WEBUI_USER:
+      kind: string
+      default: admin
+      label: Web UI username
+      description: The username for signing in to the web UI.
+    WEBUI_PASSWORD:
+      kind: secret
+      label: Web UI password
+      description: The password for signing in to the web UI. Leave it empty to have one generated; it is kept in the stack's .env file.
+    WEBUI_PORT: { kind: port, default: 5572, label: Web UI port }
+    TZ:         { kind: timezone }

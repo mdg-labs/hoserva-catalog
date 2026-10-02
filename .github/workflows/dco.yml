@@ -67,19 +67,29 @@ jobs:
       # A pull request's own github.sha is a synthetic merge commit nobody
       # signed: check its real base and head. A push checks its before/after
       # range; an all-zero `before` (a new branch) makes the script check
-      # every commit reachable from the head. A manual run has neither, so
-      # it checks the whole history of the ref it runs on.
+      # every commit reachable from the head. A force push's `before` is a
+      # rewritten-away commit the checkout never fetches, so it checks every
+      # commit since the head forked from main instead. A manual run has
+      # neither, so it checks the whole history of the ref it runs on.
       - name: Check every commit in the range
         env:
           EVENT: ${{ github.event_name }}
           PR_BASE: ${{ github.event.pull_request.base.sha }}
           PR_HEAD: ${{ github.event.pull_request.head.sha }}
           PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_FORCED: ${{ github.event.forced }}
           SHA: ${{ github.sha }}
         run: |
           case "$EVENT" in
             pull_request) base="$PR_BASE" head="$PR_HEAD" ;;
-            push) base="$PUSH_BEFORE" head="$SHA" ;;
+            push)
+              head="$SHA"
+              if [ "$PUSH_FORCED" = true ]; then
+                base=$(git merge-base origin/main "$SHA")
+              else
+                base="$PUSH_BEFORE"
+              fi
+              ;;
             *) base=0000000000000000000000000000000000000000 head="$SHA" ;;
           esac
           "$RUNNER_TEMP/check-dco.sh" "$base" "$head"

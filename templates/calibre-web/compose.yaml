@@ -1,0 +1,53 @@
+# Written from https://docs.linuxserver.io/images/docker-calibre-web/, https://github.com/janeczku/calibre-web/blob/master/README.md, https://github.com/janeczku/calibre-web/wiki/Configuration and https://github.com/janeczku/calibre-web/wiki/FAQ (D19).
+# Icon: https://github.com/janeczku/calibre-web/blob/master/cps/static/icon.svg, GPL-3.0 (the license of that repository), none
+#
+# Calibre-Web serves an existing Calibre library: a folder with Calibre's
+# metadata.db and the book folders next to it. Point the library input at
+# that folder; on the first setup screen enter /books as the location of the
+# Calibre database. Without a library yet, the README links a sample
+# metadata.db to put in the folder. Calibre-Web writes to the library
+# when books are uploaded or edited; the FAQ warns against editing it from
+# Calibre and Calibre-Web at the same time.
+#
+# The default login is admin with the password admin123: change it right
+# after the first login.
+#
+# Ebook conversion is left out. The image documentation adds it with the
+# variable DOCKER_MODS=linuxserver/mods:universal-calibre (x86-64 only), which
+# downloads an extra layer when the container starts, outside the pinned
+# image. To use it, add that variable to the environment and set the path to
+# the Calibre converter to /usr/bin/ in Calibre-Web's Basic Configuration.
+# The image already includes unrar (/usr/bin/unrar) and kepubify.
+services:
+  calibre-web:
+    image: lscr.io/linuxserver/calibre-web:0.6.27-ls403
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/calibre-web:/config
+      - ${LIBRARY}:/books
+    ports:
+      - ${WEBUI_PORT}:8083
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: calibre-web
+  revision: 1
+  title: Calibre-Web
+  categories: [media, books]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-calibre-web/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    LIBRARY:
+      kind: path
+      role: media
+      default: /mnt/user/data/media/calibre
+      label: Calibre library
+      description: The folder of your Calibre library, the one that holds metadata.db. It is mounted at /books in Calibre-Web, so enter /books as the location of the Calibre database.
+    WEBUI_PORT: { kind: port, default: 8083, label: Web UI port }
+    TZ:         { kind: timezone }

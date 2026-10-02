@@ -1,0 +1,54 @@
+# Written from https://docs.mealie.io/documentation/getting-started/installation/sqlite/, https://docs.mealie.io/documentation/getting-started/installation/backend-config/ and https://docs.mealie.io/documentation/getting-started/installation/installation-checklist/ (D19).
+# Icon: https://github.com/mealie-recipes/mealie/blob/mealie-next/frontend/public/icons/android-chrome-512x512.png, AGPL-3.0 (the license of that repository), none
+#
+# The documented SQLite setup, which the documentation calls the ideal choice
+# for 1 to 20 users. Its warning against SQLite on network storage does not
+# apply: the data folder, with the database, uploaded images and the backups
+# Mealie makes, is under the appdata folder, never on the pool. Copy those
+# backups somewhere off this server, as the documentation asks.
+#
+# Log in with the documented default account, changeme@example.com and
+# password MyPassword, and change both straight away. Sign-up without an
+# invitation stays off (ALLOW_SIGNUP false), as in the documentation's example.
+# BASE_URL is the address you open Mealie at; Mealie uses it for
+# notifications and the single sign-on (OIDC) callback. Email (SMTP), which
+# invitations and password resets use, is not set up here.
+#
+# The memory limit of 1000 MB is the documentation's recommendation, so the
+# container does not hold on to more memory than it needs while idle.
+services:
+  mealie:
+    image: ghcr.io/mealie-recipes/mealie:v3.28.0
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+      ALLOW_SIGNUP: "false"
+      BASE_URL: ${BASE_URL}
+    volumes:
+      - ${APPDATA}/mealie:/app/data
+    ports:
+      - ${WEBUI_PORT}:9000
+    deploy:
+      resources:
+        limits:
+          memory: 1000M
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: mealie
+  revision: 1
+  title: Mealie
+  categories: [productivity]
+  icon: icon.png
+  docs: https://docs.mealie.io/documentation/getting-started/installation/sqlite/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    BASE_URL:
+      kind: string
+      label: Address of Mealie
+      description: The address you open Mealie at, for example http://192.168.1.10:9925 or https://recipes.example.com behind a reverse proxy. Mealie uses it for notifications and single sign-on.
+    WEBUI_PORT: { kind: port, default: 9925, label: Web UI port }
+    TZ:         { kind: timezone }

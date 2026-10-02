@@ -1,0 +1,55 @@
+# Written from https://hub.docker.com/_/postgres (the image documentation, https://github.com/docker-library/docs/blob/master/postgres/README.md) (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/postgresql.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none. The logo is a trademark of the PostgreSQL Community Association, used here only to identify the application.
+#
+# A standalone PostgreSQL server for other apps and your own projects. The
+# superuser is postgres with the SUPERUSER_PASSWORD input as its password,
+# kept in the stack's .env file; the image applies it only when it creates
+# the database on the first start, so change it later in PostgreSQL itself.
+# Connect to the server's address on the database port; create a separate
+# user and database for each app rather than sharing the superuser.
+#
+# The port is mapped because this server's clients are apps in other stacks
+# and programs outside Docker, which reach it only through a port on the
+# server. Containers in this stack would not need it. Password authentication
+# (scram-sha-256) is the image's default for every network connection.
+#
+# The data is under the appdata folder, never on the pool. From PostgreSQL 18
+# the image keeps its data in a folder per major version below
+# /var/lib/postgresql (18/docker), and the image documentation says to mount
+# /var/lib/postgresql instead of the /var/lib/postgresql/data of earlier
+# versions; a later major version needs pg_upgrade, which this layout is made
+# for. The image documents no PUID or PGID setting: the files are owned by
+# the image's own postgres user. shm_size raises the 64 MB default shared
+# memory, as the image documentation's compose example does. The
+# documentation names no time zone setting, so there is no TZ input.
+services:
+  postgres:
+    image: docker.io/library/postgres:18.6
+    environment:
+      POSTGRES_PASSWORD: ${SUPERUSER_PASSWORD}
+    volumes:
+      - ${APPDATA}/postgresql:/var/lib/postgresql
+    ports:
+      - ${DB_PORT}:5432
+    shm_size: 128mb
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: postgresql
+  revision: 1
+  title: PostgreSQL
+  categories: [database, development]
+  icon: icon.svg
+  docs: https://hub.docker.com/_/postgres
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    SUPERUSER_PASSWORD:
+      kind: secret
+      label: Superuser password
+      description: The password of the postgres superuser. Leave it empty to have one generated; it is kept in the stack's .env file. PostgreSQL applies it only on its first start.
+    DB_PORT:
+      kind: port
+      default: 5432
+      label: Database port
+      description: The port apps and programs connect to. 5432 is the usual PostgreSQL port; pick another if something on this server already uses it.
