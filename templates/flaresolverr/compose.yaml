@@ -1,0 +1,43 @@
+# Written from https://github.com/FlareSolverr/FlareSolverr#readme, with the docker-compose.yml of that repository, and https://wiki.servarr.com/prowlarr/settings (D19).
+# Icon: https://github.com/FlareSolverr/FlareSolverr/blob/master/resources/flaresolverr_logo.svg, MIT (the license of that repository), none
+#
+# FlareSolverr has no web interface; Prowlarr sends it requests. In Prowlarr,
+# add a FlareSolverr indexer proxy under Settings, Indexer Proxies, with the
+# host http://<server>:<proxy port>, and give the proxy and the indexers that
+# need it the same tag: a proxy without a tag is disabled.
+#
+# The port is mapped on all of the server's addresses: Prowlarr runs in its
+# own stack, on another Docker network, so it reaches FlareSolverr only
+# through the server. The README's example maps it to 127.0.0.1, which no
+# other container can reach. The README warns never to expose FlareSolverr to
+# the internet, so do not forward this port on the router.
+#
+# Each request starts a Chrome browser, and the README notes that browsers use
+# a lot of memory: on a server with little memory, avoid many requests at
+# once. No folder is mounted, as in the README's docker run command; the
+# /config mount of the repository's docker-compose.yml is left out.
+services:
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:v3.5.2
+    environment:
+      LOG_LEVEL: info
+      TZ: ${TZ}
+    ports:
+      - ${PROXY_PORT}:8191
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: flaresolverr
+  revision: 1
+  title: FlareSolverr
+  categories: [downloads, network]
+  icon: icon.svg
+  docs: https://github.com/FlareSolverr/FlareSolverr#readme
+  inputs:
+    PROXY_PORT:
+      kind: port
+      default: 8191
+      label: Proxy port
+      description: The port Prowlarr sends its requests to. Keep it reachable from your network only, never from the internet.
+    TZ: { kind: timezone }
