@@ -1,0 +1,108 @@
+# CodeRabbit configuration for the Hoserva catalog.
+#
+# Grounds automated PR review in this repository's own rules (CONTRIBUTING.md,
+# README.md) rather than un-tuned defaults: templates are checked against the
+# template conventions, the CI against its pinning and secret rules, and the
+# repository's own CI is trusted for what it already verifies.
+language: en-US
+
+tone_instructions: >
+  This is the curated template catalog of Hoserva. When referencing other
+  projects or catalogs in review comments, be factual only, with no
+  disparaging remarks about them or their users.
+
+knowledge_base:
+  code_guidelines:
+    filePatterns:
+      - "CONTRIBUTING.md"
+      - "README.md"
+
+reviews:
+  profile: "chill"
+  auto_review:
+    enabled: true
+    # Contributions target dev; main moves only via the dev -> main PR.
+    base_branches:
+      - "dev"
+      - "main"
+  instructions: >
+    Do not request comments, JSDoc, or docstrings. Comments are added only
+    when the why is non-obvious.
+
+    Do not flag image existence, `docker compose config` validity, or
+    `hoserva template lint` findings: the Validate job checks those on every
+    pull request. Flag what CI cannot see: the conventions in CONTRIBUTING.md.
+
+    Do not flag work the PR, a linked issue, or an in-code comment defers to
+    a separately tracked issue.
+  path_filters:
+    # Icons are binary or machine-drawn artwork, copied unchanged from their
+    # source; their attribution is reviewed in compose.yaml.
+    - "!templates/**/*.svg"
+    - "!templates/**/*.png"
+  path_instructions:
+    - path: "templates/**/compose.yaml"
+      instructions: >
+        A curated Hoserva template (CONTRIBUTING.md, "Writing a template").
+        `x-hoserva` is Hoserva's extension block; do not flag its keys as
+        unknown Compose keys. Check that:
+        (1) the file starts with `# Written from <URL> (D19).` naming the
+        upstream pages it was written from, and nothing suggests it was copied
+        or adapted from another catalog's template;
+        (2) an `# Icon: <source URL>, <license>, <changes or none>` comment is
+        present and names a license that permits redistribution, and the
+        source is not the linuxserver.io API's `project_logo`;
+        (3) `x-hoserva.id` equals the directory name, and `x-hoserva.icon`
+        names a file next to compose.yaml;
+        (4) the image is the official or linuxserver.io image with a pinned
+        tag rather than `latest` where upstream publishes versions;
+        (5) defaults are sane: appdata on /mnt/cache/appdata, media on the
+        pool, `PUID: "99"` and `PGID: "100"` where the image supports them,
+        and no `privileged`, `network_mode: host`, `cap_add` or device
+        mapping the application does not need;
+        (6) media apps follow the media data layout: download clients and
+        library managers take one `DATA` input mounted at /data, media
+        servers a `MEDIA` input mounted at /data/media;
+        (7) on a change to an existing template, `x-hoserva.revision`
+        increased.
+    - path: ".ci/fixtures/**"
+      instructions: >
+        Test fixtures for the CI scripts, not curated templates. Do not apply
+        the template conventions here; flag only a fixture that no longer
+        matches what the test using it expects.
+    - path: ".ci/**"
+      instructions: >
+        The catalog's build, sign, validate and release scripts. Never accept
+        a committed private key, not even a test one: tests generate theirs.
+        A script change comes with a test under .ci/tests/ where behavior
+        changes. Never interpolate template input into a shell command
+        string; quote expansions and pass arguments as an argv.
+    - path: ".ci/hoserva-version"
+      instructions: >
+        Must be a full 40-character commit SHA of mdg-labs/hoserva, never a
+        branch, tag or short SHA.
+    - path: ".github/workflows/**"
+      instructions: >
+        Every third-party action is pinned by full commit SHA with its version
+        in a comment. Keep permissions minimal, and never expose a secret to a
+        pull_request run; signing and publishing run only on pushes.
+    - path: "signing-key.pub.pem"
+      instructions: >
+        The catalog's Ed25519 public key that every Hoserva install verifies
+        against. Any change here is a key rotation: flag it prominently and
+        ask for the reason and the matching Hoserva-side change.
+  finishing_touches:
+    docstrings:
+      enabled: false
+  pre_merge_checks:
+    docstrings:
+      mode: "off"
+  tools:
+    shellcheck:
+      enabled: true
+    actionlint:
+      enabled: true
+    # Template inputs are column-aligned (`APPDATA:    { … }`), which
+    # yamllint's default colons rule flags on every template.
+    yamllint:
+      enabled: false
