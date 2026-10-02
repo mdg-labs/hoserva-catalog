@@ -1,0 +1,70 @@
+# Written from https://www.zigbee2mqtt.io/guide/installation/02_docker.html, https://www.zigbee2mqtt.io/guide/getting-started/, https://www.zigbee2mqtt.io/guide/configuration/, https://www.zigbee2mqtt.io/guide/configuration/mqtt.html, https://www.zigbee2mqtt.io/guide/configuration/adapter-settings.html and https://www.zigbee2mqtt.io/guide/configuration/frontend.html (D19).
+# Icon: https://github.com/Koenkk/zigbee2mqtt/blob/master/images/logo.png, GPL-3.0 (the license of that repository), none
+#
+# Zigbee2MQTT needs an MQTT broker, such as the Mosquitto app, and a Zigbee
+# USB adapter. The broker runs as its own app, so Zigbee2MQTT reaches it by
+# the server's address and the broker's MQTT port, with the broker's user and
+# password. The adapter is mapped into the container as /dev/ttyACM0, the
+# documentation's example, and the serial port setting points there. Network
+# (tcp://) adapters are not covered: this file always maps a USB device.
+#
+# On the first start the web UI shows Zigbee2MQTT's onboarding page instead of
+# the frontend, filled in with the settings below: pick the adapter type
+# (zstack, ember, deconz, zigate or zboss) there and submit, and Zigbee2MQTT
+# then starts with the frontend at the same address. The ZIGBEE2MQTT_CONFIG_*
+# variables override configuration.yaml and are written into it on every
+# start, the MQTT password included; to change them, change the inputs. The
+# frontend has no login unless you set an auth token in its settings.
+#
+# The read-only /run/udev mount of the documentation only serves the adapter
+# auto-detection and is left out, since the adapter path is given here. The
+# container runs as root, as in the documentation's main example; the rootless
+# variant needs the host group that owns the adapter.
+services:
+  zigbee2mqtt:
+    image: ghcr.io/koenkk/zigbee2mqtt:2.14.2
+    environment:
+      TZ: ${TZ}
+      ZIGBEE2MQTT_CONFIG_MQTT_SERVER: ${MQTT_SERVER}
+      ZIGBEE2MQTT_CONFIG_MQTT_USER: ${MQTT_USER}
+      ZIGBEE2MQTT_CONFIG_MQTT_PASSWORD: ${MQTT_PASSWORD}
+      ZIGBEE2MQTT_CONFIG_SERIAL_PORT: /dev/ttyACM0
+      ZIGBEE2MQTT_CONFIG_FRONTEND_ENABLED: "true"
+    volumes:
+      - ${APPDATA}/zigbee2mqtt:/app/data
+    devices:
+      - ${ADAPTER}:/dev/ttyACM0
+    ports:
+      - ${WEBUI_PORT}:8080
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: zigbee2mqtt
+  revision: 1
+  title: Zigbee2MQTT
+  categories: [home-automation]
+  icon: icon.png
+  docs: https://www.zigbee2mqtt.io/guide/installation/02_docker.html
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    ADAPTER:
+      kind: string
+      label: Zigbee adapter
+      description: Required. The path of the Zigbee USB adapter on the server, under /dev/serial/by-id/, for example /dev/serial/by-id/usb-Texas_Instruments_TI_CC2531_USB_CDC___0X00124B0018ED3DDF-if00. That path stays the same when the adapter is plugged into another port.
+    MQTT_SERVER:
+      kind: string
+      label: MQTT broker address
+      description: The address of the MQTT broker, as mqtt://<address>:<port>, for example mqtt://192.168.1.10:1883 for the Mosquitto app on this server. Use the server's network address, not localhost, which is the container itself.
+    MQTT_USER:
+      kind: string
+      default: mqtt
+      label: MQTT user name
+      description: The user name Zigbee2MQTT logs in to the broker with, such as the user of the Mosquitto app.
+    MQTT_PASSWORD:
+      kind: secret
+      label: MQTT password
+      description: The password of that broker user. Enter the broker's password here; a generated one would not match it.
+    WEBUI_PORT: { kind: port, default: 8080, label: Web UI port }
+    TZ:         { kind: timezone }
