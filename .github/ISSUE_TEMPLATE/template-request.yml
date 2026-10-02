@@ -68,5 +68,5 @@ body:
     attributes:
       label: Contributing
       options:
-        - label: I'd like to write this template myself and open a pull request (see CONTRIBUTING.md).
+        - label: I'd like to write this template myself and open a pull request (see WRITING-TEMPLATES.md).
           required: false

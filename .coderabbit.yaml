@@ -1,7 +1,7 @@
 # CodeRabbit configuration for the Hoserva catalog.
 #
 # Grounds automated PR review in this repository's own rules (CONTRIBUTING.md,
-# README.md) rather than un-tuned defaults: templates are checked against the
+# WRITING-TEMPLATES.md, README.md) rather than un-tuned defaults: templates are checked against the
 # template conventions, the CI against its pinning and secret rules, and the
 # repository's own CI is trusted for what it already verifies.
 language: en-US
@@ -15,6 +15,7 @@ knowledge_base:
   code_guidelines:
     filePatterns:
       - "CONTRIBUTING.md"
+      - "WRITING-TEMPLATES.md"
       - "README.md"
 
 reviews:
@@ -31,7 +32,7 @@ reviews:
 
     Do not flag image existence, `docker compose config` validity, or
     `hoserva template lint` findings: the Validate job checks those on every
-    pull request. Flag what CI cannot see: the conventions in CONTRIBUTING.md.
+    pull request. Flag what CI cannot see: the conventions in WRITING-TEMPLATES.md.
 
     Do not flag work the PR, a linked issue, or an in-code comment defers to
     a separately tracked issue.
@@ -43,7 +44,7 @@ reviews:
   path_instructions:
     - path: "templates/**/compose.yaml"
       instructions: >
-        A curated Hoserva template (CONTRIBUTING.md, "Writing a template").
+        A curated Hoserva template (WRITING-TEMPLATES.md).
         `x-hoserva` is Hoserva's extension block; do not flag its keys as
         unknown Compose keys. Check that:
         (1) the file starts with `# Written from <URL> (D19).` naming the

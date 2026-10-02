@@ -33,63 +33,12 @@ push again. There is no Contributor License Agreement.
 
 ### Writing a template
 
-Every template is written from the application's upstream documentation and
-image, and never copied or adapted from another catalog's template. Link the
-documentation you wrote it from in `x-hoserva.docs`.
-
-- Prefer the application's official image, or the linuxserver.io image where one
-  exists, with a pinned tag rather than `latest` where upstream publishes
-  versions.
-- Set sane defaults: appdata on the cache, media on the pool, no unnecessary
-  privileges, `PUID=99` and `PGID=100` where the image supports them.
-- Increase `x-hoserva.revision` with every change to a template.
-- A template is the directory `templates/<id>/`; the id is the directory's name.
-  Put the icon next to `compose.yaml`. A template directory anywhere else at the
-  repository root fails CI.
-- Start `compose.yaml` with a comment `# Written from <URL> (D19).` naming every
-  page the template was written from.
-
-#### Media data layout
-
-The apps that fetch, import or read the media library share one layout, so
-downloads and the library sit on one filesystem and hardlinks and atomic moves
-work (the image documentation of the Sonarr and Radarr images explains why
-separate `/tv`, `/movies` and `/downloads` mounts lose them):
-
-- Sonarr, Radarr, Bazarr, qBittorrent and later download clients and library
-  managers take one `DATA` input (`kind: path`, `role: share`, default
-  `/mnt/user/data`) and mount it at `/data`. Downloads go under
-  `/data/torrents`, the library under `/data/media` with `tv`, `movies` and
-  `music` below it.
-- Media servers such as Jellyfin and Plex take a `MEDIA` input (`kind: path`,
-  `role: media`, default `/mnt/user/data/media`) and mount it at `/data/media`,
-  so a default install lines up with the apps above.
-- Apps that need neither take an `APPDATA` input only.
-
-#### Icons
-
-Every template has an icon next to `compose.yaml`, named by `x-hoserva.icon`,
-used only to identify the application.
-
-- Use the application's own logo from its upstream repository or website where
-  that source's stated license permits redistribution, and the SVG over a PNG.
-  Copy the file unchanged unless the license asks for more.
-- Otherwise use the application's file from
-  [selfhst/icons](https://github.com/selfhst/icons), which is licensed
-  CC-BY-4.0 (the repository's `LICENSE`). The logos stay the trademarks of
-  their projects.
-- Never use an image whose license is not stated, and never one from the
-  linuxserver.io API (`project_logo`). If no source is usable, leave the
-  template for a later change.
-- Keep the file under about 32 KB.
-- Record where it came from in a comment in `compose.yaml`, which ships in the
-  archive so the attribution travels with the icon:
-  `# Icon: <source URL>, <license>, <changes or none>`.
-
-The steps are in [README.md](README.md#adding-a-template). Before opening a pull
-request, run the checks CI runs: `.ci/check-layout.sh`, `hoserva template lint
-templates` from the version in `.ci/hoserva-version`, and `.ci/validate.sh
-templates` (needs Docker, and queries the registries for each image).
+[WRITING-TEMPLATES.md](WRITING-TEMPLATES.md) walks through writing a template
+and lists every field, rule and convention: upstream documentation as the only
+source, pinned images, defaults, the media data layout and icons. Before
+opening a pull request, run the checks CI runs: `.ci/check-layout.sh` and
+`.ci/validate.sh templates` (needs Go and Docker, and queries the registries
+for each image).
 
 ### Changing the CI
 

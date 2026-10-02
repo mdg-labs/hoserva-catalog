@@ -7,5 +7,5 @@ contact_links:
     url: https://github.com/mdg-labs/hoserva/discussions
     about: Questions and ideas are welcome in Hoserva's discussions.
   - name: Write a template yourself
-    url: https://github.com/mdg-labs/hoserva-catalog/blob/dev/CONTRIBUTING.md
-    about: The conventions every template follows, and how to open a pull request.
+    url: https://github.com/mdg-labs/hoserva-catalog/blob/main/WRITING-TEMPLATES.md
+    about: A step-by-step guide to writing a template, with every field and convention.
