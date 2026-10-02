@@ -1,0 +1,96 @@
+# Written from https://unpackerr.zip/docs/install/docker, https://unpackerr.zip/docs/install/compose, https://unpackerr.zip/docs/install/configuration and https://github.com/Unpackerr/unpackerr#readme (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/png/unpackerr.png, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none
+#
+# Unpackerr has no web interface. It asks Sonarr, Radarr, Lidarr and Whisparr
+# for their download queues, extracts finished torrent downloads that arrived
+# as archives so the app can import them, and deletes the extracted files
+# after the import. Usenet downloads are left alone, as the download client
+# extracts those itself (the documented default protocol is torrent only).
+#
+# Fill in the address and API key of each app you use; an app left empty is
+# skipped. The address is the server's address with that app's web UI port,
+# for example http://192.168.1.10:8989 for Sonarr; the API key is under
+# Settings > General in that app. An API key shorter than 32 characters stops
+# Unpackerr from starting: check its log.
+#
+# The data folder is mounted at /data as in the download clients and the apps,
+# so Unpackerr finds a download at the path they report; each app's downloads
+# are looked for under /data/torrents. The documentation's example mounts the
+# downloads at /downloads and writes the log file there; here the log file and
+# unpackerr.conf, which Unpackerr writes on its first start, go to appdata
+# instead. The environment variables set here override that file. The image
+# runs as root unless given a user, so it runs as 99:100 as the documentation
+# advises.
+services:
+  unpackerr:
+    image: ghcr.io/unpackerr/unpackerr:v0.16.1
+    user: "99:100"
+    environment:
+      TZ: ${TZ}
+      UN_LOG_FILE: /config/unpackerr.log
+      UN_SONARR_0_URL: ${SONARR_URL}
+      UN_SONARR_0_API_KEY: ${SONARR_API_KEY}
+      UN_SONARR_0_PATHS_0: /data/torrents
+      UN_RADARR_0_URL: ${RADARR_URL}
+      UN_RADARR_0_API_KEY: ${RADARR_API_KEY}
+      UN_RADARR_0_PATHS_0: /data/torrents
+      UN_LIDARR_0_URL: ${LIDARR_URL}
+      UN_LIDARR_0_API_KEY: ${LIDARR_API_KEY}
+      UN_LIDARR_0_PATHS_0: /data/torrents
+      UN_WHISPARR_0_URL: ${WHISPARR_URL}
+      UN_WHISPARR_0_API_KEY: ${WHISPARR_API_KEY}
+      UN_WHISPARR_0_PATHS_0: /data/torrents
+    volumes:
+      - ${APPDATA}/unpackerr:/config
+      - ${DATA}:/data
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: unpackerr
+  revision: 1
+  title: Unpackerr
+  categories: [downloads, automation]
+  icon: icon.png
+  docs: https://unpackerr.zip/docs/install/docker
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    DATA:
+      kind: path
+      role: share
+      default: /mnt/user/data
+      label: Data folder
+      description: The folder that holds both downloads (torrents) and the media library (media). Use the same folder for every media app so hardlinks and instant moves work.
+    SONARR_URL:
+      kind: string
+      label: Sonarr address
+      description: For example http://192.168.1.10:8989, the server's address and Sonarr's web UI port. Leave it empty if you do not use Sonarr.
+    SONARR_API_KEY:
+      kind: string
+      label: Sonarr API key
+      description: Found in Sonarr under Settings > General.
+    RADARR_URL:
+      kind: string
+      label: Radarr address
+      description: For example http://192.168.1.10:7878, the server's address and Radarr's web UI port. Leave it empty if you do not use Radarr.
+    RADARR_API_KEY:
+      kind: string
+      label: Radarr API key
+      description: Found in Radarr under Settings > General.
+    LIDARR_URL:
+      kind: string
+      label: Lidarr address
+      description: For example http://192.168.1.10:8686, the server's address and Lidarr's web UI port. Leave it empty if you do not use Lidarr.
+    LIDARR_API_KEY:
+      kind: string
+      label: Lidarr API key
+      description: Found in Lidarr under Settings > General.
+    WHISPARR_URL:
+      kind: string
+      label: Whisparr address
+      description: For example http://192.168.1.10:6969, the server's address and Whisparr's web UI port. Leave it empty if you do not use Whisparr.
+    WHISPARR_API_KEY:
+      kind: string
+      label: Whisparr API key
+      description: Found in Whisparr under Settings > General.
+    TZ: { kind: timezone }
