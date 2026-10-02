@@ -1,0 +1,72 @@
+name: Request an app
+description: Ask for an app that has no template in the catalog yet.
+title: "Request: "
+labels:
+  - template-request
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an app! Every template is written from the
+        app's own upstream documentation, so links to that documentation help
+        the most. Please check the
+        [open requests](https://github.com/mdg-labs/hoserva-catalog/issues?q=is%3Aissue+label%3Atemplate-request)
+        first, and give a 👍 to an existing one instead of opening a second.
+  - type: input
+    id: app
+    attributes:
+      label: App name
+      placeholder: e.g. Jellyseerr
+    validations:
+      required: true
+  - type: input
+    id: project
+    attributes:
+      label: Project website or repository
+      placeholder: https://github.com/…
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: What would you use it for?
+      description: A sentence or two is plenty. It helps decide which apps come first.
+    validations:
+      required: true
+  - type: textarea
+    id: docs
+    attributes:
+      label: Installation documentation
+      description: >-
+        Links to the upstream pages that describe running it in a container:
+        the image's documentation, its environment variables, volumes and ports.
+      placeholder: |
+        https://…
+    validations:
+      required: false
+  - type: input
+    id: image
+    attributes:
+      label: Container image
+      description: >-
+        The official image, or the linuxserver.io image if there is one. Leave
+        empty if you're not sure.
+      placeholder: e.g. ghcr.io/example/app or lscr.io/linuxserver/app
+    validations:
+      required: false
+  - type: textarea
+    id: needs
+    attributes:
+      label: Anything special it needs?
+      description: >-
+        Hardware access (a GPU, a USB stick), host networking, a companion
+        database, extra privileges — anything beyond folders and a web port.
+    validations:
+      required: false
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contributing
+      options:
+        - label: I'd like to write this template myself and open a pull request (see CONTRIBUTING.md).
+          required: false

@@ -1,0 +1,61 @@
+name: Fix or update a template
+description: An existing template is broken, out of date, or has a wrong default.
+title: "Fix: "
+labels:
+  - template-fix
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping keep the catalog working. If the app itself
+        misbehaves after it's running, the app's own project is usually the
+        better place. This form is for the template: what Hoserva installs and
+        how it's configured.
+  - type: input
+    id: template
+    attributes:
+      label: Template
+      description: The app's name, or its folder under `templates/`.
+      placeholder: e.g. Sonarr
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What's wrong?
+      options:
+        - It doesn't install or doesn't start
+        - A newer version is available
+        - A default is wrong (folder, port, setting)
+        - Upstream changed something (image, variables, paths)
+        - The icon or its attribution
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: What happened, and what did you expect?
+      description: Error messages or logs are very welcome.
+      placeholder: |
+        What happened:
+        What I expected:
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Upstream link
+      description: >-
+        For an update or upstream change: the release notes or documentation
+        page that shows the new version or the changed setting.
+    validations:
+      required: false
+  - type: input
+    id: hoserva-version
+    attributes:
+      label: Hoserva version
+      description: Output of `hoserva version`, if you installed the template.
+      placeholder: e.g. v0.3.1
+    validations:
+      required: false
