@@ -8,9 +8,9 @@
 #
 # The image documentation says the database settings are read on the first
 # run only, after which they are changed in /config/config.yml. To use
-# PostgreSQL, MariaDB or MySQL instead, set DB_TYPE and the DB_* variables as
-# that page lists them. On the first visit Wiki.js asks you to create the
-# administrator account.
+# PostgreSQL instead, set DB_TYPE to postgres and the DB_* variables as that
+# page lists them; it documents no other external database. On the first visit
+# Wiki.js asks you to create the administrator account.
 services:
   wikijs:
     image: lscr.io/linuxserver/wikijs:v2.5.315-ls224
