@@ -1,0 +1,79 @@
+# Written from https://docs.linuxserver.io/images/docker-firefox/, its Selkies base image documentation, https://docs.linuxserver.io/selkies/, and https://www.mozilla.org/firefox/ (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/firefox.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none. The logo is a trademark of the Mozilla Foundation, used here only to represent the application.
+#
+# Firefox runs on the server and its window is streamed to your browser, so
+# pages on your local network (a router, a switch, a printer) are reached from
+# the server's own network position. Open it on the HTTPS port: the image
+# serves a self-signed certificate, so the browser asks you to accept it once,
+# and it only works over HTTPS. The HTTP port is for putting a reverse proxy
+# in front; the image documentation says it must be proxied.
+#
+# The image documentation warns that Selkies-based images give privileged
+# access to the host system and that, without a login, the desktop has no
+# authentication: the login below is set. Keep it on a trusted network.
+#
+# shm_size is the 1gb the image documentation recommends, and says any modern
+# website needs it (it names YouTube). No seccomp setting is added: the image
+# documentation lists none for this image.
+#
+# A GPU chosen below is detected and used by the image on its own (the image
+# documentation gives Intel and AMD GPUs as a mapped /dev/dri). The NVIDIA
+# setup of the image documentation needs a driver installed from Nvidia's .run
+# file and the nvidia runtime, and is not set up here.
+services:
+  firefox:
+    image: lscr.io/linuxserver/firefox:1157.0build1-1xtradeb1.2404.1-ls126
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+      CUSTOM_USER: ${CUSTOM_USER}
+      PASSWORD: ${PASSWORD}
+    volumes:
+      - ${APPDATA}/firefox:/config
+    ports:
+      - ${HTTP_PORT}:3000
+      - ${WEBUI_PORT}:3001
+    shm_size: 1gb
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: firefox
+  revision: 1
+  title: Firefox
+  categories: [desktop, network]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-firefox/
+  webui: https://{host}:${WEBUI_PORT}
+  description: |
+    The Firefox browser running on your server, streamed to your own browser. Use it to reach pages that are only open on your local network, such as a router, a switch or a printer, from anywhere you can reach the server.
+
+    The browser is served over HTTPS with a self-signed certificate, so your browser asks you to accept it once. Its bookmarks, logins and settings are kept in the app's folder. Keep it on your local network: the login protects it, but anyone who can sign in controls a browser inside your network.
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    WEBUI_PORT:
+      kind: port
+      default: 3001
+      label: Desktop HTTPS port
+      description: The port Firefox is served on over HTTPS. Open it as https://, it does not work over plain HTTP.
+    HTTP_PORT:
+      kind: port
+      default: 3000
+      label: Desktop HTTP port
+      description: Only for putting a reverse proxy in front of Firefox. Open the HTTPS port to use it directly.
+    TZ: { kind: timezone }
+    CUSTOM_USER:
+      kind: string
+      default: admin
+      label: Login name
+      description: The user name for the desktop's web login.
+    PASSWORD:
+      kind: secret
+      label: Login password
+      description: The password for the desktop's web login. Hoserva generates one at install; it is in the stack's .env.
+    DESKTOP_GPU:
+      kind: device
+      role: gpu
+      label: GPU
+      description: Optional. An Intel or AMD GPU that Firefox may use to render and encode the stream.
