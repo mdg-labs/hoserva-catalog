@@ -1,0 +1,88 @@
+# Written from https://docs.linuxserver.io/images/docker-bookstack/, https://www.bookstackapp.com/docs/admin/installation/ and https://hub.docker.com/_/mariadb (the image documentation of the database service, https://github.com/docker-library/docs/blob/master/mariadb/README.md) (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/bookstack.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none. The logo is a trademark of the BookStack project, used here only to identify the application.
+#
+# BookStack with the MariaDB database it depends on, as its image documentation
+# describes: the database for the content, and the config folder for the
+# uploaded files, the .env file and the logs. Both are under the appdata
+# folder, never on the pool. The database service is the official mariadb
+# image the catalog's MariaDB template also uses; BookStack's installation
+# page asks for MariaDB 10.6 or later. The database root password is random
+# and is never needed, because BookStack connects as its own user, which owns
+# its database.
+#
+# The image documentation's default sign-in is admin@admin.com with the
+# password "password"; change both right after the first sign-in.
+#
+# The application key is BookStack's encryption key, and the image refuses to
+# start without one. Run
+#   docker run -it --rm --entrypoint /bin/bash lscr.io/linuxserver/bookstack:latest appkey
+# once, as the image documentation says, and enter what it prints (it begins
+# with base64:). Keep it as it is afterwards. After changing the address, run
+# the update-url command from the image documentation:
+#   docker exec -it <the bookstack container> php /app/www/artisan bookstack:update-url <old address> <new address>
+services:
+  db:
+    image: docker.io/library/mariadb:12.3.3
+    environment:
+      MARIADB_RANDOM_ROOT_PASSWORD: "1"
+      MARIADB_AUTO_UPGRADE: "1"
+      MARIADB_DATABASE: bookstack
+      MARIADB_USER: bookstack
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/bookstack/db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 30s
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+  bookstack:
+    image: lscr.io/linuxserver/bookstack:v26.09.1-ls287
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+      APP_URL: ${APP_URL}
+      APP_KEY: ${APP_KEY}
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_USERNAME: bookstack
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DATABASE: bookstack
+    volumes:
+      - ${APPDATA}/bookstack/config:/config
+    ports:
+      - ${WEBUI_PORT}:80
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: bookstack
+  revision: 1
+  title: BookStack
+  categories: [documents, productivity]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-bookstack/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    APP_URL:
+      kind: string
+      label: Address of BookStack
+      description: The address you open BookStack at, with the port, for example http://192.168.1.10:6875, or the https address a reverse proxy serves it on, for example https://wiki.example.com. BookStack builds every link from it, and behind a reverse proxy in a subfolder it does not work without it.
+    APP_KEY:
+      kind: string
+      label: Application key
+      description: BookStack's encryption key. Generate it once with docker run -it --rm --entrypoint /bin/bash lscr.io/linuxserver/bookstack:latest appkey and paste what it prints, starting with base64:. Keep it as it is afterwards.
+    DB_PASSWORD:
+      kind: secret
+      label: Database password
+      description: The password of BookStack's database user. Leave it empty to have one generated; it is kept in the stack's .env file. The database applies it only on its first start.
+    WEBUI_PORT: { kind: port, default: 6875, label: Web UI port }
+    TZ:         { kind: timezone }
