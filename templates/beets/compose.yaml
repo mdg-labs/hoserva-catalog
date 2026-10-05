@@ -1,0 +1,49 @@
+# Written from https://docs.linuxserver.io/images/docker-beets/ (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/beets.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none
+#
+# The music library is mounted at /music and the folder of music still to be
+# imported at /downloads, as in the image documentation, and the default
+# configuration of the image looks for the library at /music. Run an import
+# with `docker exec -it -u abc <container> beet import /downloads`. Edit the
+# configuration with `docker exec -it -u abc <container> beet config -e`; it
+# lives in the config folder.
+services:
+  beets:
+    image: lscr.io/linuxserver/beets:2.14.1-ls355
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/beets:/config
+      - ${MUSIC}:/music
+      - ${IMPORT}:/downloads
+    ports:
+      - ${WEBUI_PORT}:8337
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: beets
+  revision: 1
+  title: beets
+  categories: [media, automation]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-beets/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    MUSIC:
+      kind: path
+      role: media
+      default: /mnt/user/data/media/music
+      label: Music library
+      description: The folder that holds your organised music. It is mounted at /music in beets, where imported music is placed and tagged.
+    IMPORT:
+      kind: path
+      role: downloads
+      default: /mnt/user/data/torrents
+      label: Import folder
+      description: The folder that holds music still to be imported, for example your download folder. It is mounted at /downloads in beets.
+    WEBUI_PORT: { kind: port, default: 8337, label: Web UI port }
+    TZ:         { kind: timezone }
