@@ -1,4 +1,4 @@
-# Written from https://docs.linuxserver.io/images/docker-code-server/ and https://github.com/coder/code-server (D19).
+# Written from https://docs.linuxserver.io/images/docker-code-server/, https://github.com/coder/code-server and its guide on exposing code-server, https://github.com/coder/code-server/blob/main/docs/guide.md (D19).
 # Icon: https://github.com/coder/code-server/blob/main/src/browser/media/favicon.svg, MIT (the license of that repository), none
 #
 # code-server is VS Code in the browser. Without a password the image has no
@@ -7,6 +7,15 @@
 # mounted at /workspace and opens by default. To use git with GitHub, put an
 # SSH key in the appdata folder under .ssh (/config/.ssh in the container),
 # then open a terminal in code-server and set git's user.name and user.email.
+#
+# The web UI is served over plain HTTP, as the image documentation's
+# http://<your-ip>:8443 address shows, so the password and everything you open
+# or type, terminal included, cross the network unencrypted. The code-server
+# guide says never to expose it directly to the internet without
+# authentication and encryption, because someone could take over the machine
+# through the terminal. Keep it on your local network, and reach it from
+# outside only through an HTTPS reverse proxy or a tunnel such as SSH port
+# forwarding, which that guide recommends.
 services:
   code-server:
     image: lscr.io/linuxserver/code-server:4.140.0-ls368
