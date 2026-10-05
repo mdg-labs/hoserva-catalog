@@ -1,0 +1,48 @@
+# Written from https://docs.linuxserver.io/images/docker-code-server/ and https://github.com/coder/code-server (D19).
+# Icon: https://github.com/coder/code-server/blob/main/src/browser/media/favicon.svg, MIT (the license of that repository), none
+#
+# code-server is VS Code in the browser. Without a password the image has no
+# authentication, so the template always sets one; Hoserva generates it at
+# install and keeps it in the stack's .env file. The workspace folder is
+# mounted at /workspace and opens by default. To use git with GitHub, put an
+# SSH key in the appdata folder under .ssh (/config/.ssh in the container),
+# then open a terminal in code-server and set git's user.name and user.email.
+services:
+  code-server:
+    image: lscr.io/linuxserver/code-server:4.140.0-ls368
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+      PASSWORD: ${PASSWORD}
+      DEFAULT_WORKSPACE: /workspace
+    volumes:
+      - ${APPDATA}/code-server:/config
+      - ${WORKSPACE}:/workspace
+    ports:
+      - ${WEBUI_PORT}:8443
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: code-server
+  revision: 1
+  title: code-server
+  categories: [development]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-code-server/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    WORKSPACE:
+      kind: path
+      role: share
+      default: /mnt/user/code
+      label: Workspace folder
+      description: The folder code-server opens, for configuration files and projects. It is mounted at /workspace in code-server.
+    PASSWORD:
+      kind: secret
+      label: Password
+      description: The password for the code-server web UI. Leave it empty to have one generated; it is kept in the stack's .env file.
+    WEBUI_PORT: { kind: port, default: 8443, label: Web UI port }
+    TZ:         { kind: timezone }
