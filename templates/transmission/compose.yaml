@@ -1,0 +1,67 @@
+# Written from https://docs.linuxserver.io/images/docker-transmission/, the settings.json defaults and init script in https://github.com/linuxserver/docker-transmission, https://github.com/transmission/transmission/blob/main/docs/Editing-Configuration-Files.md and https://wiki.servarr.com/docker-guide (D19).
+# Icon: https://github.com/transmission/transmission/blob/main/icons/hicolor_apps_scalable_transmission.svg, GPL-2.0-only or GPL-3.0-only, or a later license endorsed by Mnemosyne LLC (COPYING of that repository), none
+#
+# One mount at /data holds the downloads and the library, so hardlinks and
+# instant moves work. The image documentation's /downloads mount is not used,
+# so its preset download folders (/downloads/complete and /downloads/incomplete,
+# inside the container) have to be moved onto /data: stop the container, open
+# settings.json in the appdata folder, set "download-dir" to /data/torrents and
+# "incomplete-dir" to /data/torrents/incomplete, and start it again. The image
+# documentation asks for the container to be stopped first, because Transmission
+# writes the file back on exit.
+#
+# The web UI login is the WEBUI_USER and WEBUI_PASSWORD inputs, which the image
+# writes into settings.json on every start. Without them the image would serve
+# the web UI to everyone who can reach the port.
+#
+# The torrent port is also given to Transmission as PEERPORT, which the image
+# documentation asks for so that Transmission listens on the port that is
+# mapped; it switches off random port selection.
+services:
+  transmission:
+    image: lscr.io/linuxserver/transmission:4.1.3-r0-ls363
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+      USER: ${WEBUI_USER}
+      PASS: ${WEBUI_PASSWORD}
+      PEERPORT: ${TORRENTING_PORT}
+    volumes:
+      - ${APPDATA}/transmission:/config
+      - ${DATA}:/data
+    ports:
+      - ${WEBUI_PORT}:9091
+      - ${TORRENTING_PORT}:${TORRENTING_PORT}
+      - ${TORRENTING_PORT}:${TORRENTING_PORT}/udp
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: transmission
+  revision: 1
+  title: Transmission
+  categories: [downloads]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-transmission/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    DATA:
+      kind: path
+      role: share
+      default: /mnt/user/data
+      label: Data folder
+      description: The folder that holds both downloads (torrents) and the media library (media). Use the same folder for every media app so hardlinks and instant moves work.
+    WEBUI_USER:
+      kind: string
+      default: admin
+      label: Web UI username
+      description: The username for the Transmission web interface. Avoid spaces.
+    WEBUI_PASSWORD:
+      kind: secret
+      label: Web UI password
+      description: The password for the Transmission web interface. Leave it empty to have one generated; it is kept in the stack's .env file. If you choose your own, do not start it with a curly bracket, which Transmission reads as an already scrambled password.
+    WEBUI_PORT:      { kind: port, default: 9091, label: Web UI port }
+    TORRENTING_PORT: { kind: port, default: 51413, label: Torrent connection port }
+    TZ:              { kind: timezone }
