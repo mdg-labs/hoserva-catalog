@@ -1,0 +1,58 @@
+# Written from https://docs.linuxserver.io/images/docker-tvheadend/ (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/tvheadend.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none
+#
+# Bridge networking with the web UI (9981) and HTSP (9982) ports mapped.
+# The image documentation says: "If you use IPTV, SAT>IP or
+# HDHomeRun, you need to create the container with --net=host and remove the -p
+# flags." The reason it gives is that Tvheadend then requires the multicast
+# address 239.255.255.250 and UDP port 1900, which docker bridge mode cannot
+# provide. For any of those inputs, change the network mode of this file to host
+# and remove the ports.
+#
+# No devices are mapped. A DVB card is passed in with the documentation's
+# devices entry, "/dev/dvb:/dev/dvb"; add it to this file only on a server that
+# has a card, since Docker refuses to start a container whose device is
+# missing. IPTV and HDHomeRun need none. The documentation's optional /dev/dri
+# entry, for hardware-accelerated encoding, is not mapped either.
+#
+# On first login the setup wizard in Tvheadend guides the basic setup; it is
+# under Configuration, General, Base. Recordings are written to /recordings.
+services:
+  tvheadend:
+    image: lscr.io/linuxserver/tvheadend:5ce3ff63-ls286
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/tvheadend:/config
+      - ${RECORDINGS}:/recordings
+    ports:
+      - ${WEBUI_PORT}:9981
+      - ${HTSP_PORT}:9982
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: tvheadend
+  revision: 1
+  title: Tvheadend
+  categories: [media]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-tvheadend/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    RECORDINGS:
+      kind: path
+      role: media
+      default: /mnt/user/data/media/recordings
+      label: Recordings folder
+      description: The folder where Tvheadend stores the TV recordings. It is mounted at /recordings in Tvheadend, so set it as the recording path there.
+    WEBUI_PORT: { kind: port, default: 9981, label: Web UI port }
+    HTSP_PORT:
+      kind: port
+      default: 9982
+      label: HTSP port
+      description: The streaming port that Kodi and other HTSP clients connect to.
+    TZ:         { kind: timezone }
