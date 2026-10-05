@@ -1,0 +1,89 @@
+# Written from https://docs.linuxserver.io/images/docker-wireguard/ and https://www.wireguard.com/ (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/wireguard.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none
+#
+# Runs as a WireGuard server: PEERS is the number of devices to create a
+# configuration for (it can also be a list of names such as myPhone,myLaptop,
+# letters and digits only). Each device's QR code is printed in the container
+# log; its configuration file and QR code image are saved in the app's folder
+# under wireguard/peer1, peer2, ... (numbered) or wireguard/peer_<name>
+# (named). To add devices later, raise PEERS or add names, and recreate the
+# container.
+#
+# Forward the VPN port (UDP) of your router to this server. The default
+# ALLOWEDIPS sends all of a device's traffic through the VPN; for access to
+# the server and your home network only, enter those ranges instead, for
+# example 10.13.13.0/24,192.168.1.0/24.
+#
+# The image documentation also lists the SYS_MODULE capability and a
+# /lib/modules mount as optional, for hosts where the WireGuard or iptables
+# kernel modules are not loaded. They are left out here; add them only if the
+# container log says a module is missing.
+services:
+  wireguard:
+    image: lscr.io/linuxserver/wireguard:1.0.20260223-r0-ls124
+    # NET_ADMIN: the image documentation says WireGuard needs it to create its
+    # VPN network interface.
+    cap_add:
+      - NET_ADMIN
+    # In the image documentation's example for this image, which lists the
+    # setting as required for client mode.
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+      SERVERURL: ${SERVERURL}
+      SERVERPORT: ${VPN_PORT}
+      PEERS: ${PEERS}
+      PEERDNS: ${PEERDNS}
+      INTERNAL_SUBNET: ${INTERNAL_SUBNET}
+      ALLOWEDIPS: ${ALLOWEDIPS}
+      LOG_CONFS: "true"
+    volumes:
+      - ${APPDATA}/wireguard:/config
+    ports:
+      - ${VPN_PORT}:51820/udp
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: wireguard
+  revision: 1
+  title: WireGuard
+  categories: [network, vpn]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-wireguard/
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    SERVERURL:
+      kind: string
+      default: auto
+      label: Server address
+      description: The public address or domain name your devices use to reach this server from the internet. Leave auto to have it looked up from the server's current public IP, or enter a domain name if your IP changes.
+    VPN_PORT:
+      kind: port
+      default: 51820
+      label: VPN port (UDP)
+      description: The UDP port your devices connect to. Forward this port of your router to this server. It is also written into each device's configuration.
+    PEERS:
+      kind: string
+      default: "1"
+      label: Devices
+      description: How many devices get a configuration, for example 3, or a list of names separated by commas, for example myPhone,myLaptop (letters and digits only).
+    PEERDNS:
+      kind: string
+      default: auto
+      label: DNS server for devices
+      description: The DNS server devices use while connected. Leave auto to use the DNS of this server, or enter an address such as 192.168.1.1.
+    INTERNAL_SUBNET:
+      kind: string
+      default: 10.13.13.0
+      label: VPN network
+      description: The private network the VPN uses between this server and the devices. Change it only if it clashes with your home network.
+    ALLOWEDIPS:
+      kind: string
+      default: 0.0.0.0/0
+      label: Reachable addresses
+      description: The addresses devices reach through the VPN. The default sends all traffic through your home. For only this server and your home network, enter their ranges separated by commas, for example 10.13.13.0/24,192.168.1.0/24.
+    TZ: { kind: timezone }
