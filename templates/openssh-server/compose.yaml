@@ -1,0 +1,72 @@
+# Written from https://docs.linuxserver.io/images/docker-openssh-server/ and https://www.openssh.com/ (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/webp/openssh.webp, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none
+#
+# A sandboxed SSH and SFTP login: the user only reaches the processes in this
+# container and the folder mapped below, which is at /data once connected
+# (for example sftp -P 2222 USER_NAME@server, then cd /data). It is not a
+# login to the server itself.
+#
+# Sign-in needs a public key, a password, or both. Keys in PUBLIC_KEY are added
+# to the user's authorized_keys at start; removing the value later does not
+# remove them. Password sign-in is off unless PASSWORD_ACCESS is set to true.
+# The image documentation discourages password sign-in on an SSH port that is
+# reachable from the internet. Sudo access, which the image can grant, is not
+# enabled.
+services:
+  openssh-server:
+    image: lscr.io/linuxserver/openssh-server:10.3_p1-r1-ls238
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+      USER_NAME: ${USER_NAME}
+      PUBLIC_KEY: ${PUBLIC_KEY}
+      PASSWORD_ACCESS: ${PASSWORD_ACCESS}
+      USER_PASSWORD: ${USER_PASSWORD}
+    volumes:
+      - ${APPDATA}/openssh-server:/config
+      - ${SHARE}:/data
+    ports:
+      - ${SSH_PORT}:2222
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: openssh-server
+  revision: 1
+  title: OpenSSH Server
+  categories: [network, files]
+  icon: icon.webp
+  docs: https://docs.linuxserver.io/images/docker-openssh-server/
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    SHARE:
+      kind: path
+      role: share
+      default: /mnt/user/sftp
+      label: Shared folder
+      description: The only folder the SSH user can reach. It is at /data after signing in.
+    SSH_PORT:
+      kind: port
+      default: 2222
+      label: SSH port
+      description: The port to connect to. It is not 22, which the server itself may use.
+    USER_NAME:
+      kind: string
+      default: linuxserver.io
+      label: User name
+      description: The name to sign in with.
+    PUBLIC_KEY:
+      kind: string
+      label: Public key
+      description: The SSH public key allowed to sign in, the whole line from your id_ed25519.pub or id_rsa.pub file. Leave it empty if you use a password instead.
+    PASSWORD_ACCESS:
+      kind: string
+      default: "false"
+      label: Allow password sign-in
+      description: Enter true to allow signing in with the password below. Keys are safer, especially if the port is reachable from the internet.
+    USER_PASSWORD:
+      kind: secret
+      label: Password
+      description: The password for password sign-in. Leave it empty to have one generated; it is kept in the stack's .env file. It is only used when password sign-in is allowed.
+    TZ: { kind: timezone }
