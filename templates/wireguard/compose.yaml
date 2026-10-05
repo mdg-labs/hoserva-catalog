@@ -3,11 +3,11 @@
 #
 # Runs as a WireGuard server: PEERS is the number of devices to create a
 # configuration for (it can also be a list of names such as myPhone,myLaptop,
-# letters and digits only). Each device's QR code is printed in the container
-# log; its configuration file and QR code image are saved in the app's folder
-# under wireguard/peer1, peer2, ... (numbered) or wireguard/peer_<name>
-# (named). To add devices later, raise PEERS or add names, and recreate the
-# container.
+# letters and digits only). Each device's configuration file and QR code image
+# are saved in the app's folder under wireguard/peer1, peer2, ... (numbered) or
+# wireguard/peer_<name> (named). The QR codes are kept out of the container log
+# so that nobody who can read the log obtains a device's configuration. To
+# add devices later, raise PEERS or add names, and recreate the container.
 #
 # Forward the VPN port (UDP) of your router to this server. The default
 # ALLOWEDIPS sends all of a device's traffic through the VPN; for access to
@@ -39,7 +39,7 @@ services:
       PEERDNS: ${PEERDNS}
       INTERNAL_SUBNET: ${INTERNAL_SUBNET}
       ALLOWEDIPS: ${ALLOWEDIPS}
-      LOG_CONFS: "true"
+      LOG_CONFS: "false"
     volumes:
       - ${APPDATA}/wireguard:/config
     ports:
