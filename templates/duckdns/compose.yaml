@@ -1,0 +1,41 @@
+# Written from https://docs.linuxserver.io/images/docker-duckdns/ (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/duckdns.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none. The logo belongs to its project, used here only to identify the application.
+#
+# Register the subdomain on https://www.duckdns.org and copy the token shown
+# on that page into the token field. If you own user.duckdns.org, enter
+# "user" as the subdomain, not a name below it; several subdomains are
+# separated by commas without spaces. The app updates the address every five
+# minutes. UPDATE_IP is left unset, so the image asks DuckDNS for the public
+# address, which supports IPv4 only. Setting it makes the image ask a
+# third-party service instead, and the image documentation says its IPv6
+# modes need host networking, so this template keeps the default. The app
+# has no web interface and needs no ports.
+services:
+  duckdns:
+    image: lscr.io/linuxserver/duckdns:d860cc34-ls92
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+      SUBDOMAINS: ${SUBDOMAINS}
+      TOKEN: ${TOKEN}
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: duckdns
+  revision: 1
+  title: Duck DNS
+  categories: [network, dns]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-duckdns/
+  inputs:
+    SUBDOMAINS:
+      kind: string
+      label: Subdomains
+      description: The Duck DNS names to keep up to date, without ".duckdns.org" (for "user.duckdns.org" enter "user"). Separate several with commas and no spaces.
+    TOKEN:
+      kind: secret
+      label: Duck DNS token
+      description: The token shown on your account page at duckdns.org. It is kept in the stack's .env file.
+    TZ: { kind: timezone }
