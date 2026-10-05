@@ -1,0 +1,38 @@
+# Written from https://docs.linuxserver.io/images/docker-dokuwiki/ and https://www.dokuwiki.org/install (D19).
+# Icon: https://github.com/dokuwiki/dokuwiki/blob/master/lib/tpl/dokuwiki/images/logo.svg, GPL-2.0 (COPYING of that repository), none
+#
+# First setup: open http://<server address>:<port>/install.php, complete the
+# installer, then restart the container. After that, log in as admin and in
+# Admin, Configuration Settings set "Use nice URLs" to .htaccess and tick
+# "Use slash as namespace separator in URLs", as the image documentation
+# describes. The pages and settings are kept in the appdata folder; DokuWiki
+# needs no database.
+#
+# The image's optional HTTPS port (443) is left out; put a reverse proxy in
+# front of the wiki for HTTPS.
+services:
+  dokuwiki:
+    image: lscr.io/linuxserver/dokuwiki:2026-07-14c-ls327
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/dokuwiki:/config
+    ports:
+      - ${WEBUI_PORT}:80
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: dokuwiki
+  revision: 1
+  title: DokuWiki
+  categories: [productivity]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-dokuwiki/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    WEBUI_PORT: { kind: port, default: 8085, label: Web UI port }
+    TZ:         { kind: timezone }
