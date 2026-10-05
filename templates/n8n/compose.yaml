@@ -62,7 +62,7 @@ services:
 x-hoserva:
   schema: 1
   id: n8n
-  revision: 1
+  revision: 2
   title: n8n
   categories: [automation, productivity]
   icon: icon.svg
@@ -72,6 +72,7 @@ x-hoserva:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     WEBHOOK_URL:
       kind: string
+      optional: true
       label: Public address
       description: Optional. The https address a reverse proxy serves n8n on, for example https://n8n.example.com/. n8n shows webhook addresses with it and registers them with outside services. Leave it empty to use n8n only on your home network.
     RUNNERS_TOKEN:
