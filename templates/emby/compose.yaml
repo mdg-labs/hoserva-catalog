@@ -1,0 +1,46 @@
+# Written from https://docs.linuxserver.io/images/docker-emby/ (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/emby.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none
+#
+# The optional HTTPS port 8920 of the image documentation is not mapped (it
+# needs your own certificate): add clients by the server's address. The
+# Raspberry Pi libraries and V4L2 devices of the documentation are not mapped
+# either. An Intel or AMD GPU picked below is mapped in as /dev/dri, which the
+# documentation names for hardware-accelerated encoding (vaapi).
+services:
+  emby:
+    image: lscr.io/linuxserver/emby:4.10.1.0-ls300
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/emby:/config
+      - ${MEDIA}:/data/media
+    ports:
+      - ${WEBUI_PORT}:8096
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: emby
+  revision: 1
+  title: Emby
+  categories: [media]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-emby/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    MEDIA:
+      kind: path
+      role: media
+      default: /mnt/user/data/media
+      label: Media library
+      description: The folder that holds your media, for example tv and movies subfolders. It is mounted at /data/media in Emby, so add libraries from there.
+    WEBUI_PORT: { kind: port, default: 8096, label: Web UI port }
+    TZ:         { kind: timezone }
+    TRANSCODE_GPU:
+      kind: device
+      role: gpu
+      label: Hardware transcoding
+      description: Optional. An Intel or AMD GPU that Emby may use to transcode video.
