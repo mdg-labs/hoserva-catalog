@@ -1,0 +1,98 @@
+# Written from https://docs.linuxserver.io/images/docker-calibre/, its Selkies base image documentation, https://docs.linuxserver.io/selkies/, and https://calibre-ebook.com/ (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/calibre.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none. The logo is a trademark of the Calibre project, used here only to represent the application.
+#
+# Calibre's window is streamed to the browser. Open it on the HTTPS port: the
+# image serves a self-signed certificate, so the browser asks you to accept it
+# once, and it only works over HTTPS. The HTTP port is for putting a reverse
+# proxy in front.
+#
+# The image documentation says to pick the default library location,
+# /config/Calibre Library, in Calibre's first-run wizard, and gives no
+# support for any other path. The library folder is mounted exactly there, so
+# the wizard's default is your library, and it is the same folder the
+# Calibre-Web template mounts at /books: with the same folder entered in both,
+# Calibre manages the books that Calibre-Web serves. Do not edit the library
+# from both apps at the same time.
+#
+# The image documentation says Calibre's built-in content server (port 8081)
+# is off by default and has to be enabled in Calibre's preferences under
+# Sharing over the net; that port is not mapped here, because Calibre-Web
+# serves the library.
+#
+# The image documentation warns that Selkies-based images give privileged
+# access to the host system and that, without a login, the desktop has no
+# authentication: the login below is set.
+#
+# security_opt seccomp:unconfined is left out: the image documentation lists
+# it as optional, and the Selkies documentation keeps it for old host kernels
+# or old libseccomp versions, as a last resort.
+#
+# shm_size is the 1gb the image documentation recommends for every desktop
+# image.
+#
+# A GPU chosen below is detected and used by the image on its own (the image
+# documentation gives Intel and AMD GPUs as a mapped /dev/dri).
+services:
+  calibre:
+    image: lscr.io/linuxserver/calibre:v9.15.0-ls424
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+      CUSTOM_USER: ${CUSTOM_USER}
+      PASSWORD: ${PASSWORD}
+    volumes:
+      - ${APPDATA}/calibre:/config
+      - "${LIBRARY}:/config/Calibre Library"
+    ports:
+      - ${HTTP_PORT}:8080
+      - ${WEBUI_PORT}:8181
+    shm_size: 1gb
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: calibre
+  revision: 1
+  title: Calibre
+  categories: [desktop, books]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-calibre/
+  webui: https://{host}:${WEBUI_PORT}
+  description: |
+    The Calibre ebook manager in your browser: add books, convert formats and edit metadata. Calibre's window is streamed to the browser.
+
+    The library folder is the one the Calibre-Web template serves, so both apps see the same library. In Calibre's first-run wizard keep the default library location. The desktop is served over HTTPS with a self-signed certificate, so the browser asks you to accept it once.
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    LIBRARY:
+      kind: path
+      role: media
+      default: /mnt/user/data/media/calibre
+      label: Calibre library
+      description: The folder of your Calibre library, the one that holds metadata.db. It is mounted at /config/Calibre Library, Calibre's default library location, and is the same folder Calibre-Web serves.
+    WEBUI_PORT:
+      kind: port
+      default: 8181
+      label: Desktop HTTPS port
+      description: The port Calibre is served on over HTTPS. Open it as https://, it does not work over plain HTTP.
+    HTTP_PORT:
+      kind: port
+      default: 8080
+      label: Desktop HTTP port
+      description: Only for putting a reverse proxy in front of Calibre. Open the HTTPS port to use it directly.
+    TZ: { kind: timezone }
+    CUSTOM_USER:
+      kind: string
+      default: admin
+      label: Login name
+      description: The user name for the desktop's web login.
+    PASSWORD:
+      kind: secret
+      label: Login password
+      description: The password for the desktop's web login. Hoserva generates one at install; it is in the stack's .env.
+    DESKTOP_GPU:
+      kind: device
+      role: gpu
+      label: GPU
+      description: Optional. An Intel or AMD GPU that Calibre may use to render and encode the stream.
