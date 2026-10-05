@@ -17,7 +17,11 @@
 # the database, user and passwords are only read then, on both sides: changing
 # them afterwards does not change them in MongoDB. The passwords are kept in
 # the stack's .env file. The database user name and database name are fixed
-# (unifi); the root account is only used to create that user.
+# (unifi); the root account is only used to create that user. Both passwords
+# are written into that init script inside double quotes and UniFi reads the
+# database password URL-encoded, so the database refuses to start with a
+# password that is empty or has anything but letters and digits in it, rather
+# than run an init script that fails and leaves the database without its user.
 #
 # After the first start the web UI is at https://<server>:<web UI port>, on a
 # self-signed certificate, and its first-run wizard sets the application up or
@@ -50,6 +54,15 @@ services:
       - -c
       - |
         set -e
+        alnum() { [[ -n $$1 ]] && ( LC_ALL=C; [[ $$1 =~ ^[A-Za-z0-9]+$$ ]] ); }
+        if ! alnum "$${MONGO_INITDB_ROOT_PASSWORD}"; then
+          echo "Database administrator password must be non-empty and use only letters and digits." >&2
+          exit 1
+        fi
+        if ! alnum "$${MONGO_PASS}"; then
+          echo "Database password must be non-empty and use only letters and digits." >&2
+          exit 1
+        fi
         cat > /docker-entrypoint-initdb.d/init-mongo.sh <<'SCRIPT'
         #!/bin/bash
         if which mongosh > /dev/null 2>&1; then
