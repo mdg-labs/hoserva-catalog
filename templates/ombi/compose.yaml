@@ -1,0 +1,36 @@
+# Written from https://docs.linuxserver.io/images/docker-ombi/ and https://docs.ombi.app/ (D19).
+# Icon: https://github.com/Ombi-app/Ombi/blob/develop/src/Ombi/wwwroot/images/favicon/android-chrome-192x192.png, GPL-2.0 (the license of that repository), none
+#
+# The first visit starts a setup wizard; after it, configure the services
+# Ombi uses: Plex, Jellyfin or Emby, and Sonarr and Radarr. Each of those runs
+# in its own stack, so enter them by the server's address, for example
+# http://<server>:8989 for Sonarr.
+#
+# The image documentation's optional BASE_URL is left out: Ombi then serves at
+# the root, and the base URL can be set in Ombi's own settings instead.
+services:
+  ombi:
+    image: lscr.io/linuxserver/ombi:v4.53.10-ls271
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/ombi:/config
+    ports:
+      - ${WEBUI_PORT}:3579
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: ombi
+  revision: 1
+  title: Ombi
+  categories: [media]
+  icon: icon.png
+  docs: https://docs.linuxserver.io/images/docker-ombi/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    WEBUI_PORT: { kind: port, default: 3579, label: Web UI port }
+    TZ:         { kind: timezone }
