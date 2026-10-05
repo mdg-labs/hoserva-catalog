@@ -1,0 +1,36 @@
+# Written from https://docs.linuxserver.io/images/docker-grocy/ and https://github.com/grocy/grocy/blob/master/README.md (D19).
+# Icon: https://github.com/grocy/grocy/blob/master/public/img/icon.svg, MIT (LICENSE.md of that repository), none
+#
+# Log in with the documented default account, admin with the password admin,
+# and change the password straight away (user menu, top right). Grocy keeps
+# its database and settings in the appdata folder.
+#
+# After every update of the image, open the Grocy start page (the logo at the
+# top left) once: the image documentation says that is what runs the database
+# migrations.
+services:
+  grocy:
+    image: lscr.io/linuxserver/grocy:v4.7.1-ls343
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/grocy:/config
+    ports:
+      - ${WEBUI_PORT}:80
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: grocy
+  revision: 1
+  title: Grocy
+  categories: [productivity]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-grocy/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    WEBUI_PORT: { kind: port, default: 9283, label: Web UI port }
+    TZ:         { kind: timezone }
