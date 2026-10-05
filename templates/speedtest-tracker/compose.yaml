@@ -1,0 +1,74 @@
+# Written from https://docs.linuxserver.io/images/docker-speedtest-tracker/, https://docs.speedtest-tracker.dev/getting-started/installation/using-docker-compose, https://docs.speedtest-tracker.dev/getting-started/environment-variables and https://docs.speedtest-tracker.dev/security/encryption (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/speedtest-tracker.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none. The logo is a trademark of Speedtest Tracker, used here only to identify the application.
+#
+# Speedtest Tracker with its default SQLite database, kept with the rest of
+# its data in the appdata folder, so there is no database service. It runs
+# Ookla's Speedtest against the internet on the schedule below, which uses
+# your connection's bandwidth each time.
+#
+# APP_KEY encrypts the data Speedtest Tracker stores. Its documentation gives
+# the format, "base64:" followed by 32 random bytes in base64, and the
+# command to make one, which is also the install form's hint. Hoserva's
+# generated secrets do not have that length, so the key is entered by hand:
+# keep a copy of it away from this server, since data encrypted with a lost
+# key cannot be read.
+#
+# The administrator account is created on the first start from the email
+# address and password below; the password is generated if left empty and is
+# kept in the stack's .env file. Changing them later has no effect, so change
+# them in Speedtest Tracker.
+services:
+  speedtest-tracker:
+    image: lscr.io/linuxserver/speedtest-tracker:v1.15.0-ls174
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+      DISPLAY_TIMEZONE: ${TZ}
+      APP_KEY: ${APP_KEY}
+      APP_URL: ${APP_URL}
+      DB_CONNECTION: sqlite
+      SPEEDTEST_SCHEDULE: ${SPEEDTEST_SCHEDULE}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+    volumes:
+      - ${APPDATA}/speedtest-tracker:/config
+    ports:
+      - ${WEBUI_PORT}:80
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: speedtest-tracker
+  revision: 1
+  title: Speedtest Tracker
+  categories: [network, monitoring]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-speedtest-tracker/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    APP_KEY:
+      kind: string
+      label: Application key
+      description: "Encrypts the data the app stores. Make one with: echo \"base64:$(openssl rand -base64 32)\" and paste the whole result, including base64:. Keep a copy of it."
+    APP_URL:
+      kind: string
+      label: Address of the app
+      description: The address you open Speedtest Tracker at, with the port, for example http://192.168.1.10:8080. It is used for links in emails and notifications.
+    SPEEDTEST_SCHEDULE:
+      kind: string
+      default: 0 */6 * * *
+      label: Test schedule
+      description: When to run a speed test, as a cron expression. The default runs one every 6 hours. Each test uses your internet connection's bandwidth.
+    ADMIN_EMAIL:
+      kind: string
+      default: admin@example.com
+      label: Administrator email address
+      description: The email address of the administrator account, which you sign in with. It is created on the first start.
+    ADMIN_PASSWORD:
+      kind: secret
+      label: Administrator password
+      description: The password of the administrator account. Leave it empty to have one generated; it is kept in the stack's .env file. It is only used when the account is created on the first start.
+    WEBUI_PORT: { kind: port, default: 8080, label: Web UI port }
+    TZ:         { kind: timezone }
