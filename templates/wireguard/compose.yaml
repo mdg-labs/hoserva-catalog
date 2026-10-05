@@ -10,9 +10,10 @@
 # add devices later, raise PEERS or add names, and recreate the container.
 #
 # Forward the VPN port (UDP) of your router to this server. The default
-# ALLOWEDIPS sends all of a device's traffic through the VPN; for access to
-# the server and your home network only, enter those ranges instead, for
-# example 10.13.13.0/24,192.168.1.0/24.
+# ALLOWEDIPS, "0.0.0.0/0, ::0/0", routes all of a device's traffic, IPv4 and
+# IPv6, into the VPN so none of it bypasses the VPN; for access to the server
+# and your home network only, enter those ranges instead, for example
+# 10.13.13.0/24,192.168.1.0/24.
 #
 # The image documentation also lists the SYS_MODULE capability and a
 # /lib/modules mount as optional, for hosts where the WireGuard or iptables
@@ -83,7 +84,7 @@ x-hoserva:
       description: The private network the VPN uses between this server and the devices. Change it only if it clashes with your home network.
     ALLOWEDIPS:
       kind: string
-      default: 0.0.0.0/0
-      label: Reachable addresses
-      description: The addresses devices reach through the VPN. The default sends all traffic through your home. For only this server and your home network, enter their ranges separated by commas, for example 10.13.13.0/24,192.168.1.0/24.
+      default: "0.0.0.0/0, ::0/0"
+      label: Addresses sent through the VPN
+      description: The addresses a device sends through the VPN. The default routes all of a device's traffic, IPv4 and IPv6, into the VPN so none of it bypasses the VPN. For only this server and your home network, enter their ranges separated by commas, for example 10.13.13.0/24,192.168.1.0/24.
     TZ: { kind: timezone }
