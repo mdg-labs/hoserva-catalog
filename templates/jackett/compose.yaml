@@ -1,0 +1,47 @@
+# Written from https://docs.linuxserver.io/images/docker-jackett/ and https://github.com/Jackett/Jackett (D19).
+# Icon: https://github.com/Jackett/Jackett/blob/master/src/Jackett.Common/Content/apple-touch-icon.png, GPL-2.0 (the license of that repository), none
+#
+# Jackett is an indexer proxy: it translates the queries of apps such as Sonarr
+# and Radarr into tracker-specific requests and sends the results back. The web
+# UI at port 9117 is where the trackers and the connections to other apps are
+# configured.
+#
+# The image documentation mounts a torrent blackhole folder at /downloads.
+# Jackett only writes to it if a blackhole directory is set in its settings
+# (use /downloads); the folder can be left at its default otherwise.
+#
+# The image documentation's optional AUTO_UPDATE is left out, so Jackett only
+# changes with the pinned image, which Hoserva updates through the template.
+services:
+  jackett:
+    image: lscr.io/linuxserver/jackett:v0.24.2793-ls49
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/jackett:/config
+      - ${BLACKHOLE}:/downloads
+    ports:
+      - ${WEBUI_PORT}:9117
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: jackett
+  revision: 1
+  title: Jackett
+  categories: [media, automation]
+  icon: icon.png
+  docs: https://docs.linuxserver.io/images/docker-jackett/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    BLACKHOLE:
+      kind: path
+      role: downloads
+      default: /mnt/user/data/torrents/blackhole
+      label: Torrent blackhole folder
+      description: The torrent blackhole folder, mounted at /downloads in Jackett. It is only used if you set /downloads as the blackhole directory in the Jackett settings; otherwise leave it as it is.
+    WEBUI_PORT: { kind: port, default: 9117, label: Web UI port }
+    TZ:         { kind: timezone }

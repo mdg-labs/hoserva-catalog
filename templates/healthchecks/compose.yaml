@@ -1,0 +1,97 @@
+# Written from https://docs.linuxserver.io/images/docker-healthchecks/, https://healthchecks.io/docs/self_hosted_configuration/ and https://github.com/healthchecks/healthchecks/blob/v4.4/hc/settings.py (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/healthchecks.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none. The logo is a trademark of Healthchecks, used here only to identify the application.
+#
+# Open Healthchecks at exactly the address entered as the site address:
+# Healthchecks only answers requests to the host name in it and builds the
+# ping URLs it shows from it, so use the same host name or IP address and
+# port you will use in the browser and in your cron jobs. If the port below
+# is changed, change the site address to match.
+#
+# On the first start the superuser account is created from the email address
+# and password given; the password is generated if left empty and is kept in
+# the stack's .env file. Sign in with that email address and password. The
+# image generates the secret key Django signs sessions with and keeps it in
+# /config/local_settings.py, so keep the appdata folder.
+#
+# Debug mode is off, as the Healthchecks documentation says it must be for a
+# server in use. Healthchecks can only send email (alerts, invitations) when a
+# mail server is set below. The image's optional port 2525 for pings sent by
+# email is not published.
+services:
+  healthchecks:
+    image: lscr.io/linuxserver/healthchecks:v4.4-ls361
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+      DEBUG: "False"
+      SITE_ROOT: ${SITE_ROOT}
+      SUPERUSER_EMAIL: ${SUPERUSER_EMAIL}
+      SUPERUSER_PASSWORD: ${SUPERUSER_PASSWORD}
+      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL}
+      EMAIL_HOST: ${EMAIL_HOST}
+      EMAIL_PORT: ${EMAIL_PORT}
+      EMAIL_USE_TLS: ${EMAIL_USE_TLS}
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD}
+    volumes:
+      - ${APPDATA}/healthchecks:/config
+    ports:
+      - ${WEBUI_PORT}:8000
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: healthchecks
+  revision: 1
+  title: Healthchecks
+  categories: [monitoring]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-healthchecks/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    SITE_ROOT:
+      kind: string
+      label: Site address
+      description: The address you open Healthchecks at, with the port, for example http://192.168.1.10:8000 (or https://healthchecks.example.com behind a reverse proxy). Healthchecks answers only requests to this host name and builds its ping URLs from it.
+    SUPERUSER_EMAIL:
+      kind: string
+      label: Superuser email address
+      description: The email address of the administrator account, which you sign in with. It is created on the first start.
+    SUPERUSER_PASSWORD:
+      kind: secret
+      label: Superuser password
+      description: The password of the administrator account. Leave it empty to have one generated; it is kept in the stack's .env file. It is only used when the account is created on the first start.
+    DEFAULT_FROM_EMAIL:
+      kind: string
+      default: healthchecks@example.org
+      label: Sender address for email
+      description: The From address of the emails Healthchecks sends. Only used when a mail server is set below; use an address that server accepts.
+    EMAIL_HOST:
+      kind: string
+      optional: true
+      label: Mail server (optional)
+      description: The host name of an SMTP server for alerts and invitations. Leave it empty if Healthchecks should not send email.
+    EMAIL_PORT:
+      kind: string
+      default: "587"
+      label: Mail server port
+      description: The port of the mail server. 587 is the usual port for an explicit TLS connection.
+    EMAIL_USE_TLS:
+      kind: string
+      default: "True"
+      label: Use TLS for email
+      description: True or False. Use TLS when talking to the mail server; the usual setting for port 587.
+    EMAIL_HOST_USER:
+      kind: string
+      optional: true
+      label: Mail server user (optional)
+      description: The user name for the mail server. Leave it empty if the server needs none.
+    EMAIL_HOST_PASSWORD:
+      kind: string
+      optional: true
+      label: Mail server password (optional)
+      description: The password for the mail server. Leave it empty if the server needs none. It is kept in the stack's .env file.
+    WEBUI_PORT: { kind: port, default: 8000, label: Web UI port }
+    TZ:         { kind: timezone }

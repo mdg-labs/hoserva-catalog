@@ -1,0 +1,41 @@
+# Written from https://docs.linuxserver.io/images/docker-wikijs/ and https://docs.requarks.io/install/docker (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/wiki-js.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none. The logo is a trademark of the Wiki.js project, used here only to identify the application.
+#
+# Wiki.js with its SQLite database, the image's default, so no database
+# service is needed. The database file is /config/db.sqlite, next to the
+# configuration, and /data holds the cache and temporary uploads, so both are
+# under the appdata folder. Back that folder up: it holds all the pages.
+#
+# The image documentation says the database settings are read on the first
+# run only, after which they are changed in /config/config.yml. To use
+# PostgreSQL instead, set DB_TYPE to postgres and the DB_* variables as that
+# page lists them; it documents no other external database. On the first visit
+# Wiki.js asks you to create the administrator account.
+services:
+  wikijs:
+    image: lscr.io/linuxserver/wikijs:v2.5.315-ls224
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+      DB_TYPE: sqlite
+    volumes:
+      - ${APPDATA}/wikijs/config:/config
+      - ${APPDATA}/wikijs/data:/data
+    ports:
+      - ${WEBUI_PORT}:3000
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: wikijs
+  revision: 1
+  title: Wiki.js
+  categories: [documents, productivity]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-wikijs/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    WEBUI_PORT: { kind: port, default: 3000, label: Web UI port }
+    TZ:         { kind: timezone }

@@ -13,10 +13,11 @@
 # after the first login.
 #
 # Ebook conversion is left out. The image documentation adds it with the
-# variable DOCKER_MODS=linuxserver/mods:universal-calibre (x86-64 only), which
-# downloads an extra layer when the container starts, outside the pinned
-# image. To use it, add that variable to the environment and set the path to
-# the Calibre converter to /usr/bin/ in Calibre-Web's Basic Configuration.
+# variable DOCKER_MODS=linuxserver/mods:universal-calibre (64-bit only: x86-64
+# and arm64), which downloads an extra layer when the container starts,
+# outside the pinned image. To use it, add that variable to the environment
+# and set the path to the Calibre converter to /usr/bin/ in Calibre-Web's
+# Basic Configuration.
 # The image already includes unrar (/usr/bin/unrar) and kepubify.
 services:
   calibre-web:
@@ -35,7 +36,7 @@ services:
 x-hoserva:
   schema: 1
   id: calibre-web
-  revision: 1
+  revision: 2
   title: Calibre-Web
   categories: [media, books]
   icon: icon.svg

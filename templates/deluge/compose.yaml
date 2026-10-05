@@ -1,0 +1,51 @@
+# Written from https://docs.linuxserver.io/images/docker-deluge/, the web interface preference pages in https://github.com/deluge-torrent/deluge (deluge/ui/web/js/deluge-all/preferences/) and https://wiki.servarr.com/docker-guide (D19).
+# Icon: https://github.com/deluge-torrent/deluge/blob/develop/deluge/ui/data/icons/hicolor/scalable/apps/deluge.svg, CC-BY-SA-2.0 (the license declared in the file's own metadata; authors Jakub Steiner and Tuomas Kuosmanen), none
+#
+# The web UI login is admin with the password deluge until you change it: do
+# that first, under Preferences > Interface > WebUI Password. One mount at
+# /data holds the downloads and the library, so hardlinks and instant moves
+# work. The image documentation's /downloads mount is not used, so under
+# Preferences > Downloads set "Download to" to /data/torrents (the image
+# presets /downloads, inside the container).
+#
+# Under Preferences > Network, untick "Use Random Port" and set the incoming
+# port to the torrent connection port chosen at install, as the image
+# documentation asks; otherwise Deluge listens on random ports that are not
+# mapped. Deluge's port for desktop clients (58846) is left unpublished: the
+# image documentation lists it as optional.
+services:
+  deluge:
+    image: lscr.io/linuxserver/deluge:2.2.0-ls383
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/deluge:/config
+      - ${DATA}:/data
+    ports:
+      - ${WEBUI_PORT}:8112
+      - ${TORRENTING_PORT}:${TORRENTING_PORT}
+      - ${TORRENTING_PORT}:${TORRENTING_PORT}/udp
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: deluge
+  revision: 1
+  title: Deluge
+  categories: [downloads]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-deluge/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    DATA:
+      kind: path
+      role: share
+      default: /mnt/user/data
+      label: Data folder
+      description: The folder that holds both downloads (torrents) and the media library (media). Use the same folder for every media app so hardlinks and instant moves work.
+    WEBUI_PORT:      { kind: port, default: 8112, label: Web UI port }
+    TORRENTING_PORT: { kind: port, default: 6881, label: Torrent connection port }
+    TZ:              { kind: timezone }

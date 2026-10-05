@@ -1,0 +1,45 @@
+# Written from https://docs.linuxserver.io/images/docker-beets/, https://github.com/linuxserver/docker-beets and https://beets.readthedocs.io/en/stable/reference/config.html (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/beets.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none
+#
+# One mount at /data holds the downloads and the library, so imports can move
+# or hardlink files instead of copying them. The image's default configuration
+# keeps the library at /music, which is not mounted here: edit the
+# configuration with `docker exec -it -u abc <container> beet config -e` (it
+# lives in the config folder) and set `directory: /data/media/music`. Run an
+# import with a path under /data, for example
+# `docker exec -it -u abc <container> beet import /data/torrents/<folder>`.
+# The image's default import copies files; set `move: yes` or `hardlink: yes`
+# under `import` to avoid the copy (with `hardlink: yes`, also set `write: no`).
+services:
+  beets:
+    image: lscr.io/linuxserver/beets:2.14.1-ls355
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/beets:/config
+      - ${DATA}:/data
+    ports:
+      - ${WEBUI_PORT}:8337
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: beets
+  revision: 1
+  title: beets
+  categories: [media, automation]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-beets/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    DATA:
+      kind: path
+      role: share
+      default: /mnt/user/data
+      label: Data folder
+      description: The folder that holds both downloads (torrents) and the media library (media). Use the same folder for every media app so hardlinks and instant moves work.
+    WEBUI_PORT: { kind: port, default: 8337, label: Web UI port }
+    TZ:         { kind: timezone }

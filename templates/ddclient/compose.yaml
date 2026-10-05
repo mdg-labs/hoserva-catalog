@@ -1,0 +1,32 @@
+# Written from https://docs.linuxserver.io/images/docker-ddclient/ and https://github.com/ddclient/ddclient (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/ddclient.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none. The logo belongs to its project, used here only to identify the application.
+#
+# ddclient is set up through its ddclient.conf file in the config folder (the
+# appdata folder's ddclient). The image documentation says it lists many
+# providers: uncomment yours and fill in the login or token it asks for.
+# ddclient restarts by itself and reads the file again when it changes.
+# To read the public address from an AVM Fritz!Box, add
+# use=cmd, cmd=/etc/ddclient/get-ip-from-fritzbox to the file. The app has no
+# web interface and needs no ports.
+services:
+  ddclient:
+    image: lscr.io/linuxserver/ddclient:v4.0.0-ls234
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/ddclient:/config
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: ddclient
+  revision: 1
+  title: ddclient
+  categories: [network, dns]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-ddclient/
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    TZ:      { kind: timezone }

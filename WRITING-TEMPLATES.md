@@ -171,7 +171,7 @@ underscores, starting with a letter — and each value describes it:
 | `path` | A folder on the server mounted into the container. | Needs a `role`. A default is an absolute path. |
 | `port` | A port on the server mapped to the container. | A default is a number from 1 to 65535. |
 | `string` | Any other value the user types, such as a claim token. | |
-| `secret` | A password or key the app needs. | No default: Hoserva generates a random value at install and writes it only to the stack's `.env`. |
+| `secret` | A password or key the app needs. | No default. The user may type a value; left empty, Hoserva generates a random one (48 hex characters). Either way it is written only to the stack's `.env`. A `secret` cannot be `optional`: one that must stay empty when unused, such as an optional SMTP password, is a `string` with `optional: true`. |
 | `timezone` | The server's time zone, usually as `TZ`. | Left empty, it becomes `UTC`. |
 | `device` | A GPU for hardware transcoding or acceleration. | Role `gpu`. Not referenced anywhere: if the user picks a GPU, Hoserva maps its render device into every service and adds the render group. Leaving it empty installs without one. |
 

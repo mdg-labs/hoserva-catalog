@@ -1,0 +1,51 @@
+# Written from https://docs.linuxserver.io/images/docker-lazylibrarian/ and https://lazylibrarian.gitlab.io/ (D19).
+# Icon: https://gitlab.com/LazyLibrarian/LazyLibrarian/-/blob/master/data/images/ll256.png, GPL-3.0 (the license of that repository), none
+#
+# One mount at /data holds the downloads and the book library, so hardlinks
+# and instant moves work. In LazyLibrarian's settings, under Processing, set
+# the book destination folder to /data/media/books and the audiobook
+# destination folder to /data/media/audiobooks, and, under Downloaders, use
+# the paths under /data/torrents or /data/usenet that your download client
+# reports. The image documentation's separate /downloads and /books mounts are
+# not used.
+#
+# Two optional features of the image are left out. Both are switched on with
+# the DOCKER_MODS variable, which downloads an extra layer when the container
+# starts, outside the pinned image: linuxserver/mods:universal-calibre for the
+# Calibredb import program (64-bit only: x86-64 and arm64; set its path to
+# /usr/bin/calibredb in Processing) and linuxserver/mods:lazylibrarian-ffmpeg
+# for audiobook conversion (set the ffmpeg path to ffmpeg under Processing,
+# External Programs). Separate several mods with |.
+services:
+  lazylibrarian:
+    image: lscr.io/linuxserver/lazylibrarian:cafa7e09-ls364
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/lazylibrarian:/config
+      - ${DATA}:/data
+    ports:
+      - ${WEBUI_PORT}:5299
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: lazylibrarian
+  revision: 1
+  title: LazyLibrarian
+  categories: [media, books, automation]
+  icon: icon.png
+  docs: https://docs.linuxserver.io/images/docker-lazylibrarian/
+  webui: http://{host}:${WEBUI_PORT}/home
+  inputs:
+    APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
+    DATA:
+      kind: path
+      role: share
+      default: /mnt/user/data
+      label: Data folder
+      description: The folder that holds both downloads (torrents, usenet) and the media library (media). Use the same folder for every media app so hardlinks and instant moves work. Books go in media/books and audiobooks in media/audiobooks.
+    WEBUI_PORT: { kind: port, default: 5299, label: Web UI port }
+    TZ:         { kind: timezone }

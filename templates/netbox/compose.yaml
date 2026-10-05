@@ -1,0 +1,100 @@
+# Written from https://docs.linuxserver.io/images/docker-netbox/, the NetBox installation requirements at https://github.com/netbox-community/netbox/blob/main/docs/installation/index.md and https://github.com/netbox-community/netbox/blob/main/docs/installation/2-redis.md, and the image documentation at https://hub.docker.com/_/postgres and https://hub.docker.com/_/redis (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/netbox.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none. The logo is a trademark of NetBox Labs, used here only to identify the application.
+#
+# NetBox with the PostgreSQL database and Redis instance the image
+# documentation says it requires. NetBox 4.7 needs PostgreSQL 15 or newer and
+# Redis 6.0 or newer, so the stack runs PostgreSQL 17 and Redis 8. Both keep
+# their data under the appdata folder, never on the pool. PostgreSQL 17 keeps
+# its data in /var/lib/postgresql/data, where its image documentation says
+# the volume must be mounted for versions before 18. Redis holds NetBox's
+# cache and its queue of background jobs, and NetBox's documentation says
+# anyone who can write to Redis can run code on a worker, so it publishes no
+# port: only the stack's own services reach it.
+#
+# On the first start the image writes its configuration file, configuration.py
+# in the appdata folder, from the settings below, and it is not written again
+# while that file exists: to change ALLOWED_HOST or the database or Redis
+# connection later, edit configuration.py in the appdata folder. The image
+# documentation describes SUPERUSER_EMAIL and SUPERUSER_PASSWORD as the
+# email address and password of the admin account: log in as admin with them.
+# The password is kept in the stack's .env file.
+#
+# ALLOWED_HOST is the one address or host name NetBox accepts requests for.
+# The default * accepts any, which suits a home network; to restrict it, enter
+# the address or name you open NetBox at. Behind a reverse proxy that serves
+# HTTPS, the image's optional CSRF_TRUSTED_ORIGINS setting lists the origins
+# NetBox trusts; it is not set here.
+# The values are put into the file by a text substitution, so keep the
+# passwords to letters and digits, as the generated ones are.
+services:
+  db:
+    image: docker.io/library/postgres:17.11
+    environment:
+      POSTGRES_DB: netbox
+      POSTGRES_USER: netbox
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ${APPDATA}/netbox/db:/var/lib/postgresql/data
+    restart: unless-stopped
+  redis:
+    image: docker.io/library/redis:8.10.2-alpine
+    volumes:
+      - ${APPDATA}/netbox/redis:/data
+    restart: unless-stopped
+  netbox:
+    image: lscr.io/linuxserver/netbox:v4.7.2-ls383
+    depends_on:
+      - db
+      - redis
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+      SUPERUSER_EMAIL: ${SUPERUSER_EMAIL}
+      SUPERUSER_PASSWORD: ${SUPERUSER_PASSWORD}
+      ALLOWED_HOST: ${ALLOWED_HOST}
+      DB_NAME: netbox
+      DB_USER: netbox
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: db
+      DB_PORT: "5432"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_DB_TASK: "0"
+      REDIS_DB_CACHE: "1"
+    volumes:
+      - ${APPDATA}/netbox/config:/config
+    ports:
+      - ${WEBUI_PORT}:8000
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: netbox
+  revision: 1
+  title: NetBox
+  categories: [network, productivity]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-netbox/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    SUPERUSER_EMAIL:
+      kind: string
+      label: Admin email address
+      description: The email address of the admin account NetBox creates on its first start. The image documents the account as admin.
+    SUPERUSER_PASSWORD:
+      kind: secret
+      label: Admin password
+      description: The password of the admin account. Leave it empty to have one generated; it is kept in the stack's .env file. Use only letters and digits if you set your own.
+    ALLOWED_HOST:
+      kind: string
+      default: "*"
+      label: Allowed host
+      description: The address or host name you open NetBox at, for example 192.168.1.10 or netbox.home.lan. Only one is accepted; the default * accepts any. The image writes it into its configuration file on the first start only.
+    DB_PASSWORD:
+      kind: secret
+      label: Database password
+      description: The password of the database user NetBox connects with. Leave it empty to have one generated; it is kept in the stack's .env file. Use only letters and digits if you set your own.
+    WEBUI_PORT: { kind: port, default: 8000, label: Web UI port }
+    TZ:         { kind: timezone }

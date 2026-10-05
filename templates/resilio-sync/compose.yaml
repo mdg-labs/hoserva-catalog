@@ -1,0 +1,45 @@
+# Written from https://docs.linuxserver.io/images/docker-resilio-sync/ and https://help.resilio.com/hc/en-us/articles/204754759-What-ports-and-protocols-are-used-by-Sync (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/resilio-sync.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none
+#
+# Open the web UI to create the account and configure Resilio Sync; the image
+# documentation gives no preset login. Add the folders to sync under /sync,
+# which is the sync folder below. The sync port is the one Resilio Sync uses
+# to connect to other devices, over TCP and UDP. /downloads, the image's
+# folder for downloads and cache, is kept in appdata.
+services:
+  resilio-sync:
+    image: lscr.io/linuxserver/resilio-sync:3.1.2.1076-1-ls261
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/resilio-sync/config:/config
+      - ${SYNC}:/sync
+      - ${APPDATA}/resilio-sync/downloads:/downloads
+    ports:
+      - ${WEBUI_PORT}:8888
+      - ${SYNC_PORT}:55555
+      - ${SYNC_PORT}:55555/udp
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: resilio-sync
+  revision: 1
+  title: Resilio Sync
+  categories: [files, sync]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-resilio-sync/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    SYNC:
+      kind: path
+      role: share
+      default: /mnt/user/resilio-sync
+      label: Sync folder
+      description: The folder that holds the files Resilio Sync synchronises. It is mounted at /sync in Resilio Sync, so add folders from there.
+    WEBUI_PORT: { kind: port, default: 8888, label: Web UI port }
+    SYNC_PORT:  { kind: port, default: 55555, label: Sync port }
+    TZ:         { kind: timezone }

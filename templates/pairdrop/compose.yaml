@@ -1,0 +1,41 @@
+# Written from https://docs.linuxserver.io/images/docker-pairdrop/ and https://github.com/schlagmichdoch/PairDrop/blob/master/docs/host-your-own.md (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/pairdrop.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none
+#
+# PairDrop keeps no data on disk, so it has no appdata folder. Devices that
+# open the same address on the same network see each other and send files
+# straight between them (WebRTC).
+#
+# The image documentation strongly recommends running PairDrop behind a
+# reverse proxy that serves it over HTTPS if it is reachable from outside the
+# local network, and the proxy must set the X-Forwarded-For header correctly,
+# otherwise every client sees every other client.
+#
+# The image also reads optional variables this template leaves at their
+# defaults: WS_FALLBACK=true routes transfers through the server when a
+# direct WebRTC connection is blocked, for example by a VPN (all traffic then
+# passes through, and is readable by, the server); RATE_LIMIT=true limits each
+# client to 100 requests per 5 minutes; RTC_CONFIG points to a JSON file with
+# custom STUN/TURN servers.
+services:
+  pairdrop:
+    image: lscr.io/linuxserver/pairdrop:v1.11.2-ls145
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+    ports:
+      - ${WEBUI_PORT}:3000
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: pairdrop
+  revision: 1
+  title: PairDrop
+  categories: [files, productivity]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-pairdrop/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    WEBUI_PORT: { kind: port, default: 3000, label: Web UI port }
+    TZ:         { kind: timezone }

@@ -1,0 +1,137 @@
+# Written from https://docs.linuxserver.io/images/docker-unifi-network-application/ and the official MongoDB image documentation at https://hub.docker.com/_/mongo (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/ubiquiti-unifi.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none. The logo is a trademark of Ubiquiti Inc., used here only to identify the application.
+#
+# The UniFi Network Application and the external MongoDB database the image
+# documentation requires, on the official mongo image pinned to 7.0: the
+# documentation says to pin the database version, because MongoDB does not
+# upgrade between major versions on its own, and says that since release 8.1
+# the application supports MongoDB 3.6 through 7.0. MongoDB newer than 4.4
+# needs a CPU with AVX on x86-64; on one without, the documentation says to
+# use MongoDB 4.4, by changing the database image tag.
+#
+# The documentation has the database user created by an init-mongo.sh script
+# mounted into /docker-entrypoint-initdb.d, to be used exactly as given, and a
+# template cannot ship a file, so the database's start command writes that
+# script with the documented contents and starts the image's normal entrypoint.
+# The image runs it only when it creates the database on its first start, and
+# the database, user and passwords are only read then, on both sides: changing
+# them afterwards does not change them in MongoDB. The passwords are kept in
+# the stack's .env file. The database user name and database name are fixed
+# (unifi); the root account is only used to create that user. Both passwords
+# are written into that init script inside double quotes and UniFi reads the
+# database password URL-encoded, so the database refuses to start with a
+# password that is empty or has anything but letters and digits in it, rather
+# than run an init script that fails and leaves the database without its user.
+#
+# After the first start the web UI is at https://<server>:<web UI port>, on a
+# self-signed certificate, and its first-run wizard sets the application up or
+# restores a backup. Devices are told to contact the controller at the
+# container's own address, which they cannot reach: in the application, under
+# Devices > Device Updates and Settings > Device SSH Settings, turn on "Inform
+# Host Override" and enter this server's address (UniFi moves that option
+# between releases, so search for "Inform" if it is not there). The
+# documentation says port 8080 must not be remapped, because devices are told
+# it and it would break adopted devices, so the device and STUN ports are not
+# inputs.
+#
+# Only the ports the documentation marks as required are published: the
+# device inform port, the STUN port and the device discovery port. The
+# optional ones are left out: 1900/udp (controller discovery on the local
+# network), 8843 and 8880 (guest portal redirects), 6789 (mobile speed test)
+# and 5514/udp (remote syslog). Add a line under ports for any of them you use.
+services:
+  db:
+    image: docker.io/library/mongo:7.0.43
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MONGO_USER: unifi
+      MONGO_PASS: ${DB_PASSWORD}
+      MONGO_DBNAME: unifi
+      MONGO_AUTHSOURCE: admin
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        set -e
+        alnum() { [[ -n $$1 ]] && ( LC_ALL=C; [[ $$1 =~ ^[A-Za-z0-9]+$$ ]] ); }
+        if ! alnum "$${MONGO_INITDB_ROOT_PASSWORD}"; then
+          echo "Database administrator password must be non-empty and use only letters and digits." >&2
+          exit 1
+        fi
+        if ! alnum "$${MONGO_PASS}"; then
+          echo "Database password must be non-empty and use only letters and digits." >&2
+          exit 1
+        fi
+        cat > /docker-entrypoint-initdb.d/init-mongo.sh <<'SCRIPT'
+        #!/bin/bash
+        if which mongosh > /dev/null 2>&1; then
+          mongo_init_bin='mongosh'
+        else
+          mongo_init_bin='mongo'
+        fi
+        "$${mongo_init_bin}" <<EOF
+        use $${MONGO_AUTHSOURCE}
+        db.auth("$${MONGO_INITDB_ROOT_USERNAME}", "$${MONGO_INITDB_ROOT_PASSWORD}")
+        db.createUser({
+          user: "$${MONGO_USER}",
+          pwd: "$${MONGO_PASS}",
+          roles: [
+            "clusterMonitor",
+            { db: "$${MONGO_DBNAME}", role: "dbOwner" },
+            { db: "$${MONGO_DBNAME}_stat", role: "dbOwner" },
+            { db: "$${MONGO_DBNAME}_audit", role: "dbOwner" },
+            { db: "$${MONGO_DBNAME}_restore", role: "dbOwner" }
+          ]
+        })
+        EOF
+        SCRIPT
+        chmod 0755 /docker-entrypoint-initdb.d/init-mongo.sh
+        exec docker-entrypoint.sh mongod
+    volumes:
+      - ${APPDATA}/unifi-network-application/db:/data/db
+    restart: unless-stopped
+  unifi-network-application:
+    image: lscr.io/linuxserver/unifi-network-application:10.6.106-ls148
+    depends_on:
+      - db
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+      MONGO_USER: unifi
+      MONGO_PASS: ${DB_PASSWORD}
+      MONGO_HOST: db
+      MONGO_PORT: "27017"
+      MONGO_DBNAME: unifi
+      MONGO_AUTHSOURCE: admin
+    volumes:
+      - ${APPDATA}/unifi-network-application/config:/config
+    ports:
+      - ${WEBUI_PORT}:8443
+      - 8080:8080
+      - 3478:3478/udp
+      - 10001:10001/udp
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: unifi-network-application
+  revision: 1
+  title: UniFi Network Application
+  categories: [network]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-unifi-network-application/
+  webui: https://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    DB_ROOT_PASSWORD:
+      kind: secret
+      label: Database administrator password
+      description: The password of the MongoDB root account, used once to create the UniFi database user. Leave it empty to have one generated; it is kept in the stack's .env file. Use only letters and digits if you set your own.
+    DB_PASSWORD:
+      kind: secret
+      label: Database password
+      description: The password of the database user UniFi connects with. Leave it empty to have one generated; it is kept in the stack's .env file. Use only letters and digits if you set your own, since UniFi reads special characters URL-encoded.
+    WEBUI_PORT: { kind: port, default: 8443, label: Web UI port }
+    TZ:         { kind: timezone }

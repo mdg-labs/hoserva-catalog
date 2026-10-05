@@ -1,0 +1,84 @@
+# Written from https://docs.linuxserver.io/images/docker-webtop/ and its Selkies base image documentation, https://docs.linuxserver.io/selkies/ (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/webp/webtop.webp, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none. The logo is a trademark of its owners, used here only to identify the application.
+#
+# One desktop flavour is pinned: the image's default, the XFCE desktop on
+# Alpine (the latest tag of the image documentation). The tag below is that
+# build's version tag; the other flavours (KDE, MATE, i3, Debian, Ubuntu,
+# Fedora, Arch) are separate tags of the same image.
+#
+# Open the desktop on the HTTPS port: the image serves a self-signed
+# certificate, so the browser asks you to accept it once, and the desktop only
+# works over HTTPS. The HTTP port is for putting a reverse proxy in front; the
+# image documentation says it must be proxied.
+#
+# The image documentation warns that this container gives privileged access to
+# the host system, and that the desktop includes a terminal with passwordless
+# sudo: anyone who reaches the web interface gets root inside the container.
+# Keep it on a trusted network and behind the login below. Without a login
+# the image has no authentication at all.
+#
+# shm_size is the 1gb the image documentation recommends for every desktop
+# image. No seccomp setting is added: the image documentation lists none for
+# this image.
+#
+# A GPU chosen below is detected and used by the image on its own (the image
+# documentation gives Intel and AMD GPUs as a mapped /dev/dri). The NVIDIA
+# setup of the image documentation needs a driver installed from Nvidia's .run
+# file and the nvidia runtime, and is not set up here.
+services:
+  webtop:
+    image: lscr.io/linuxserver/webtop:092de24e-ls318
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+      CUSTOM_USER: ${CUSTOM_USER}
+      PASSWORD: ${PASSWORD}
+    volumes:
+      - ${APPDATA}/webtop:/config
+    ports:
+      - ${HTTP_PORT}:3000
+      - ${WEBUI_PORT}:3001
+    shm_size: 1gb
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: webtop
+  revision: 1
+  title: Webtop
+  categories: [desktop]
+  icon: icon.webp
+  docs: https://docs.linuxserver.io/images/docker-webtop/
+  webui: https://{host}:${WEBUI_PORT}
+  description: |
+    A full Linux desktop in the browser: the XFCE desktop on Alpine, streamed to any modern web browser. Use it for the odd graphical tool on the server without leaving the browser.
+
+    This template pins the image's default flavour, XFCE on Alpine. The desktop is served over HTTPS with a self-signed certificate, so the browser asks you to accept it once. It includes a terminal with passwordless sudo, so anyone who can sign in has root inside the container: keep it on your local network.
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    WEBUI_PORT:
+      kind: port
+      default: 3001
+      label: Desktop HTTPS port
+      description: The port the desktop is served on over HTTPS. Open it as https://, the desktop does not work over plain HTTP.
+    HTTP_PORT:
+      kind: port
+      default: 3000
+      label: Desktop HTTP port
+      description: Only for putting a reverse proxy in front of the desktop. Open the HTTPS port to use it directly.
+    TZ: { kind: timezone }
+    CUSTOM_USER:
+      kind: string
+      default: admin
+      label: Login name
+      description: The user name for the desktop's web login.
+    PASSWORD:
+      kind: secret
+      label: Login password
+      description: The password for the desktop's web login. Hoserva generates one at install; it is in the stack's .env.
+    DESKTOP_GPU:
+      kind: device
+      role: gpu
+      label: GPU
+      description: Optional. An Intel or AMD GPU that the desktop may use to render and encode the stream.

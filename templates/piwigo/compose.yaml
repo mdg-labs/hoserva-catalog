@@ -1,0 +1,78 @@
+# Written from https://docs.linuxserver.io/images/docker-piwigo/, https://piwigo.org/ and https://hub.docker.com/_/mariadb (the image documentation of the database service, https://github.com/docker-library/docs/blob/master/mariadb/README.md) (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/piwigo.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none. The logo is a trademark of the Piwigo project, used here only to identify the application.
+#
+# Piwigo with a MariaDB database, because the image documentation says a user
+# and a database must exist on a MySQL or MariaDB server for Piwigo to use.
+# The database service creates both on its first start. Piwigo's own
+# configuration is under the appdata folder, and so is the database, never on
+# the pool; the photos are in the gallery folder on the pool. The database
+# service is the official mariadb image the catalog's MariaDB template also
+# uses. Its root password is random and never needed, because Piwigo
+# connects as its own user, which owns its database.
+#
+# On the first visit Piwigo's installation page asks for the database. Enter
+# db as the host, piwigo as the user name and the database name, and the
+# database password, which Hoserva keeps in the stack's .env file; then create
+# the administrator account. The image generates self-signed keys on its first
+# run in the config folder (keys), which you can replace with your own, and
+# the image documentation suggests enabling the local files editor on
+# Piwigo's plugins page to edit the configuration, for example the email
+# settings.
+services:
+  db:
+    image: docker.io/library/mariadb:12.3.3
+    environment:
+      MARIADB_RANDOM_ROOT_PASSWORD: "1"
+      MARIADB_AUTO_UPGRADE: "1"
+      MARIADB_DATABASE: piwigo
+      MARIADB_USER: piwigo
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/piwigo/db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 30s
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+  piwigo:
+    image: lscr.io/linuxserver/piwigo:16.4.0-ls359
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/piwigo/config:/config
+      - ${GALLERY}:/gallery
+    ports:
+      - ${WEBUI_PORT}:80
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: piwigo
+  revision: 1
+  title: Piwigo
+  categories: [photos, media]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-piwigo/
+  webui: http://{host}:${WEBUI_PORT}
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    GALLERY:
+      kind: path
+      role: share
+      default: /mnt/user/piwigo
+      label: Gallery folder
+      description: The folder that holds the photos Piwigo stores and serves. Only Piwigo should change what is in it.
+    DB_PASSWORD:
+      kind: secret
+      label: Database password
+      description: The password of Piwigo's database user, which you enter on Piwigo's installation page. Leave it empty to have one generated; it is kept in the stack's .env file. The database applies it only on its first start.
+    WEBUI_PORT: { kind: port, default: 8080, label: Web UI port }
+    TZ:         { kind: timezone }
