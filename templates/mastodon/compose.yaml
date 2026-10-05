@@ -1,0 +1,173 @@
+# Written from https://docs.linuxserver.io/images/docker-mastodon/ (the image documentation, https://github.com/linuxserver/docker-mastodon), https://docs.joinmastodon.org/admin/config/, https://docs.joinmastodon.org/admin/tootctl/ and the README, .env.production.sample and configuration of Mastodon v4.7.3 (https://github.com/mastodon/mastodon/tree/v4.7.3) (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/mastodon.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none. The logo is a trademark of Mastodon gGmbH, used here only to identify the application.
+#
+# Mastodon needs its own public domain name served over HTTPS: other servers
+# reach it by that name, and LOCAL_DOMAIN cannot be changed once set. Put a
+# reverse proxy in front of it and point the domain at the proxy. The image
+# serves HTTPS with a self-signed certificate on its own and redirects plain
+# HTTP to it, so the proxy must send its requests to the HTTPS port below
+# with https as the scheme and not verify that certificate (the image
+# documentation's "Strict reverse proxies" note links the steps for common
+# proxies). Only the HTTPS port is mapped.
+#
+# One image runs the web server, the streaming service and the Sidekiq job
+# queue; the image documentation says it needs separate PostgreSQL and Redis,
+# which are the other two services (Mastodon's README asks for PostgreSQL 14
+# or newer and Redis 7.0 or newer). The optional Elasticsearch and S3 storage
+# are switched off. The image prepares the database on start, so the first
+# start takes a while.
+#
+# The configuration and the database are under the appdata folder, never on
+# the pool. Uploaded media (the image links its public/system folder into
+# /config/mastodon/public/system) is mounted from the pool.
+#
+# SECRET_KEY_BASE, OTP_SECRET and the three Active Record encryption keys are
+# random values Hoserva generates at install; Mastodon's own setup task and
+# configuration accept random strings for them. Never change them afterwards:
+# the image documentation says changing SECRET_KEY_BASE ends every session
+# and changing OTP_SECRET breaks two-factor logins, and Mastodon warns that
+# changing the encryption keys can lose data. The VAPID keys for push
+# notifications are an elliptic-curve key pair, not a random string, so they
+# are inputs you generate once with the image's own helper:
+#   docker run --rm -it --entrypoint /bin/bash lscr.io/linuxserver/mastodon:v4.7.3-ls215 generate-vapid
+#
+# PUID and PGID make the image run Mastodon as the owner of the appdata and
+# media folders. Sign-ups are closed by default, so the first account is
+# created inside the running container with the image's tootctl alias, for
+# example
+#   docker exec -it <the mastodon container> /tootctl accounts create <name> --email <address> --confirmed --approve --role Owner
+# --confirmed skips the confirmation email, so it works without SMTP, and
+# --approve is needed because accounts wait for approval while registrations
+# are closed. Further accounts can be made the same way, or the Owner can open
+# registrations in the web interface's administration settings.
+#
+# There is no webui link: Mastodon only answers requests whose Host is
+# LOCAL_DOMAIN or WEB_DOMAIN, so the server's LAN address would get a 403.
+# Open the site through the public domain.
+services:
+  db:
+    image: docker.io/library/postgres:17.11
+    environment:
+      POSTGRES_DB: mastodon
+      POSTGRES_USER: mastodon
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ${APPDATA}/mastodon/db:/var/lib/postgresql/data
+    shm_size: 128mb
+    restart: unless-stopped
+  redis:
+    image: docker.io/library/redis:8.10.2-alpine
+    volumes:
+      - ${APPDATA}/mastodon/redis:/data
+    restart: unless-stopped
+  mastodon:
+    image: lscr.io/linuxserver/mastodon:v4.7.3-ls215
+    depends_on:
+      - db
+      - redis
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+      LOCAL_DOMAIN: ${LOCAL_DOMAIN}
+      WEB_DOMAIN: ${WEB_DOMAIN:-${LOCAL_DOMAIN}}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_USER: mastodon
+      DB_NAME: mastodon
+      DB_PASS: ${DB_PASSWORD}
+      ES_ENABLED: "false"
+      S3_ENABLED: "false"
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      OTP_SECRET: ${OTP_SECRET}
+      ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY: ${ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY}
+      ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY: ${ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY}
+      ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT: ${ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
+      SMTP_SERVER: ${SMTP_SERVER}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_LOGIN: ${SMTP_LOGIN}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_FROM_ADDRESS: ${SMTP_FROM_ADDRESS}
+    volumes:
+      - ${APPDATA}/mastodon/config:/config
+      - ${MEDIA}:/config/mastodon/public/system
+    ports:
+      - ${WEBUI_PORT}:443
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: mastodon
+  revision: 1
+  title: Mastodon
+  categories: [social, productivity]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-mastodon/
+  description: |-
+    A Mastodon social network server that takes part in the fediverse, with PostgreSQL and Redis in the same stack. Use it for yourself, your family or a small community.
+
+    Before installing you need a public domain name, with HTTPS served by a reverse proxy: other servers reach yours by that name, and it cannot be changed later. The app serves HTTPS with a self-signed certificate on the Web UI port; point the proxy at that port over https and let it skip checking the certificate.
+
+    You also generate the push notification (VAPID) keys once with the command in the input's help text. The other secrets are generated for you. Email (SMTP) is optional, but without it Mastodon cannot send sign-up confirmations or notifications; the first account is created from the command line, as the template's comments explain.
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    MEDIA:
+      kind: path
+      role: share
+      default: /mnt/user/mastodon
+      label: Media folder
+      description: The folder that holds the uploaded and cached images, videos and other media. It can grow large; the database and the configuration stay on the cache.
+    LOCAL_DOMAIN:
+      kind: string
+      label: Server domain
+      description: The public domain name of your server, without https://, for example social.example.com. It identifies your server to others and cannot be changed safely later.
+    WEB_DOMAIN:
+      kind: string
+      optional: true
+      label: Web domain
+      description: Optional. Only if the address of the web site differs from the server domain, for example @you@example.com served at mastodon.example.com. Leave it empty to use the server domain. It cannot be changed safely later.
+    VAPID_PRIVATE_KEY:
+      kind: string
+      label: Push notification private key
+      description: 'Generate the key pair once on the server with: docker run --rm -it --entrypoint /bin/bash lscr.io/linuxserver/mastodon:v4.7.3-ls215 generate-vapid. Paste the private key here, without the VAPID_PRIVATE_KEY= part. Changing it later breaks push notifications.'
+    VAPID_PUBLIC_KEY:
+      kind: string
+      label: Push notification public key
+      description: The public key printed by the same command, without the VAPID_PUBLIC_KEY= part.
+    SMTP_SERVER:
+      kind: string
+      optional: true
+      label: Mail server
+      description: Optional. The host name of the SMTP server Mastodon sends sign-up confirmations and notifications through. Leave it empty to send no email.
+    SMTP_PORT: { kind: string, default: "587", label: Mail server port }
+    SMTP_LOGIN:
+      kind: string
+      optional: true
+      label: Mail server user name
+      description: Optional. The user name for the mail server, if it needs one.
+    SMTP_PASSWORD:
+      kind: string
+      optional: true
+      label: Mail server password
+      description: Optional. The password for the mail server, if it needs one. It is kept in the stack's .env file.
+    SMTP_FROM_ADDRESS:
+      kind: string
+      optional: true
+      label: Sender address
+      description: Optional. The address emails come from, for example notifications@example.com. Needed when a mail server is set.
+    DB_PASSWORD:                                  { kind: secret, label: Database password }
+    SECRET_KEY_BASE:                              { kind: secret, label: Session secret }
+    OTP_SECRET:                                   { kind: secret, label: Two-factor secret }
+    ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY:         { kind: secret, label: Encryption primary key }
+    ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY:   { kind: secret, label: Encryption deterministic key }
+    ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT: { kind: secret, label: Encryption key derivation salt }
+    WEBUI_PORT:
+      kind: port
+      default: 8443
+      label: HTTPS port
+      description: The port the reverse proxy sends requests to, over https. Do not expose it to the internet directly.
+    TZ: { kind: timezone }
