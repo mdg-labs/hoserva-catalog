@@ -1,0 +1,63 @@
+# Written from https://docs.linuxserver.io/images/docker-obsidian/ (D19).
+# Icon: https://github.com/selfhst/icons/blob/main/svg/obsidian.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none
+#
+# Obsidian runs as a desktop app streamed to the browser. Open the HTTPS port
+# (https://<server>:3001) and accept the certificate warning: the image uses a
+# self-signed certificate, and the browser features it needs only work over
+# HTTPS. The HTTP port is meant to sit behind a reverse proxy. Anyone who
+# reaches the page can use the app's terminal, which has passwordless sudo
+# inside the container, so keep the login set and do not expose the port to
+# the internet. In Obsidian choose "Open folder as vault" and pick /vaults.
+services:
+  obsidian:
+    image: lscr.io/linuxserver/obsidian:v1.13.7-ls147
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+      CUSTOM_USER: ${CUSTOM_USER}
+      PASSWORD: ${PASSWORD}
+    volumes:
+      - ${APPDATA}/obsidian:/config
+      - ${VAULT}:/vaults
+    ports:
+      - ${HTTP_PORT}:3000
+      - ${HTTPS_PORT}:3001
+    # Obsidian is an Electron app; the image documentation says it needs this shared memory.
+    shm_size: 1gb
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: obsidian
+  revision: 1
+  title: Obsidian
+  categories: [desktop, productivity]
+  icon: icon.svg
+  docs: https://docs.linuxserver.io/images/docker-obsidian/
+  webui: https://{host}:${HTTPS_PORT}
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    VAULT:
+      kind: path
+      role: share
+      default: /mnt/user/obsidian
+      label: Vault folder
+      description: The folder that holds your Obsidian vaults. It is mounted at /vaults in Obsidian, so open or create vaults from there.
+    CUSTOM_USER:
+      kind: string
+      default: admin
+      label: User name
+      description: The user name for the login page.
+    PASSWORD:
+      kind: secret
+      label: Password
+      description: The password for the login page. Leave it empty to have one generated; it is kept in the stack's .env file.
+    HTTPS_PORT: { kind: port, default: 3001, label: HTTPS port }
+    HTTP_PORT:  { kind: port, default: 3000, label: HTTP port (for a reverse proxy) }
+    TZ:         { kind: timezone }
+    OBSIDIAN_GPU:
+      kind: device
+      role: gpu
+      label: Graphics acceleration
+      description: Optional. An Intel or AMD GPU that Obsidian's desktop may use for smoother rendering.
