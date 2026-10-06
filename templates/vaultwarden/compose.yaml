@@ -14,7 +14,7 @@
 # The documentation names no time zone setting, so there is no TZ input.
 services:
   vaultwarden:
-    image: vaultwarden/server:1.37.3
+    image: vaultwarden/server:1.37.4
     environment:
       DOMAIN: ${DOMAIN}
       SIGNUPS_ALLOWED: "true"
@@ -27,7 +27,7 @@ services:
 x-hoserva:
   schema: 1
   id: vaultwarden
-  revision: 1
+  revision: 2
   title: Vaultwarden
   categories: [security, productivity]
   icon: icon.svg
