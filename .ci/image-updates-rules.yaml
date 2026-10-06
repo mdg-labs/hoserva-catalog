@@ -1,0 +1,67 @@
+# How .ci/image-updates.py decides what a newer image version is. This is the
+# only place an image-specific exception lives (CONTRIBUTING.md, "Image
+# updates"). The first rule whose `match` covers an image applies; an image no
+# rule covers uses `defaults`.
+#
+# match    a host/repository glob. Docker Hub is docker.io, and its official
+#          images sit under library/ (docker.io/library/postgres).
+# scheme   how versions are compared:
+#            semver       tags of the pinned tag's shape (digit runs read as N)
+#                         whose first number has as many digits as the pinned
+#                         tag's. The newest with the same first number is the
+#                         update; a larger first number is a major.
+#            calver       the same shape rule, but the first number is a year or
+#                         date: the newest tag of any year is the update, and
+#                         there is no major.
+#            linuxserver  the version tag the registry's `latest` points at,
+#                         looked for among the newest version tags of the
+#                         listing (lscr.io and ghcr.io list in push order).
+#                         The -ls<N> build counter is only compared between
+#                         builds of one version.
+# include  regular expressions (re.search): when set, a tag must match one.
+# exclude  regular expressions: a tag matching one is not considered. A rule's
+#          list adds to the defaults'. A filter the pinned tag itself matches
+#          is not applied, so a pin on a prerelease line follows that line.
+# majors   false: a newer major is never reported for these images (default
+#          true). Updates within the pinned major still are.
+#
+# An image whose pinned tag cannot be classified under its rule (no number, not
+# in the registry's tag list, not matching the include filter) is a listed
+# failure, never "no update".
+
+defaults:
+  scheme: semver
+  exclude:
+    - '(?i)(?:^|[-._])(?:rc|alpha|beta|dev|nightly|unstable|snapshot|preview|canary)(?:[-._]?\d+)?(?:[-._]|$)'
+
+rules:
+  - match: lscr.io/linuxserver/*
+    scheme: linuxserver
+
+  # The first number is a year or a date.
+  - match: ghcr.io/home-assistant/home-assistant
+    scheme: calver
+  - match: docker.io/pihole/pihole
+    scheme: calver
+  - match: ghcr.io/alexta69/metube
+    scheme: calver
+  - match: ghcr.io/kieraneglin/pinchflat
+    scheme: calver
+
+  # Publishes a nightly of the same N.N.N shape as its releases, tagged by date.
+  - match: docker.io/kopia/kopia
+    exclude:
+      - '^\d{8}\.'
+
+  # Database servers are kept per major (one template per major, or a pinned
+  # major per template): a newer major is a migration, never an update.
+  - match: docker.io/library/postgres
+    majors: false
+  - match: ghcr.io/immich-app/postgres
+    majors: false
+  - match: docker.io/library/mariadb
+    majors: false
+  - match: docker.io/library/mysql
+    majors: false
+  - match: docker.io/library/mongo
+    majors: false

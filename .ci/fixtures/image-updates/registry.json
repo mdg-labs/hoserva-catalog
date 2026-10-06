@@ -1,0 +1,452 @@
+{
+ "lscr.io": {
+  "linuxserver/webtop": {
+   "pageSize": 4,
+   "tags": [
+    "latest",
+    "092de24e-ls318",
+    "a1b2c3d4-ls320",
+    "amd64-a1b2c3d4-ls320",
+    "arm64v8-a1b2c3d4-ls320",
+    "develop-5.0.0-ls5000",
+    "unstable-5.1.3-ls370",
+    "unstable-5.1.3-ls371",
+    "unstable-5.1.3-ls372",
+    "unstable-5.1.3-ls373",
+    "unstable-5.1.3-ls374",
+    "unstable-5.1.3-ls375",
+    "unstable-5.1.3-ls376",
+    "unstable-5.1.3-ls377",
+    "unstable-5.1.3-ls378",
+    "unstable-5.1.3-ls379",
+    "unstable-5.1.3-ls380",
+    "unstable-5.1.3-ls381",
+    "unstable-5.1.3-ls382",
+    "version-a1b2c3d4"
+   ],
+   "digests": {
+    "latest": "=a1b2c3d4-ls320"
+   }
+  },
+  "linuxserver/sabnzbd": {
+   "tags": [
+    "latest",
+    "5.1.3-ls275",
+    "5.1.3-ls276",
+    "amd64-5.1.3-ls276",
+    "version-5.1.3"
+   ],
+   "digests": {
+    "latest": "=5.1.3-ls276"
+   }
+  },
+  "linuxserver/prowlarr": {
+   "tags": [
+    "latest",
+    "5.1.3-ls275",
+    "5.1.4-ls276"
+   ],
+   "digests": {
+    "latest": "=5.1.4-ls276"
+   }
+  },
+  "linuxserver/jellyfin": {
+   "tags": [
+    "latest",
+    "12.1-ls51"
+   ],
+   "digests": {
+    "latest": "=12.1-ls51"
+   }
+  },
+  "linuxserver/nzbget": {
+   "tags": [
+    "latest",
+    "2.0-ls9",
+    "2.0-ls10"
+   ],
+   "digests": {
+    "latest": "=2.0-ls10"
+   }
+  },
+  "linuxserver/inplace": {
+   "tags": [
+    "latest",
+    "5.1.2-ls270",
+    "5.1.3-ls275",
+    "5.1.3-ls276"
+   ],
+   "digests": {
+    "latest": "=5.1.3-ls275"
+   }
+  },
+  "linuxserver/older": {
+   "tags": [
+    "latest",
+    "5.1.3-ls275",
+    "5.1.4-ls280"
+   ],
+   "digests": {
+    "latest": "=5.1.3-ls275"
+   }
+  },
+  "linuxserver/unmatched": {
+   "tags": [
+    "latest",
+    "1.0-ls1",
+    "1.1-ls2"
+   ],
+   "digests": {
+    "latest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+   }
+  },
+  "linuxserver/jackett": {
+   "tags": [
+    "latest",
+    "v0.22.1770-ls720",
+    "v0.22.1771-ls721",
+    "v0.22.1772-ls722",
+    "v0.22.1773-ls723",
+    "v0.22.1774-ls724",
+    "v0.22.1775-ls725",
+    "v0.22.1776-ls726",
+    "v0.22.1777-ls727",
+    "v0.22.1778-ls728",
+    "v0.22.1779-ls729",
+    "v0.22.1780-ls730",
+    "v0.22.1781-ls731",
+    "v0.22.1782-ls732",
+    "v0.22.1783-ls733",
+    "v0.22.1784-ls734",
+    "v0.22.1785-ls735",
+    "v0.22.1786-ls736",
+    "v0.22.1787-ls737",
+    "v0.22.1788-ls738",
+    "v0.22.1789-ls739",
+    "v0.22.1790-ls740",
+    "v0.22.1791-ls741",
+    "v0.22.1792-ls742",
+    "v0.22.1793-ls743",
+    "v0.22.1794-ls744",
+    "v0.24.2793-ls49",
+    "v0.24.2798-ls50"
+   ],
+   "digests": {
+    "latest": "=v0.24.2798-ls50"
+   }
+  },
+  "linuxserver/jellyfinreal": {
+   "tags": [
+    "latest",
+    "10.9.0-ls300",
+    "10.9.1-ls301",
+    "10.9.2-ls302",
+    "10.9.3-ls303",
+    "10.9.4-ls304",
+    "10.9.5-ls305",
+    "10.9.6-ls306",
+    "10.9.7-ls307",
+    "10.9.8-ls308",
+    "10.9.9-ls309",
+    "10.9.10-ls310",
+    "10.9.11-ls311",
+    "10.9.12-ls312",
+    "10.9.13-ls313",
+    "10.9.14-ls314",
+    "10.9.15-ls315",
+    "10.9.16-ls316",
+    "10.9.17-ls317",
+    "10.9.18-ls318",
+    "10.9.19-ls319",
+    "10.9.20-ls320",
+    "10.9.21-ls321",
+    "10.9.22-ls322",
+    "10.9.23-ls323",
+    "10.9.24-ls324",
+    "20201215.0-fixup-ls150",
+    "20201215.1-fixup-ls151",
+    "20201215.2-fixup-ls152",
+    "20201215.3-fixup-ls153",
+    "20201215.4-fixup-ls154",
+    "20201215.5-fixup-ls155",
+    "20201215.6-fixup-ls156",
+    "20201215.7-fixup-ls157",
+    "20201215.8-fixup-ls158",
+    "20201215.9-fixup-ls159",
+    "20201215.10-fixup-ls160",
+    "20201215.11-fixup-ls161",
+    "20201215.12-fixup-ls162",
+    "20201215.13-fixup-ls163",
+    "20201215.14-fixup-ls164",
+    "20201215.15-fixup-ls165",
+    "20201215.16-fixup-ls166",
+    "20201215.17-fixup-ls167",
+    "20201215.18-fixup-ls168",
+    "20201215.19-fixup-ls169",
+    "20201215.20-fixup-ls170",
+    "20201215.21-fixup-ls171",
+    "20201215.22-fixup-ls172",
+    "20201215.23-fixup-ls173",
+    "20201215.24-fixup-ls174",
+    "10.8.13-1-ls246",
+    "10.8.13-1-ls247",
+    "12.1ubu2604-ls51",
+    "12.2ubu2604-ls52"
+   ],
+   "digests": {
+    "latest": "=12.2ubu2604-ls52"
+   }
+  },
+  "linuxserver/reset": {
+   "tags": [
+    "latest",
+    "3.0.0-ls400",
+    "3.1.0-ls2"
+   ],
+   "digests": {
+    "latest": "=3.1.0-ls2"
+   }
+  },
+  "linuxserver/betas": {
+   "tags": [
+    "latest",
+    "1.0.0-ls10",
+    "1.0.1-ls11",
+    "9.9.0-beta-ls0",
+    "9.9.1-beta-ls1",
+    "9.9.2-beta-ls2",
+    "9.9.3-beta-ls3",
+    "9.9.4-beta-ls4",
+    "9.9.5-beta-ls5",
+    "9.9.6-beta-ls6",
+    "9.9.7-beta-ls7",
+    "9.9.8-beta-ls8",
+    "9.9.9-beta-ls9",
+    "9.9.10-beta-ls10",
+    "9.9.11-beta-ls11",
+    "9.9.12-beta-ls12",
+    "9.9.13-beta-ls13",
+    "9.9.14-beta-ls14",
+    "9.9.15-beta-ls15",
+    "9.9.16-beta-ls16",
+    "9.9.17-beta-ls17",
+    "9.9.18-beta-ls18",
+    "9.9.19-beta-ls19",
+    "9.9.20-beta-ls20",
+    "9.9.21-beta-ls21",
+    "9.9.22-beta-ls22",
+    "9.9.23-beta-ls23",
+    "9.9.24-beta-ls24"
+   ],
+   "digests": {
+    "latest": "=1.0.1-ls11"
+   }
+  }
+ },
+ "docker.io": {
+  "org/semver": {
+   "tags": [
+    "1.2.3",
+    "1.2.4",
+    "1.9.0",
+    "1.10.0",
+    "1.10.0-rc1",
+    "1.11.0-alpine",
+    "latest"
+   ]
+  },
+  "org/major": {
+   "tags": [
+    "2.1.0",
+    "2.1.1",
+    "3.0.0",
+    "3.1.0"
+   ]
+  },
+  "org/majoronly": {
+   "tags": [
+    "2.1.0",
+    "3.0.0"
+   ]
+  },
+  "org/alpine": {
+   "tags": [
+    "1.2.3-alpine",
+    "1.2.4",
+    "1.2.5-alpine",
+    "1.2.9",
+    "latest"
+   ]
+  },
+  "org/plain": {
+   "tags": [
+    "1.2.3",
+    "1.2.9-alpine"
+   ]
+  },
+  "library/postgres": {
+   "pageSize": 3,
+   "tags": [
+    "17.11",
+    "17.12",
+    "18.6",
+    "19.0",
+    "19.1"
+   ]
+  },
+  "org/digrebuild": {
+   "tags": [
+    "2.0.1"
+   ],
+   "digests": {
+    "2.0.1": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+   }
+  },
+  "org/digversion": {
+   "tags": [
+    "1.0.0",
+    "1.0.1"
+   ],
+   "digests": {
+    "1.0.1": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+   }
+  },
+  "org/multi": {
+   "tags": [
+    "1.0.0",
+    "1.1.0"
+   ]
+  },
+  "org/devpin": {
+   "tags": [
+    "1.3.0",
+    "1.4.0"
+   ]
+  },
+  "org/dupes": {
+   "tags": [
+    "1.0.0",
+    "1.1.0"
+   ]
+  },
+  "org/current": {
+   "tags": [
+    "4.0.0"
+   ]
+  },
+  "org/broken": {
+   "status": 500,
+   "tags": [
+    "1.0.0"
+   ]
+  },
+  "org/untagged": {
+   "tags": [
+    "2.0.0"
+   ]
+  },
+  "org/halfpin": {
+   "tags": [
+    "1.0.0",
+    "1.1.0"
+   ]
+  },
+  "org/unlisted": {
+   "tags": [
+    "1.0.0"
+   ]
+  },
+  "org/calver": {
+   "tags": [
+    "2026.9.4",
+    "2026.10.0",
+    "2027.1.0",
+    "20261005.0.1"
+   ]
+  },
+  "org/kopia": {
+   "tags": [
+    "0.23.1",
+    "0.23.2",
+    "20261004.0.5",
+    "20261005.0.232010"
+   ]
+  },
+  "org/nightly": {
+   "tags": [
+    "0.23.1",
+    "0.23.2",
+    "20261005.0.232010"
+   ]
+  },
+  "org/incl": {
+   "tags": [
+    "1.0.0",
+    "1.1.0",
+    "1.2.0",
+    "2.0.0"
+   ]
+  },
+  "org/excl": {
+   "tags": [
+    "1.0.0",
+    "1.1.0",
+    "1.2.0"
+   ]
+  },
+  "org/inclpin": {
+   "tags": [
+    "1.0.0",
+    "9.0.0"
+   ]
+  },
+  "org/prerel": {
+   "tags": [
+    "1.0.0-rc1",
+    "1.0.0-rc2"
+   ]
+  },
+  "org/majedit": {
+   "tags": [
+    "2.1.0",
+    "3.0.0"
+   ]
+  },
+  "kopia/kopia": {
+   "tags": [
+    "0.23.1",
+    "0.23.2",
+    "20261004.0.5",
+    "20261005.0.232010"
+   ]
+  },
+  "org/dbmajor": {
+   "tags": [
+    "17.5",
+    "17.6",
+    "18.0"
+   ]
+  }
+ },
+ "open.example": {
+  "org/vapp": {
+   "anonymous": true,
+   "tags": [
+    "v3.5.2",
+    "v3.5.3",
+    "3.5.9",
+    "v3.5.3-rc1"
+   ]
+  }
+ },
+ "ghcr.io": {
+  "home-assistant/home-assistant": {
+   "tags": [
+    "2026.9.4",
+    "2026.10.1",
+    "2027.1.0",
+    "20261005.0.1"
+   ]
+  }
+ }
+}

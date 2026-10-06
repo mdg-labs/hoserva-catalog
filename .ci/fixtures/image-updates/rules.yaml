@@ -1,0 +1,26 @@
+# The ruleset the image-updates test runs with: every scheme and every filter
+# of .ci/image-updates-rules.yaml, on the fixture registry's images.
+defaults:
+  scheme: semver
+  exclude:
+    - '(?i)(?:^|[-._])(?:rc|alpha|beta|dev|nightly|unstable|snapshot|preview|canary)(?:[-._]?\d+)?(?:[-._]|$)'
+
+rules:
+  - match: lscr.io/linuxserver/*
+    scheme: linuxserver
+  - match: docker.io/org/calver
+    scheme: calver
+  - match: docker.io/org/kopia
+    exclude:
+      - '^\d{8}\.'
+  - match: docker.io/org/incl
+    include:
+      - '^1\.[01]\.'
+  - match: docker.io/org/excl
+    exclude:
+      - '^1\.2\.'
+  - match: docker.io/org/inclpin
+    include:
+      - '^9\.'
+  - match: docker.io/org/dbmajor
+    majors: false
