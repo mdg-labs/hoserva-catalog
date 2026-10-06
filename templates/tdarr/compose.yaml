@@ -16,7 +16,7 @@
 # its whole folder and wakes the pool's disks.
 services:
   tdarr:
-    image: ghcr.io/haveagitgat/tdarr:2.93.01
+    image: ghcr.io/haveagitgat/tdarr:2.94.03
     environment:
       TZ: ${TZ}
       PUID: "99"
@@ -46,7 +46,7 @@ services:
 x-hoserva:
   schema: 1
   id: tdarr
-  revision: 1
+  revision: 2
   title: Tdarr
   categories: [media, automation]
   icon: icon.png
