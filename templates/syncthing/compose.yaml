@@ -14,7 +14,7 @@
 # local network.
 services:
   syncthing:
-    image: lscr.io/linuxserver/syncthing:v2.1.5-ls230
+    image: lscr.io/linuxserver/syncthing:v2.1.6-ls231
     hostname: syncthing
     environment:
       PUID: "99"
@@ -33,7 +33,7 @@ services:
 x-hoserva:
   schema: 1
   id: syncthing
-  revision: 1
+  revision: 2
   title: Syncthing
   categories: [files, sync]
   icon: icon.svg
