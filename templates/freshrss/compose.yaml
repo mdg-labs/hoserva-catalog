@@ -10,7 +10,7 @@
 # appdata folder; they are active after the container restarts.
 services:
   freshrss:
-    image: lscr.io/linuxserver/freshrss:1.30.0-ls323
+    image: lscr.io/linuxserver/freshrss:1.30.1-ls324
     environment:
       PUID: "99"
       PGID: "100"
@@ -24,7 +24,7 @@ services:
 x-hoserva:
   schema: 1
   id: freshrss
-  revision: 1
+  revision: 2
   title: FreshRSS
   categories: [productivity]
   icon: icon.svg
