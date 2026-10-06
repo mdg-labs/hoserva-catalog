@@ -18,7 +18,7 @@
 # and the same with RADARR_URL and RADARR_API_KEY for Radarr.
 services:
   recyclarr:
-    image: ghcr.io/recyclarr/recyclarr:8.7.2
+    image: ghcr.io/recyclarr/recyclarr:8.7.3
     user: "99:100"
     environment:
       TZ: ${TZ}
@@ -35,7 +35,7 @@ services:
 x-hoserva:
   schema: 1
   id: recyclarr
-  revision: 1
+  revision: 2
   title: Recyclarr
   categories: [media, automation]
   icon: icon.svg
