@@ -14,7 +14,7 @@
 # changes with the pinned image, which Hoserva updates through the template.
 services:
   jackett:
-    image: lscr.io/linuxserver/jackett:v0.24.2793-ls49
+    image: lscr.io/linuxserver/jackett:v0.24.2798-ls50
     environment:
       PUID: "99"
       PGID: "100"
@@ -29,7 +29,7 @@ services:
 x-hoserva:
   schema: 1
   id: jackett
-  revision: 1
+  revision: 2
   title: Jackett
   categories: [media, automation]
   icon: icon.png
