@@ -22,7 +22,7 @@ services:
 x-hoserva:
   schema: 1
   id: radarr
-  revision: 2
+  revision: 3
   title: Radarr
   categories: [media, automation]
   icon: icon.svg
@@ -31,7 +31,7 @@ x-hoserva:
   description: |
     A movie collection manager: it watches your indexers for the movies you want, sends them to your download client, and renames and files them in your library.
 
-    One data folder holds both downloads and library, so imports are hardlinks or instant moves. In Radarr set the root folder to /data/media/movies, and in the download client use the paths under /data/torrents.
+    One data folder holds both downloads and library, so imports are hardlinks or instant moves. In Radarr set the root folder to /data/media/movies, and in the download client use the paths under /data/torrents. The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     DATA:
