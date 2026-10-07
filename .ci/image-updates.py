@@ -69,7 +69,7 @@ ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 SERVICE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 LS_RE = re.compile(r"^(.+)-ls(\d+)$")
 MAJOR_ID_RE = re.compile(r"-\d+$")
-MARKER_RE = re.compile(r"<!-- image-update id=(\S+) targets=(\S*)(?: majors=(\S*))? -->")
+MARKER_RE = re.compile(r"<!-- image-update id=(\S+) targets=(\S*)(?: kinds=(\S*))?(?: majors=(\S*))? -->")
 RULES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "image-updates-rules.yaml")
 ARCH_PREFIXES = {"amd64", "arm64v8", "arm32v7", "arm64", "armhf", "arm"}
 DOCKER_HOSTS = {"docker.io", "index.docker.io", "registry-1.docker.io"}
@@ -563,8 +563,10 @@ def decode(text):
     return dict(item.split("=", 1) for item in (text or "").split(",") if item)
 
 
-def marker(tpl_id, changes, majors):
-    text = f"<!-- image-update id={tpl_id} targets={encode({s: c.target for s, c in changes.items()})}"
+def marker(tpl_id, records, majors):
+    text = f"<!-- image-update id={tpl_id} targets={encode({s: t for s, (t, _) in records.items()})}"
+    if records:
+        text += f" kinds={encode({s: k for s, (_, k) in records.items()})}"
     if majors:
         text += f" majors={encode(majors)}"
     return text + " -->"
@@ -591,9 +593,9 @@ def title(tpl_id, changes, majors):
     return text + f" and {len(tags) - 1} more" if len(tags) > 1 else text
 
 
-def body(tpl, changes, majors):
+def body(tpl, changes, majors, records):
     lines = [
-        marker(tpl.id, changes, majors),
+        marker(tpl.id, records, majors),
         "",
         f"A newer image version is available for the `{tpl.id}` template.",
         "",
@@ -681,7 +683,8 @@ class GitHub:
                         "number": item["number"],
                         "id": match.group(1),
                         "targets": decode(match.group(2)),
-                        "majors": decode(match.group(3)),
+                        "kinds": decode(match.group(3)),
+                        "majors": decode(match.group(4)),
                     }
                 )
             if len(items) < 100:
@@ -703,20 +706,20 @@ class GitHub:
             )
         self.label_ready = True
 
-    def create(self, tpl, changes, majors):
+    def create(self, tpl, changes, majors, records):
         self.ensure_label()
         made = self.api(
             f"repos/{self.repo}/issues",
             "POST",
-            {"title": title(tpl.id, changes, majors), "body": body(tpl, changes, majors), "labels": [LABEL]},
+            {"title": title(tpl.id, changes, majors), "body": body(tpl, changes, majors, records), "labels": [LABEL]},
         )
         return made["number"]
 
-    def edit(self, number, tpl, changes, majors):
+    def edit(self, number, tpl, changes, majors, records):
         self.api(
             f"repos/{self.repo}/issues/{number}",
             "PATCH",
-            {"title": title(tpl.id, changes, majors), "body": body(tpl, changes, majors)},
+            {"title": title(tpl.id, changes, majors), "body": body(tpl, changes, majors, records)},
         )
 
     def close(self, number, comment):
@@ -742,6 +745,17 @@ def ahead(pin, target):
     return shape(pin) == shape(target) and numbers(pin) > numbers(target)
 
 
+def major_behind(pin, major):
+    """True when the version dev pins has a lower first number than the major line; tags of another shape are not comparable."""
+    pin, major = version_of(pin), version_of(major)
+    return shape(pin) == shape(major) and numbers(pin)[:1] < numbers(major)[:1]
+
+
+def major_reached(pin, major):
+    pin, major = version_of(pin), version_of(major)
+    return shape(pin) == shape(major) and numbers(pin)[:1] >= numbers(major)[:1]
+
+
 def decide(pinned, changes, majors, keep):
     """One of none, create, edit, supersede, close, given the newest open issue (or None)."""
     wants = bool(majors) or any(c.kind == "version" for c in changes.values())
@@ -753,6 +767,11 @@ def decide(pinned, changes, majors, keep):
         return "close"
     if not wants and any(ahead(p, t) for p, t in held):
         return "none"
+    if not wants and keep["majors"] and all(s in pinned and keep["kinds"].get(s) == "rebuild" and version_of(t) == version_of(pinned[s]) for s, t in keep["targets"].items()):
+        held_majors = [(pinned[s], m) for s, m in keep["majors"].items() if s in pinned]
+        behind_dev = any(major_behind(p, m) for p, m in held_majors)
+        reached_dev = any(major_reached(p, m) for p, m in held_majors)
+        return "close" if behind_dev and not reached_dev else "none"
     if not changes and not majors:
         return "none"
     new = {s: c.target for s, c in changes.items()}
@@ -768,9 +787,31 @@ def decide(pinned, changes, majors, keep):
     return "supersede" if version_diff else "edit"
 
 
+def recorded(pinned, changes, keep):
+    """The (target, kind) the marker records per service. A service the open
+    issue recorded as a version change stays a version change while its version
+    is the one reported now or the one dev pins, so a later rebuild of an adopted
+    version never turns it into a rebuild. Only an in-place edit passes the open
+    issue: an adopted version closes through the Fixes trailer naming that issue,
+    which no other issue has."""
+    records = {s: (c.target, c.kind) for s, c in changes.items()}
+    if keep is None:
+        return records
+    for service, target in keep["targets"].items():
+        if keep["kinds"].get(service) != "version":
+            continue
+        if service in changes:
+            if version_of(changes[service].target) == version_of(target):
+                records[service] = (changes[service].target, "version")
+        elif service in pinned and version_of(pinned[service]) == version_of(target):
+            records[service] = (target, "version")
+    return records
+
+
 def reconcile(gh, tpl, pinned, changes, majors, issues):
     keep = issues[-1] if issues else None
     action = decide(pinned, changes, majors, keep)
+    records = recorded(pinned, changes, keep if action == "edit" else None)
     notes = []
     if action == "close":
         for old in issues:
@@ -778,14 +819,14 @@ def reconcile(gh, tpl, pinned, changes, majors, issues):
             notes.append(f"closed #{old['number']}: no newer version reported")
         return notes
     if action in ("create", "supersede"):
-        new = gh.create(tpl, changes, majors)
+        new = gh.create(tpl, changes, majors, records)
         notes.append(f"opened #{new}")
         for old in issues:
             gh.supersede(old["number"], new)
             notes.append(f"closed #{old['number']} as not planned")
         return notes
     if action == "edit":
-        gh.edit(keep["number"], tpl, changes, majors)
+        gh.edit(keep["number"], tpl, changes, majors, records)
         notes.append(f"updated #{keep['number']} in place")
     for old in issues[:-1]:
         gh.supersede(old["number"], keep["number"])

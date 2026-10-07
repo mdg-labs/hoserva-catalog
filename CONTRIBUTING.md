@@ -62,6 +62,19 @@ documentation, with `Fixes #<n>` in the commit message.
   whose version `dev` already pins, or pins a newer one than, is left alone, even
   when a rebuild of that pin is reported, and closes with the commit that reaches
   `main`.
+- An open issue that reports only a new major (no version change) is closed the
+  same way, with the same comment, once that major is no longer reported (a rule
+  changed, or upstream withdrew the tag) and `dev` still pins a lower major for
+  the service. A rebuild of the pinned version recorded in it does not keep it
+  open, but a version change recorded in it does, whether it is still pending or
+  `dev` has already adopted it, as does a recorded change whose kind the issue
+  does not state (an issue opened before the kind was recorded). Editing the
+  issue in place keeps a recorded version change that `dev` has adopted: a later
+  rebuild of that version, or a new major, never turns it into a rebuild. An issue
+  opened in place of a superseded one records only what is reported then, as an
+  adopted version closes through the commit that names the issue it was adopted
+  for. When `dev` already pins that major or a later one for any of its services,
+  the issue is left alone and closes with the commit that reaches `main`.
 - A rebuild-only bump (a new `-ls<N>` suffix on the same version, or a new digest
   behind a pinned tag) never opens an issue. When an issue is already open, it is
   edited in place to name the newest rebuild: same number, no comment, nothing
