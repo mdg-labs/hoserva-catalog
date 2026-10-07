@@ -28,7 +28,7 @@ services:
       - ${APPDATA}/paperless-ngx/db:/var/lib/postgresql
     restart: unless-stopped
   webserver:
-    image: ghcr.io/paperless-ngx/paperless-ngx:3.2.1
+    image: ghcr.io/paperless-ngx/paperless-ngx:3.3.0
     depends_on:
       - db
       - broker
@@ -53,7 +53,7 @@ services:
 x-hoserva:
   schema: 1
   id: paperless-ngx
-  revision: 1
+  revision: 2
   title: Paperless-ngx
   categories: [documents, productivity]
   icon: icon.svg

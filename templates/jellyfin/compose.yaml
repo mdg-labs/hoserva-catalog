@@ -6,7 +6,7 @@
 # clients by the server's address.
 services:
   jellyfin:
-    image: lscr.io/linuxserver/jellyfin:12.1ubu2604-ls51
+    image: lscr.io/linuxserver/jellyfin:12.2ubu2604-ls53
     environment:
       PUID: "99"
       PGID: "100"
@@ -21,7 +21,7 @@ services:
 x-hoserva:
   schema: 1
   id: jellyfin
-  revision: 1
+  revision: 2
   title: Jellyfin
   categories: [media]
   icon: icon.svg

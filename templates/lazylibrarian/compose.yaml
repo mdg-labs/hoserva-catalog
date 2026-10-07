@@ -18,7 +18,7 @@
 # External Programs). Separate several mods with |.
 services:
   lazylibrarian:
-    image: lscr.io/linuxserver/lazylibrarian:cafa7e09-ls364
+    image: lscr.io/linuxserver/lazylibrarian:120ec585-ls366
     environment:
       PUID: "99"
       PGID: "100"
@@ -33,7 +33,7 @@ services:
 x-hoserva:
   schema: 1
   id: lazylibrarian
-  revision: 1
+  revision: 2
   title: LazyLibrarian
   categories: [media, books, automation]
   icon: icon.png

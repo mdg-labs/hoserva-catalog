@@ -1,4 +1,4 @@
-# Written from https://hub.docker.com/_/nextcloud (the image documentation, https://github.com/docker-library/docs/blob/master/nextcloud/README.md), https://github.com/nextcloud/docker/blob/master/.examples/docker-compose/insecure/postgres/apache/compose.yaml and https://docs.nextcloud.com/server/latest/admin_manual/installation/system_requirements.html (D19).
+# Written from https://hub.docker.com/_/nextcloud (the image documentation, https://github.com/docker-library/docs/blob/master/nextcloud/README.md), https://github.com/nextcloud/docker/blob/master/.examples/docker-compose/insecure/postgres/apache/compose.yaml and https://docs.nextcloud.com/server/35/admin_manual/installation/system_requirements.html, https://docs.nextcloud.com/server/35/admin_manual/maintenance/upgrade.html and https://docs.nextcloud.com/server/35/admin_manual/release_notes/upgrade_to_35.html (D19).
 # Icon: https://github.com/selfhst/icons/blob/main/svg/nextcloud.svg, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none
 #
 # The official apache image with PostgreSQL and Redis, as the image
@@ -25,6 +25,16 @@
 # PostgreSQL 18 is one of the versions the system requirements list as
 # supported; the database mount is the one upstream's example uses for the
 # current postgres image (postgres:alpine is 18-alpine).
+#
+# Updating from revision 1 (Nextcloud 34.0.4) to Nextcloud 35: the image
+# upgrades the installation when it starts, and the upgrade page requires the
+# latest point release of the current major version first, which 34.0.4 is
+# (the image documentation lists no later 34.x). Nextcloud can only be upgraded
+# one major version at a time and does not support downgrading, so make a backup
+# of the appdata and data folders before applying this update. The 35 release
+# notes list only system requirement changes (PHP 8.2, older operating system,
+# MariaDB and MySQL versions dropped), none of which concern the image and
+# PostgreSQL 18 used here.
 services:
   db:
     image: postgres:18-alpine
@@ -41,7 +51,7 @@ services:
       - ${APPDATA}/nextcloud/redis:/data
     restart: unless-stopped
   app:
-    image: nextcloud:34.0.4-apache
+    image: nextcloud:35.0.1-apache
     depends_on:
       - db
       - redis
@@ -61,7 +71,7 @@ services:
 x-hoserva:
   schema: 1
   id: nextcloud
-  revision: 1
+  revision: 2
   title: Nextcloud
   categories: [files, productivity]
   icon: icon.svg

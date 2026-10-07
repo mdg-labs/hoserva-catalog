@@ -18,14 +18,14 @@
 #
 # The image runs on the CPU by default. A GPU chosen below maps its render
 # device, which the bundled Vulkan support uses on Intel and AMD GPUs. The
-# ROCm build for AMD GPUs is the 0.35.0-rocm tag with /dev/kfd and /dev/dri
+# ROCm build for AMD GPUs is the 0.40.0-rocm tag with /dev/kfd and /dev/dri
 # added under devices. An NVIDIA GPU needs the NVIDIA Container Toolkit on the
 # server and the Compose form of --gpus=all: under deploy, resources,
 # reservations, devices, an entry with driver nvidia, count all and
 # capabilities [gpu]. Neither is set up here.
 services:
   ollama:
-    image: docker.io/ollama/ollama:0.35.0
+    image: docker.io/ollama/ollama:0.40.0
     environment:
       OLLAMA_MODELS: /models
     volumes:
@@ -38,7 +38,7 @@ services:
 x-hoserva:
   schema: 1
   id: ollama
-  revision: 1
+  revision: 2
   title: Ollama
   categories: [ai]
   icon: icon.svg
