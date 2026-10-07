@@ -27,12 +27,16 @@ services:
 x-hoserva:
   schema: 1
   id: vaultwarden
-  revision: 2
+  revision: 3
   title: Vaultwarden
   categories: [security, productivity]
   icon: icon.svg
   docs: https://github.com/dani-garcia/vaultwarden/wiki/Using-Docker-Compose
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A password manager server that works with the Bitwarden apps, browser extensions and web vault, so you can store and sync your passwords on your own server.
+
+    The web vault needs HTTPS in most browsers, so put a reverse proxy that serves HTTPS in front of it and enter that address as the public address. Sign-up is open so you can create the first account: after creating it, change SIGNUPS_ALLOWED to false in the app's Compose file so no one else can register. The admin page is disabled.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     DOMAIN:

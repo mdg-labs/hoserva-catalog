@@ -46,12 +46,16 @@ services:
 x-hoserva:
   schema: 1
   id: tdarr
-  revision: 2
+  revision: 3
   title: Tdarr
   categories: [media, automation]
   icon: icon.png
   docs: https://docs.tdarr.io/docs/installation/docker/run-compose
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A tool that transcodes the files in your media library automatically and checks their health, using the rules and plugins you set up, so your videos end up in the formats you choose.
+
+    Tdarr replaces files in the library with their transcoded versions, so keep a copy of anything you cannot replace. A library scan walks the whole library folder and wakes the pool's disks. The cache where each file is written while it is processed is in the app's folder on the cache. The server port for separate nodes is not published, so a node on another machine cannot join.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     MEDIA:

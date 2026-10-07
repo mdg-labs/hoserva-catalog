@@ -39,12 +39,16 @@ services:
 x-hoserva:
   schema: 1
   id: stash
-  revision: 1
+  revision: 2
   title: Stash
   categories: [media]
   icon: icon.svg
   docs: https://docs.stashapp.cc/installation/docker/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A self-hosted web app that organises and serves a collection of videos and images: it gathers information about them from the internet, lets you tag and sort them, and plays them in your browser.
+
+    In the setup wizard keep the suggested folders, and choose /blobs if it asks where to store blobs. Generated previews, sprites and transcodes can grow large; they stay in the app's folder on the cache. The official image has no hardware acceleration, and Stash shows times in UTC.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     LIBRARY:

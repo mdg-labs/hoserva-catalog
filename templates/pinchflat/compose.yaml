@@ -27,12 +27,16 @@ services:
 x-hoserva:
   schema: 1
   id: pinchflat
-  revision: 1
+  revision: 2
   title: Pinchflat
   categories: [downloads, media, automation]
   icon: icon.png
   docs: https://github.com/kieraneglin/pinchflat#readme
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A self-hosted app that downloads videos from YouTube channels and playlists you choose, using yt-dlp, and keeps checking for new ones. The files are saved to a folder, ready for a media server.
+
+    The download folder defaults to a youtube folder in the media library. To have Jellyfin or Plex pick the videos up, create a Media Profile with the Media Center preset in Pinchflat and add the folder as a TV show library in the media server.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     DOWNLOADS:

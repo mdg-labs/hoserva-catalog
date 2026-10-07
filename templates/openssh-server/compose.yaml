@@ -33,11 +33,15 @@ services:
 x-hoserva:
   schema: 1
   id: openssh-server
-  revision: 1
+  revision: 2
   title: OpenSSH Server
   categories: [network, files]
   icon: icon.webp
   docs: https://docs.linuxserver.io/images/docker-openssh-server/
+  description: |
+    An SSH and SFTP server that gives one user a sandboxed login: they reach only the shared folder and the processes inside the container, not the server itself.
+
+    Connect with, for example, sftp -P 2222 <user>@<server> and open /data, the shared folder. Sudo access is not enabled. Public keys given at install are added to the user's authorized keys when the app starts, and removing the value later does not remove them.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     SHARE:

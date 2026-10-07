@@ -26,12 +26,18 @@ services:
 x-hoserva:
   schema: 1
   id: prometheus
-  revision: 1
+  revision: 2
   title: Prometheus
   categories: [monitoring]
   icon: icon.svg
   docs: https://prometheus.io/docs/prometheus/latest/installation/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A monitoring system that collects numeric metrics from your services and stores them as time series you can query and graph.
+
+    As installed it collects metrics only from itself. To collect from other targets, bind-mount a prometheus.yml with a scrape_configs entry for each of them at /etc/prometheus/prometheus.yml by adding it to the volumes of the app. Its web page has no login, so keep it on your home network.
+
+    The stored metrics must be on a local disk: the project does not support network file systems such as NFS for them.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     WEBUI_PORT: { kind: port, default: 9090, label: Web UI port }

@@ -28,12 +28,16 @@ services:
 x-hoserva:
   schema: 1
   id: whisparr
-  revision: 1
+  revision: 2
   title: Whisparr
   categories: [media, automation]
   icon: icon.svg
   docs: https://wiki.servarr.com/whisparr/installation/docker
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A collection manager for adult movies and scenes for Usenet and BitTorrent users: it watches your indexers, sends downloads to your download client, and sorts and renames the results in your library.
+
+    This app runs Whisparr v3, which covers scenes and movies. One data folder holds both downloads and library, so imports are hardlinks or instant moves. In Whisparr set the root folder to a folder of its own under the library, for example /data/media/whisparr, and in the download client use the paths under /data/torrents or /data/usenet.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     DATA:

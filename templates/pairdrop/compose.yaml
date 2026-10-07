@@ -30,12 +30,16 @@ services:
 x-hoserva:
   schema: 1
   id: pairdrop
-  revision: 1
+  revision: 2
   title: PairDrop
   categories: [files, productivity]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-pairdrop/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A way to send files and text between devices in a web browser: devices that open the same address on the same network see each other and send directly, like AirDrop.
+
+    It keeps nothing on disk. If you make it reachable from outside your home network, put it behind a reverse proxy that serves HTTPS and sets the X-Forwarded-For header correctly, otherwise every client sees every other client.
   inputs:
     WEBUI_PORT: { kind: port, default: 3000, label: Web UI port }
     TZ:         { kind: timezone }

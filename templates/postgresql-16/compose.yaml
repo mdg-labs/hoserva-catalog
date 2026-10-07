@@ -42,11 +42,17 @@ services:
 x-hoserva:
   schema: 1
   id: postgresql-16
-  revision: 1
+  revision: 2
   title: PostgreSQL 16
   categories: [database, development]
   icon: icon.svg
   docs: https://hub.docker.com/_/postgres
+  description: |
+    A PostgreSQL relational database server for the apps that need one and for your own projects.
+
+    The PostgreSQL project supports a major version for five years after its first release. PostgreSQL 16 was first released on September 14, 2023, and its final release is scheduled for November 9, 2028.
+
+    Each major version is its own template, and this one only ever moves within PostgreSQL 16. Moving to a newer major version is PostgreSQL's own upgrade, with pg_upgrade or a dump and restore.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     SUPERUSER_PASSWORD:

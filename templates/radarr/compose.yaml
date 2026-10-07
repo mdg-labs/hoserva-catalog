@@ -22,12 +22,16 @@ services:
 x-hoserva:
   schema: 1
   id: radarr
-  revision: 1
+  revision: 2
   title: Radarr
   categories: [media, automation]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-radarr/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A movie collection manager: it watches your indexers for the movies you want, sends them to your download client, and renames and files them in your library.
+
+    One data folder holds both downloads and library, so imports are hardlinks or instant moves. In Radarr set the root folder to /data/media/movies, and in the download client use the paths under /data/torrents.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     DATA:

@@ -34,12 +34,18 @@ services:
 x-hoserva:
   schema: 1
   id: open-webui
-  revision: 1
+  revision: 2
   title: Open WebUI
   categories: [ai]
   icon: icon.svg
   docs: https://docs.openwebui.com/getting-started/quick-start/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A web interface for chatting with AI language models, with your chats, documents and users kept on your own server. It works with Ollama and with other model providers.
+
+    It has no models of its own: install the Ollama app, or add another provider under Settings > Admin > Connections. The first account you create becomes the administrator, and sign-up then turns itself off; let others join under Settings > Admin > Authentication.
+
+    The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     OLLAMA_URL:

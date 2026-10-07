@@ -56,12 +56,16 @@ services:
 x-hoserva:
   schema: 1
   id: piwigo
-  revision: 1
+  revision: 2
   title: Piwigo
   categories: [photos, media]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-piwigo/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A web photo gallery: upload your photos, sort them into albums and tags, and let family and friends browse them.
+
+    It runs with its own MariaDB database. On the first visit the installation page asks for it: enter db as the host, piwigo as the user name and the database name, and the database password from the stack's .env file; then create the administrator account.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     GALLERY:

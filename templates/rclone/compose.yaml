@@ -57,12 +57,18 @@ services:
 x-hoserva:
   schema: 1
   id: rclone
-  revision: 1
+  revision: 2
   title: rclone
   categories: [backup, sync]
   icon: icon.svg
   docs: https://rclone.org/install/#docker
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A tool for copying files to and from cloud storage and other remote locations, here with its web interface for adding remotes and starting transfers.
+
+    The folder to back up is mounted read-only at /source, so rclone cannot change or delete what it copies; restore only into /backups. rclone copies when you start a transfer and has no schedule of its own. With the default folders, /source/backups is the backup folder itself: exclude it from every copy, and exclude /source/appdata if the pool has an appdata share. A copy kept on this server does not survive losing it, so copy to a remote or a USB disk as well.
+
+    Anyone signed in to the web interface can run commands and read every file and stored credential rclone can reach, so keep it on your home network. The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS. On its first start rclone downloads the web interface from GitHub.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     SOURCE:

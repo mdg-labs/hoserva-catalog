@@ -33,12 +33,18 @@ services:
 x-hoserva:
   schema: 1
   id: syncthing
-  revision: 2
+  revision: 3
   title: Syncthing
   categories: [files, sync]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-syncthing/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    Continuous file synchronisation between your devices: the folders you pair stay in step directly between the devices, without a cloud service or a central server.
+
+    Add folders to sync in Syncthing under /data1, the sync folder. This app uses Docker's default network mode, in which Syncthing sees only the container's internal address, and its own notes recommend host networking: enter the other device's address by hand when connecting devices on your local network. Set a username and password for the web interface under Actions > Settings, because it listens on every address.
+
+    The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     SYNC:

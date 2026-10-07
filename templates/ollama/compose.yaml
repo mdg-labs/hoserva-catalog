@@ -38,11 +38,17 @@ services:
 x-hoserva:
   schema: 1
   id: ollama
-  revision: 2
+  revision: 3
   title: Ollama
   categories: [ai]
   icon: icon.svg
   docs: https://docs.ollama.com/docker
+  description: |
+    Runs large language models on your own server and serves them through an API that other apps use. It has no web interface of its own; Open WebUI is one app that talks to it.
+
+    After install, pull and run a model with docker exec -it <container> ollama run llama3.2, or from an app such as Open WebUI. Models are several gigabytes each.
+
+    The API has no login: anyone who can reach its port can run, pull and delete models. Keep it on your home network and never forward it from your router. Without a GPU, models run on the CPU.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     MODELS:

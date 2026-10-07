@@ -36,12 +36,16 @@ services:
 x-hoserva:
   schema: 1
   id: seerr
-  revision: 1
+  revision: 2
   title: Seerr
   categories: [media]
   icon: icon.svg
   docs: https://docs.seerr.dev/getting-started/docker
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A request manager for your media library: people search for movies and TV shows and ask for them, and Seerr sends the requests to Sonarr or Radarr. It works with Jellyfin, Plex and Emby.
+
+    On the first visit a setup wizard connects Seerr to your media server and then to Sonarr and Radarr. Each of those runs in its own stack, so enter them by the server's address, for example http://<server>:8989 for Sonarr.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     WEBUI_PORT: { kind: port, default: 5055, label: Web UI port }
