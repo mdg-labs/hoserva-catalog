@@ -60,11 +60,15 @@ services:
 x-hoserva:
   schema: 1
   id: mosquitto
-  revision: 1
+  revision: 2
   title: Mosquitto
   categories: [home-automation, network]
   icon: icon.svg
   docs: https://hub.docker.com/_/eclipse-mosquitto
+  description: |
+    An MQTT message broker: the lightweight publish and subscribe hub that smart home devices and apps such as Home Assistant and Zigbee2MQTT use to exchange messages.
+
+    On the first start the template writes a configuration with password authentication (no anonymous clients), an MQTT listener on port 1883 and an MQTT over WebSockets listener on port 9001; clients connect to the server's address with the MQTT user name and password. No TLS is set up, so use it on your home network. The configuration file in the app's folder is never overwritten: edit it to change the listeners.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     MQTT_USER:

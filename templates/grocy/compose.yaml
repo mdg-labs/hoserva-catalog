@@ -24,12 +24,16 @@ services:
 x-hoserva:
   schema: 1
   id: grocy
-  revision: 1
+  revision: 3
   title: Grocy
   categories: [productivity]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-grocy/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A self-hosted household manager: stock levels with best-before dates, shopping lists, recipes, meal plans, chores, tasks and more, all in one web app.
+
+    Sign in with the default account, admin with the password admin, and change the password straight away. After every update, open the Grocy start page (the logo at the top left) once: that runs the database migrations. The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     WEBUI_PORT: { kind: port, default: 9283, label: Web UI port }

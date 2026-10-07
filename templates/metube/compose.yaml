@@ -27,12 +27,16 @@ services:
 x-hoserva:
   schema: 1
   id: metube
-  revision: 1
+  revision: 2
   title: MeTube
   categories: [downloads, media]
   icon: icon.png
   docs: https://github.com/alexta69/metube#readme
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A web front end for yt-dlp: paste a video or playlist link from YouTube or another site yt-dlp supports, and MeTube downloads it as video or audio into a folder on your server.
+
+    Downloads go to the download folder, which defaults to a folder of the media library so that Jellyfin or Plex can show them once you add it as a library. On every start the image makes user 99 and group 100 the owner of everything in that folder. Sites change often and MeTube publishes a new image for every yt-dlp release, so keep the app updated.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     DOWNLOADS:

@@ -40,12 +40,18 @@ services:
 x-hoserva:
   schema: 1
   id: speedtest-tracker
-  revision: 1
+  revision: 2
   title: Speedtest Tracker
   categories: [network, monitoring]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-speedtest-tracker/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A tool that runs internet speed tests on a schedule and keeps the results, so you can see how your connection's speed changes over time.
+
+    Each test runs Ookla's Speedtest against the internet and uses your connection's bandwidth. The application key must be entered by hand in the format the install form shows: keep a copy of it away from this server, since data encrypted with a lost key cannot be read. The administrator account is created on the first start from the email address and password given at install; changing those inputs later has no effect, so change them in Speedtest Tracker.
+
+    The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     APP_KEY:

@@ -30,12 +30,16 @@ services:
 x-hoserva:
   schema: 1
   id: obsidian
-  revision: 1
+  revision: 2
   title: Obsidian
   categories: [desktop, productivity]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-obsidian/
   webui: https://{host}:${HTTPS_PORT}
+  description: |
+    A note-taking app that keeps your notes as Markdown files in folders called vaults and links them together. Its desktop app runs on your server and is streamed to your browser.
+
+    In Obsidian choose Open folder as vault and pick /vaults. The app is served over HTTPS with a self-signed certificate, so the browser asks you to accept it once. It includes a terminal with passwordless sudo inside the container, so keep the login set and never expose the port to the internet.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     VAULT:

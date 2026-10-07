@@ -53,12 +53,18 @@ services:
 x-hoserva:
   schema: 1
   id: paperless-ngx
-  revision: 2
+  revision: 3
   title: Paperless-ngx
   categories: [documents, productivity]
   icon: icon.svg
   docs: https://docs.paperless-ngx.com/setup/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A document management system: it imports your scanned and digital documents, makes their text searchable with OCR, and lets you tag and file them in one archive.
+
+    This app runs the web server together with its own PostgreSQL database and a Valkey broker; the optional Tika and Gotenberg services for office documents are not included. On the first visit Paperless-ngx asks you to create the superuser account.
+
+    The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     MEDIA:

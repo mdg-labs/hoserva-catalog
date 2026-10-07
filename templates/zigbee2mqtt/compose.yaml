@@ -41,12 +41,18 @@ services:
 x-hoserva:
   schema: 1
   id: zigbee2mqtt
-  revision: 1
+  revision: 2
   title: Zigbee2MQTT
   categories: [home-automation]
   icon: icon.png
   docs: https://www.zigbee2mqtt.io/guide/installation/02_docker.html
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A bridge between your Zigbee devices and MQTT: it controls Zigbee lights, sensors and switches through a USB adapter and publishes them to an MQTT broker, without the vendors' own hubs.
+
+    It needs an MQTT broker, such as the Mosquitto app, and a Zigbee USB adapter in the server; adapters on the network (tcp://) are not covered. On the first start the web interface shows an onboarding page filled in with the settings from install: pick the adapter type (zstack, ember, deconz, zigate or zboss) and submit, and Zigbee2MQTT then starts with its frontend at the same address.
+
+    The frontend has no login unless you set an auth token in its settings, so keep it on your home network.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     ADAPTER:

@@ -85,7 +85,15 @@ assert_open() {
   got="$(open_for "$id")"
   [ -n "$got" ] || t_fail "$id: no open issue"
   [ "$(wc -w <<<"$got")" -eq 1 ] || t_fail "$id: more than one open issue: $got"
-  assert_eq "$(marker "$got")" "<!-- image-update id=$id $want -->" "$id marker"
+  assert_eq "$(marker "$got" | sed 's/ kinds=[^ ]*//')" "<!-- image-update id=$id $want -->" "$id marker"
+}
+
+# The kind of each recorded target, as the marker carries it between the
+# targets and the majors.
+assert_kinds() {
+  local id="$1" want="$2" got
+  got="$(open_for "$id")"
+  assert_eq "$(marker "$got" | grep -o ' kinds=[^ ]*' || true)" "${want:+ kinds=$want}" "$id kinds"
 }
 
 assert_none() {
@@ -130,6 +138,7 @@ assert_eq "$(jq -r '[.[] | select(.number > 3) | .labels[].name] | unique | join
 # past branch-prefixed tags with higher build numbers and across tag pages;
 # a hash-shaped version needs no parsing.
 assert_open webtop 'targets=app=a1b2c3d4-ls320'
+assert_kinds webtop app=version
 # 5.1.3-ls275 -> 5.1.4-ls276 is a version change.
 assert_open prowlarr 'targets=app=5.1.4-ls276'
 # 5.1.3-ls275 -> 5.1.3-ls276 is a rebuild only: no issue.
@@ -140,7 +149,9 @@ assert_none jellyfin
 assert_open semver 'targets=app=1.10.0'
 # A newer first number is a new major, listed apart from the update.
 assert_open major 'targets=app=2.1.1 majors=app=3.1.0'
+assert_kinds major app=version
 assert_open majoronly 'targets= majors=app=3.0.0'
+assert_kinds majoronly ""
 assert_eq "$(field "$(open_for majoronly)" .title)" 'majoronly: new major image version 3.0.0' "major-only title"
 # A suffix never matches a different suffix, in either direction.
 assert_open alpine 'targets=app=1.2.5-alpine'
@@ -181,6 +192,7 @@ assert_eq "$(sed 's/ .*//' "$writes")" "PATCH" "an in-place edit is one PATCH"
 grep -q "^PATCH #$inplace_issue {\"title\"" "$writes" || t_fail "the open issue was not edited"
 assert_eq "$(open_for inplace)" "$inplace_issue" "same issue number"
 assert_open inplace 'targets=app=5.1.3-ls276'
+assert_kinds inplace app=version
 grep -q '5.1.3-ls276' <<<"$(field "$inplace_issue" .title)" || t_fail "the title still names the old tag"
 assert_eq "$(field "$inplace_issue" '.comments | length')" 0 "in-place comments"
 assert_eq "$(field "$inplace_issue" .state)" open "in-place state"
@@ -307,6 +319,164 @@ run_updates
 assert_eq "$(cat "$writes")" "" "run after the closes writes"
 for id in goneother gonesame gonenone rbpinned pinahead lsahead digahead; do rm -r "${T:?}/templates/$id"; done
 
+# An open issue that reports only a new major (no version target) is closed the
+# same way once the major is no longer reported, while dev still pins the old
+# major: upstream withdrew the tag, a rule stopped reporting majors or versions
+# (with a rebuild of the companion left over), and nothing is opened for what is
+# left. When dev already pins the major or a later one, even for one service of
+# several, the issue is left alone.
+tpl majgone "app=org/gone:1.0.0"
+seed 870 image-update '<!-- image-update id=majgone targets= majors=app=2.0.0 -->
+Body.'
+tpl majdb "app=org/dbmajor:17.6"
+seed 871 image-update '<!-- image-update id=majdb targets= majors=app=18.0 -->
+Body.'
+tpl majcomp "db=org/companion:1.0.0@$aaa"
+seed 872 image-update '<!-- image-update id=majcomp targets= majors=db=2.0.0 -->
+Body.'
+tpl majpin "app=org/majoronly:3.0.0"
+seed 873 image-update '<!-- image-update id=majpin targets= majors=app=3.0.0 -->
+Body.'
+tpl majpast "app=org/major:3.1.0"
+seed 874 image-update '<!-- image-update id=majpast targets= majors=app=3.0.0 -->
+Body.'
+tpl majhalf "a=org/gone:1.0.0" "b=org/majoronly:3.0.0"
+seed 875 image-update '<!-- image-update id=majhalf targets= majors=a=2.0.0,b=3.0.0 -->
+Body.'
+tpl majpinrb "app=org/companion:1.0.0@$aaa"
+seed 876 image-update '<!-- image-update id=majpinrb targets= majors=app=1.0.0 -->
+Body.'
+tpl majrb "app=org/digrebuild:2.0.1@$aaa"
+seed 877 image-update "<!-- image-update id=majrb targets=app=2.0.1@$bbb kinds=app=rebuild majors=app=3.0.0 -->
+Body."
+mutate '.["docker.io"]["org/shaped"] = {"tags": ["1.0"]}'
+tpl majshape "app=org/shaped:1.0"
+seed 878 image-update '<!-- image-update id=majshape targets= majors=app=2.0.0 -->
+Body.'
+tpl majtarget "app=org/gone:1.0.0"
+seed 879 image-update '<!-- image-update id=majtarget targets=app=1.5 majors=app=2.0.0 -->
+Body.'
+tpl majother "a=org/gone:1.0.0"
+seed 880 image-update '<!-- image-update id=majother targets=b=1.5.0 majors=a=2.0.0 -->
+Body.'
+# A recorded version target keeps the issue open when dev has since adopted it
+# (it closes with its Fixes trailer on main), and so does a target whose kind the
+# marker does not record (an issue opened before kinds were written).
+tpl majadopt "app=org/dbmajor:17.6"
+seed 881 image-update '<!-- image-update id=majadopt targets=app=17.6 kinds=app=version majors=app=18.0 -->
+Body.'
+tpl majadoptsem "app=org/gone:1.0.0"
+seed 882 image-update '<!-- image-update id=majadoptsem targets=app=1.0.0 kinds=app=version majors=app=2.0.0 -->
+Body.'
+tpl majadoptdig "app=org/digrebuild:2.0.1@$bbb"
+seed 883 image-update "<!-- image-update id=majadoptdig targets=app=2.0.1@$bbb kinds=app=version majors=app=3.0.0 -->
+Body."
+tpl majnokind "app=org/gone:1.0.0"
+seed 884 image-update '<!-- image-update id=majnokind targets=app=1.0.0 majors=app=2.0.0 -->
+Body.'
+tpl majmixed "a=org/gone:1.0.0" "b=org/digrebuild:2.0.1@$bbb"
+seed 885 image-update "<!-- image-update id=majmixed targets=a=1.0.0,b=2.0.1@$bbb kinds=a=version,b=rebuild majors=a=2.0.0 -->
+Body."
+cp "$issues" "$T/before.json"
+: >"$GITHUB_STEP_SUMMARY"
+run_updates
+assert_eq "$rc" 0 "gone-major run exit status"
+if grep -q '^CREATE' "$writes"; then t_fail "a gone major opened an issue: $(cat "$writes")"; fi
+for n in 870 871 872 877; do
+  assert_eq "$(field $n .state)" closed "#$n state"
+  assert_eq "$(field $n .state_reason)" not_planned "#$n reason"
+  assert_eq "$(field $n '.comments | join("|")')" "No newer version is reported any more for this template; closing." "#$n comment"
+  grep -q "^COMMENT #$n " "$writes" || t_fail "#$n was not commented on"
+  grep -q "^PATCH #$n {\"state\":\"closed\",\"state_reason\":\"not_planned\"}\$" "$writes" || t_fail "#$n was not closed"
+  grep -q "closed #$n: no newer version reported" "$GITHUB_STEP_SUMMARY" || t_fail "the job summary does not list the close of #$n"
+done
+assert_eq "$(grep -c . "$writes")" 8 "writes of the gone-major run"
+assert_eq "$(open_for majgone)$(open_for majdb)$(open_for majcomp)$(open_for majrb)" "" "closed major-only templates have no open issue"
+for n in 873 874 875 876 878 879 880 881 882 883 884 885; do
+  assert_eq "$(jq -c ".[] | select(.number == $n)" "$issues")" "$(jq -c ".[] | select(.number == $n)" "$T/before.json")" "#$n changed"
+done
+assert_eq "$(open_for majpin) $(open_for majpast) $(open_for majhalf) $(open_for majpinrb)" "873 874 875 876" "major-only issues dev already pins"
+assert_eq "$(open_for majshape) $(open_for majtarget) $(open_for majother)" "878 879 880" "major-only issues that cannot be compared or still have a version target"
+assert_eq "$(open_for majadopt) $(open_for majadoptsem) $(open_for majadoptdig) $(open_for majnokind) $(open_for majmixed)" "881 882 883 884 885" "issues with an adopted or unrecorded-kind target"
+run_updates
+assert_eq "$(cat "$writes")" "" "run after the major-only closes writes"
+for id in majgone majdb majcomp majrb majshape majtarget majother majpin majpast majhalf majpinrb majadopt majadoptsem majadoptdig majnokind majmixed; do rm -r "${T:?}/templates/$id"; done
+
+# A version change an issue recorded stays a version change when it is edited
+# after dev adopted it (a later rebuild of that version, a new major), so the
+# issue is never closed as "major gone" while a Fixes trailer for it waits on
+# main. A digest-pinned image is edited in place by a rebuild of the adopted
+# version and its withdrawn major then leaves the issue open.
+ccc="sha256:$(printf 'c%.0s' $(seq 64))"
+ddd="sha256:$(printf 'd%.0s' $(seq 64))"
+mutate ".[\"docker.io\"][\"org/dxrb\"] = {\"tags\": [\"17.5\", \"17.6\", \"18.0\"], \"digests\": {\"17.6\": \"$ccc\"}}"
+mutate ".[\"docker.io\"][\"org/dxcarry\"] = {\"tags\": [\"17.5\", \"17.6\", \"18.0\"], \"digests\": {\"17.6\": \"$ccc\"}}"
+mutate '.["lscr.io"]["linuxserver/adopted"] = {"tags": ["latest", "5.1.2-ls270", "5.1.3-ls275", "5.1.3-ls276"], "digests": {"latest": "=5.1.3-ls275"}}'
+tpl dxrb "app=org/dxrb:17.5@$aaa"
+tpl dxcarry "app=org/dxcarry:17.5@$aaa"
+tpl lsadopted "app=lscr.io/linuxserver/adopted:5.1.2-ls270"
+run_updates
+assert_eq "$rc" 0 "adopted-version run exit status"
+assert_open dxrb "targets=app=17.6@$ccc majors=app=18.0"
+assert_kinds dxrb app=version
+assert_open dxcarry "targets=app=17.6@$ccc majors=app=18.0"
+assert_open lsadopted 'targets=app=5.1.3-ls275'
+assert_kinds lsadopted app=version
+# dev adopts 17.6 and 5.1.3-ls275; their issues are not touched.
+tpl dxrb "app=org/dxrb:17.6@$ccc"
+tpl dxcarry "app=org/dxcarry:17.6@$ccc"
+tpl lsadopted "app=lscr.io/linuxserver/adopted:5.1.3-ls275"
+run_updates
+assert_eq "$(cat "$writes")" "" "run after dev adopted the versions writes"
+# Upstream rebuilds the adopted version: the edit keeps it a version change.
+mutate ".[\"docker.io\"][\"org/dxrb\"].digests[\"17.6\"] = \"$ddd\""
+mutate '.["lscr.io"]["linuxserver/adopted"].digests.latest = "=5.1.3-ls276"'
+run_updates
+assert_open dxrb "targets=app=17.6@$ddd majors=app=18.0"
+assert_kinds dxrb app=version
+assert_open lsadopted 'targets=app=5.1.3-ls276'
+assert_kinds lsadopted app=version
+# The major is withdrawn: the issue still names the adopted version, so it stays
+# open and is never commented on or closed.
+mutate '.["docker.io"]["org/dxrb"].tags = ["17.5", "17.6"]'
+run_updates
+assert_eq "$rc" 0 "withdrawn-major run exit status"
+if grep -q 'COMMENT\|"state":"closed"' "$writes"; then t_fail "an issue with an adopted version was closed: $(cat "$writes")"; fi
+assert_open dxrb "targets=app=17.6@$ddd"
+assert_kinds dxrb app=version
+# A new major while the recorded version is adopted keeps the version change in
+# the edited issue, so withdrawing that major too leaves the issue alone.
+mutate '.["docker.io"]["org/dxcarry"].tags = ["17.5", "17.6", "19.0"]'
+run_updates
+assert_open dxcarry "targets=app=17.6@$ccc majors=app=19.0"
+assert_kinds dxcarry app=version
+mutate '.["docker.io"]["org/dxcarry"].tags = ["17.5", "17.6"]'
+run_updates
+assert_eq "$(cat "$writes")" "" "withdrawn major after an adopted version writes"
+assert_open dxcarry "targets=app=17.6@$ccc majors=app=19.0"
+assert_eq "$(field "$(open_for dxcarry)" .state)" open "adopted-version issue state"
+# A superseding issue is named by no commit, so it does not carry an adopted
+# version: when dev adopts one service's version and passes the other's, the
+# superseding issue records neither and closes once its only major is withdrawn.
+mutate ".[\"docker.io\"][\"org/sx\"] = {\"tags\": [\"17.5\", \"17.6\", \"18.0\"], \"digests\": {\"17.6\": \"$ccc\"}}"
+mutate '.["docker.io"]["org/sdb"] = {"tags": ["4.9", "4.10"], "digests": {}}'
+tpl sx "app=org/sx:17.5@$aaa" "db=org/sdb:4.9"
+run_updates
+n1="$(open_for sx)"
+assert_kinds sx app=version,db=version
+mutate '.["docker.io"]["org/sdb"].tags = ["4.9", "4.10", "4.11"]'
+tpl sx "app=org/sx:17.6@$ccc" "db=org/sdb:4.11"
+run_updates
+n2="$(open_for sx)"
+assert_eq "$([ -n "$n2" ] && [ "$n2" != "$n1" ] && echo superseded)" superseded "sx: $n1 superseded by $n2"
+assert_open sx "targets= majors=app=18.0"
+assert_kinds sx ""
+mutate '.["docker.io"]["org/sx"].tags = ["17.5", "17.6"]'
+run_updates
+assert_eq "$(field "$n2" .state)" closed "superseding issue state after its major is withdrawn"
+assert_none sx
+for id in dxrb dxcarry lsadopted sx; do rm -r "${T:?}/templates/$id"; done
+
 # A registry failure leaves the template's open issue alone and fails the run
 # after every other template has been processed; so does a template that
 # cannot be compared at all.
@@ -315,6 +485,9 @@ seed 820 image-update '<!-- image-update id=a-broken targets=app=1.0.1 -->
 Body.'
 tpl h-half "a=org/hone:1.0.0" "b=org/broken:1.0.0"
 seed 830 image-update '<!-- image-update id=h-half targets=a=1.1.0,b=1.0.1 -->
+Body.'
+tpl m-broken "app=org/broken:1.0.0"
+seed 831 image-update '<!-- image-update id=m-broken targets= majors=app=2.0.0 -->
 Body.'
 mutate '.["docker.io"]["org/hone"] = {"tags": ["1.0.0", "1.1.0"]}'
 tpl b-missing "app=ghcr.io/org/missing:1.0.0"
@@ -334,8 +507,11 @@ if grep -q '#820' "$writes"; then t_fail "the broken template's issue was writte
 # One failing service of two leaves the template alone, not read as "no update".
 assert_eq "$(open_for h-half)" 830 "half-broken template's issue"
 if grep -q '#830\|h-half' "$writes"; then t_fail "a template with a failed service was written to"; fi
+# A major-only issue whose registry read failed is not read as "major gone".
+assert_eq "$(open_for m-broken)" 831 "major-only issue of an unreadable template"
+if grep -q '#831\|m-broken' "$writes"; then t_fail "a major-only issue of an unreadable template was written to"; fi
 assert_open z-last 'targets=app=1.0.1'
-for id in a-broken h-half b-missing c-variable d-untagged e-older f-unmatched g-unlisted; do
+for id in a-broken h-half m-broken b-missing c-variable d-untagged e-older f-unmatched g-unlisted; do
   grep -q "$id" "$GITHUB_STEP_SUMMARY" || t_fail "$id is not listed in the job summary"
 done
 grep -q 'HTTP 500' "$GITHUB_STEP_SUMMARY" || t_fail "the registry failure is not in the job summary"
@@ -347,7 +523,7 @@ grep -q 'is not in the registry' "$GITHUB_STEP_SUMMARY" || t_fail "an unlisted p
 assert_none e-older
 assert_none f-unmatched
 assert_none g-unlisted
-for id in a-broken h-half b-missing c-variable d-untagged e-older f-unmatched g-unlisted; do rm -r "${T:?}/templates/$id"; done
+for id in a-broken h-half m-broken b-missing c-variable d-untagged e-older f-unmatched g-unlisted; do rm -r "${T:?}/templates/$id"; done
 
 # A pointer comment that fails leaves two open issues, never none; the next
 # run reduces them to the newest.
@@ -457,6 +633,7 @@ assert_eq "$rc" 0 "companion run exit status"
 assert_none compnone
 assert_none comprb
 assert_open compmix "targets=app=1.1.0,db=1.0.0@$bbb"
+assert_kinds compmix app=version,db=rebuild
 assert_open compone 'targets=app=1.1.0'
 assert_open compmajor 'targets= majors=app=3.0.0'
 assert_eq "$(grep -E '^- (Registry page of|Image of) ' <<<"$(field "$(open_for compone)" .body)")" \

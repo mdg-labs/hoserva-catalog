@@ -27,12 +27,16 @@ services:
 x-hoserva:
   schema: 1
   id: tautulli
-  revision: 1
+  revision: 2
   title: Tautulli
   categories: [media, monitoring]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-tautulli/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A monitoring, statistics and notification tool for Plex Media Server: see who is watching what, browse the watch history, and get alerts for streams and newly added media.
+
+    On the first visit a setup wizard signs in to Plex and asks for the Plex server. Plex runs in its own stack or on another machine, so enter it by the server's address and port, for example <server>:32400. Plex's log folder is not mounted; to use Tautulli's built-in Plex log viewer, add a read-only mount of Plex's Logs folder and set it under Settings > Plex Media Server.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     WEBUI_PORT: { kind: port, default: 8181, label: Web UI port }

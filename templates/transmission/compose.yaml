@@ -39,12 +39,18 @@ services:
 x-hoserva:
   schema: 1
   id: transmission
-  revision: 1
+  revision: 2
   title: Transmission
   categories: [downloads]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-transmission/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A BitTorrent client with a web interface, used to download and seed torrents. Sonarr, Radarr and similar apps can send their downloads to it.
+
+    The image presets download folders inside the container, outside the data folder. To keep hardlinks and instant moves working, stop the app after install, open settings.json in the app's folder, set download-dir to /data/torrents and incomplete-dir to /data/torrents/incomplete, and start it again; Transmission writes the file back when it stops.
+
+    The web interface login is the one you set at install, written into settings.json at every start. The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     DATA:

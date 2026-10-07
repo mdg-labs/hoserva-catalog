@@ -31,12 +31,16 @@ services:
 x-hoserva:
   schema: 1
   id: sabnzbd
-  revision: 1
+  revision: 2
   title: SABnzbd
   categories: [downloads]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-sabnzbd/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A Usenet downloader with a web interface: it fetches the files an NZB describes from your Usenet provider, then checks and unpacks them. Sonarr, Radarr and similar apps can send their downloads to it.
+
+    In the setup wizard or under Config > Folders set the temporary download folder to /data/usenet/incomplete and the completed download folder to /data/usenet, so categories sort downloads into /data/usenet/tv and so on. SABnzbd only answers to addresses it knows: open it by the server's IP address, add the server's name to host_whitelist under Config > Special, or set a username and password under Config > General.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     DATA:

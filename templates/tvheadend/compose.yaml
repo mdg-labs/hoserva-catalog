@@ -35,12 +35,16 @@ services:
 x-hoserva:
   schema: 1
   id: tvheadend
-  revision: 1
+  revision: 2
   title: Tvheadend
   categories: [media]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-tvheadend/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A TV streaming server and recorder: it takes live TV from sources such as DVB tuner cards and IPTV, and streams and records it for apps such as Kodi.
+
+    This app uses bridge networking. IPTV, SAT>IP and HDHomeRun need host networking, so for those change the network mode of the app's Compose file to host and remove its ports. No tuner device is mapped: for a DVB card add /dev/dvb:/dev/dvb to the Compose file, only on a server that has a card, since Docker refuses to start a container whose device is missing. On the first login the setup wizard under Configuration > General > Base guides the basic setup.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     RECORDINGS:

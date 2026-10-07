@@ -22,12 +22,16 @@ services:
 x-hoserva:
   schema: 1
   id: sonarr
-  revision: 1
+  revision: 3
   title: Sonarr
   categories: [media, automation]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-sonarr/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A TV series collection manager: it watches your indexers for new episodes of the shows you follow, sends them to your download client, and renames and files them in your library.
+
+    One data folder holds both downloads and library, so imports are hardlinks or instant moves. In Sonarr set the root folder to /data/media/tv, and in the download client use the paths under /data/torrents. The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     DATA:

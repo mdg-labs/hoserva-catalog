@@ -22,12 +22,16 @@ services:
 x-hoserva:
   schema: 1
   id: bazarr
-  revision: 1
+  revision: 2
   title: Bazarr
   categories: [media, automation]
   icon: icon.png
   docs: https://docs.linuxserver.io/images/docker-bazarr/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A subtitle manager that works with Sonarr and Radarr: it finds and downloads subtitles for the series and movies in your library from subtitle providers, in the languages you choose.
+
+    It mounts the same data folder as Sonarr and Radarr, so the library paths they report are the paths Bazarr reads. In Bazarr the series are under /data/media/tv and the movies under /data/media/movies.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     DATA:

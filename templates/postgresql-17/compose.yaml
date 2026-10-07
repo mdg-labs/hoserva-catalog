@@ -38,11 +38,17 @@ services:
 x-hoserva:
   schema: 1
   id: postgresql-17
-  revision: 1
+  revision: 2
   title: PostgreSQL 17
   categories: [database, development]
   icon: icon.svg
   docs: https://hub.docker.com/_/postgres
+  description: |
+    A PostgreSQL relational database server for the apps that need one and for your own projects.
+
+    The PostgreSQL project supports a major version for five years after its first release. PostgreSQL 17 was first released on September 26, 2024, and its final release is scheduled for November 8, 2029.
+
+    Each major version is its own template, and this one only ever moves within PostgreSQL 17. Moving to a newer major version is PostgreSQL's own upgrade, with pg_upgrade or a dump and restore.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     SUPERUSER_PASSWORD:

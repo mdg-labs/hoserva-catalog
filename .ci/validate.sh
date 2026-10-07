@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 # Validates the templates directory of a catalog checkout: `hoserva template
-# lint` from the pinned Hoserva version, then per template `docker compose
-# config` and a manifest query for every image. Exits non-zero on the first
-# failing stage; an empty or missing templates directory skips lint, which
-# would otherwise report "no template directories found" (git does not keep
-# an empty directory, so a catalog without templates has none).
+# lint` from the pinned Hoserva version, then that every template carries the
+# short description this catalog requires (the Hoserva schema keeps the field
+# optional), then per template `docker compose config` and a manifest query
+# for every image. Exits non-zero on the first failing stage; an empty or
+# missing templates directory skips lint, which would otherwise report "no
+# template directories found" (git does not keep an empty directory, so a
+# catalog without templates has none), and the description check with it.
 #
 # usage: validate.sh [templates-dir]   (default: templates/ of this checkout)
 #
@@ -42,6 +44,8 @@ if [ "${#entries[@]}" -eq 0 ]; then
 fi
 
 go run "github.com/mdg-labs/hoserva/cmd/hoserva@$version" template lint "$catalog"
+
+python3 "$ci_dir/catalog.py" check-description "$catalog" "${entries[@]}" || ci_die "description check failed"
 
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT

@@ -29,12 +29,16 @@ services:
 x-hoserva:
   schema: 1
   id: wikijs
-  revision: 1
+  revision: 2
   title: Wiki.js
   categories: [documents, productivity]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-wikijs/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A wiki engine for writing and organising pages in your browser, with Markdown and visual editors and access control through user groups.
+
+    It uses its built-in SQLite database, so no database service is needed. All pages are in the app's folder, so back that folder up. On the first visit Wiki.js asks you to create the administrator account. The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     WEBUI_PORT: { kind: port, default: 3000, label: Web UI port }

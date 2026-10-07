@@ -27,12 +27,18 @@ services:
 x-hoserva:
   schema: 1
   id: pyload-ng
-  revision: 1
+  revision: 2
   title: pyLoad
   categories: [downloads]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-pyload-ng/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A download manager with a web interface that fetches files from one-click hosters and other sources, with plugins for many sites.
+
+    The web interface login is pyload with the password pyload until you change it: do that first. Finished downloads go to the download folder you choose, a plain download folder rather than part of a media library. Click'n'Load, which lets a browser extension send links on port 9666, is not published.
+
+    The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     DOWNLOADS:

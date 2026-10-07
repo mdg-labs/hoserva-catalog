@@ -54,12 +54,18 @@ services:
 x-hoserva:
   schema: 1
   id: frigate
-  revision: 1
+  revision: 2
   title: Frigate
   categories: [security, home-automation]
   icon: icon.svg
   docs: https://docs.frigate.video/frigate/installation
   webui: https://{host}:${WEBUI_PORT}
+  description: |
+    A network video recorder for IP cameras with local, real-time object detection: it records your cameras, detects people, cars and other objects, and works with Home Assistant.
+
+    On its first start Frigate creates a basic configuration and prints the password of the generated admin user in its log: sign in with it, change it under Settings > Users, then add cameras under Settings > Camera management. The web interface uses HTTPS with a self-signed certificate, so the browser warns on the first visit.
+
+    Continuous recording writes to the recordings folder all the time and keeps its disk spinning, so give it a share on one dedicated disk, so the others can spin down. The RTSP restream has no login unless go2rtc is configured otherwise. A Coral TPU and an NVIDIA GPU are not set up.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     RECORDINGS:

@@ -29,12 +29,16 @@ services:
 x-hoserva:
   schema: 1
   id: jackett
-  revision: 2
+  revision: 3
   title: Jackett
   categories: [media, automation]
   icon: icon.png
   docs: https://docs.linuxserver.io/images/docker-jackett/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    An indexer proxy: it translates the searches of apps such as Sonarr and Radarr into requests to many torrent trackers and indexers and sends the results back in a form those apps understand.
+
+    Add your trackers and the connections to other apps in the web interface. The blackhole folder is only used if you set /downloads as the blackhole directory in Jackett's settings.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     BLACKHOLE:

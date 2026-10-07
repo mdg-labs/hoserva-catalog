@@ -36,11 +36,15 @@ services:
 x-hoserva:
   schema: 1
   id: mariadb
-  revision: 1
+  revision: 2
   title: MariaDB
   categories: [database, development]
   icon: icon.svg
   docs: https://hub.docker.com/_/mariadb
+  description: |
+    A MariaDB database server, compatible with MySQL clients, for apps in other stacks and your own projects.
+
+    The administrator is root, with the root password from the install form (it is in the stack's .env file); the image applies it only when it creates the database on the first start. Create a separate user and database for each app instead of sharing root. The database port is published so that apps in other stacks and programs outside Docker can connect; 3306 is the usual MySQL port, so change it if something on this server already uses it.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     ROOT_PASSWORD:

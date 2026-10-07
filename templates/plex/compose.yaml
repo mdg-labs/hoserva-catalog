@@ -27,12 +27,16 @@ services:
 x-hoserva:
   schema: 1
   id: plex
-  revision: 1
+  revision: 2
   title: Plex
   categories: [media]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-plex/
   webui: http://{host}:${WEBUI_PORT}/web
+  description: |
+    A media server that organises your movies, TV shows, music and photos and streams them to Plex apps on your TV, phone and computer.
+
+    This app uses bridge networking, so only port 32400 is published. Discovery of the server on the local network, DLNA and the companion port are not available; players find the server through your Plex account or by its address.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     MEDIA:

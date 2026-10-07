@@ -65,12 +65,18 @@ services:
 x-hoserva:
   schema: 1
   id: kopia
-  revision: 1
+  revision: 2
   title: Kopia
   categories: [backup]
   icon: icon.svg
   docs: https://kopia.io/docs/installation/#docker-images
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A backup tool with a web interface: it takes encrypted, deduplicated snapshots of your folders and keeps them in a local folder or on cloud and remote storage.
+
+    The folder to back up is mounted read-only at /source and the local backup and restore folder at /backups. With the default folders /backups is also visible inside /source, so exclude it from every snapshot. The web interface is served over plain HTTP, so use it on your local network or behind an HTTPS reverse proxy; sign in with the web UI username and password.
+
+    When you create or connect the repository in the web interface, enter the repository password from the install form (it is in the stack's .env file), and keep a copy of it away from this server: the backup cannot be restored without it. Mounting a snapshot is not available; restore files instead.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     SOURCE:

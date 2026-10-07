@@ -102,13 +102,13 @@ services:
 x-hoserva:
   schema: 1
   id: mastodon
-  revision: 1
+  revision: 2
   title: Mastodon
   categories: [social, productivity]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-mastodon/
-  description: |-
-    A Mastodon social network server that takes part in the fediverse, with PostgreSQL and Redis in the same stack. Use it for yourself, your family or a small community.
+  description: |
+    Mastodon is a self-hosted social network that takes part in the fediverse, so your account can follow and be followed by people on other servers. This template runs it with PostgreSQL and Redis; use it for yourself, your family or a small community.
 
     Before installing you need a public domain name, with HTTPS served by a reverse proxy: other servers reach yours by that name, and it cannot be changed later. The app serves HTTPS with a self-signed certificate on the Web UI port; point the proxy at that port over https and let it skip checking the certificate.
 

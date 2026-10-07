@@ -30,12 +30,18 @@ services:
 x-hoserva:
   schema: 1
   id: pi-hole
-  revision: 1
+  revision: 2
   title: Pi-hole
   categories: [network, dns]
   icon: icon.svg
   docs: https://docs.pi-hole.net/docker/
   webui: http://{host}:${WEBUI_PORT}/admin
+  description: |
+    A network-wide ad and tracker blocker that works as your network's DNS server: by default, devices that use it get an address that leads nowhere for the domains it blocks.
+
+    To use it, set this server as the DNS server in your router or on individual devices. Pi-hole's own DHCP server, NTP and HTTPS are not set up here. Because it runs on Docker's bridge network, its query log shows the Docker gateway as the client of each query.
+
+    The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     DNS_PORT:

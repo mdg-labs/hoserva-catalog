@@ -31,12 +31,18 @@ services:
 x-hoserva:
   schema: 1
   id: qbittorrent
-  revision: 1
+  revision: 2
   title: qBittorrent
   categories: [downloads]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-qbittorrent/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A BitTorrent client with a web interface, used to download and seed torrents. Sonarr, Radarr and similar apps can send their downloads to it.
+
+    The web interface user is admin. A temporary password is printed to the container log on the first start, and a new one at every start until you set your own in the settings. In the settings set the default save path to /data/torrents, so hardlinks and instant moves work for the apps that import the downloads.
+
+    The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     DATA:

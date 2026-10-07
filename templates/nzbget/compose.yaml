@@ -33,12 +33,18 @@ services:
 x-hoserva:
   schema: 1
   id: nzbget
-  revision: 1
+  revision: 2
   title: NZBGet
   categories: [downloads]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-nzbget/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A Usenet downloader with a web interface: it fetches the files an NZB describes from your Usenet provider. Sonarr, Radarr and Lidarr can send their downloads to it.
+
+    Downloads are saved under /data/usenet in the shared data folder, so those apps can import a finished download with an instant move. After install, in NZBGet's Settings > Paths set DestDir to /data/usenet/completed and InterDir to /data/usenet/intermediate, and under Categories give tv, movies and music a destination below /data/usenet.
+
+    The web interface login is the one you set at install. NZBGet is given it again at every start, so a username or password changed in its settings does not last. The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     DATA:

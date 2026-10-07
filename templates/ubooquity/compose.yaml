@@ -34,7 +34,7 @@ services:
 x-hoserva:
   schema: 1
   id: ubooquity
-  revision: 1
+  revision: 2
   title: Ubooquity
   categories: [media, books]
   icon: icon.png
@@ -43,9 +43,9 @@ x-hoserva:
   links:
     project: https://vaemendis.net/ubooquity/
   description: |-
-    A home server for your comics and ebooks. Read them from a browser, tablet, phone or e-reader, at home or from anywhere you can reach your server. Ubooquity is free for non-commercial use.
+    A home server for your comics and ebooks. Read them from a browser, tablet, phone or e-reader, at home or from anywhere you can reach your server.
 
-    It has two web addresses. The library, on the Library port, is where you and your family read; the admin page, on the Admin port at /ubooquity/admin, is where you set the administrator password on first use, add the folders to share and create user accounts. Add the folders /books, /comics and /files in the admin page under Library, then press Save and restart.
+    Ubooquity is free for non-commercial use. It has two web addresses. The library, on the Library port, is where you and your family read; the admin page, on the Admin port at /ubooquity/admin, is where you set the administrator password on first use, add the folders to share and create user accounts. Add the folders /books, /comics and /files in the admin page under Library, then press Save and restart.
 
     The pages are served over plain HTTP, so use them on your home network or behind a reverse proxy that serves HTTPS.
   inputs:

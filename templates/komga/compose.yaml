@@ -25,12 +25,16 @@ services:
 x-hoserva:
   schema: 1
   id: komga
-  revision: 1
+  revision: 3
   title: Komga
   categories: [media, books]
   icon: icon.svg
   docs: https://komga.org/docs/installation/docker
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A media server for comics, manga and ebooks: browse and read your collection in the browser, and open it from compatible reader apps through its OPDS feed.
+
+    Add libraries from /data in Komga, for example /data/comics and /data/manga. Komga's Java process is limited to about 1 GB of memory by default; if the logs show OutOfMemory errors, add JAVA_TOOL_OPTIONS (for example -Xmx4g) to the app's environment. The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     BOOKS:

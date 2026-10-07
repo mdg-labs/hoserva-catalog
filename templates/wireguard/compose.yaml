@@ -50,11 +50,17 @@ services:
 x-hoserva:
   schema: 1
   id: wireguard
-  revision: 1
+  revision: 2
   title: WireGuard
   categories: [network, vpn]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-wireguard/
+  description: |
+    A WireGuard VPN server: it creates a configuration and QR code for each of your devices, so they can reach your server and home network securely from anywhere.
+
+    Forward the VPN port (UDP) of your router to this server. Each device's configuration file and QR code image are saved in the app's folder under wireguard/peer1, peer2 and so on, or wireguard/peer_<name> for named devices. To add devices later, raise the number of devices or add names, and recreate the app. By default all of a device's traffic, IPv4 and IPv6, goes through the VPN.
+
+    WireGuard needs the NET_ADMIN capability, which the install summary shows.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     SERVERURL:

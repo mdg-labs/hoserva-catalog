@@ -27,12 +27,16 @@ services:
 x-hoserva:
   schema: 1
   id: beets
-  revision: 1
+  revision: 2
   title: beets
   categories: [media, automation]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-beets/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A music library manager that imports your music, corrects its tags from online music databases and organises the files into a tidy folder structure. You use it with commands in the app's container.
+
+    The image's default configuration keeps the library at /music, which is not mounted here: edit the configuration with docker exec -it -u abc <container> beet config -e and set directory: /data/media/music. Run an import with a path under /data, for example beet import /data/torrents/<folder>. Imports copy files by default; set move: yes or hardlink: yes under import to avoid the copy (with hardlink: yes, also set write: no).
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     DATA:

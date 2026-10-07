@@ -35,11 +35,15 @@ services:
 x-hoserva:
   schema: 1
   id: recyclarr
-  revision: 2
+  revision: 3
   title: Recyclarr
   categories: [media, automation]
   icon: icon.svg
   docs: https://recyclarr.dev/guide/installation/docker/
+  description: |
+    A command-line tool that keeps the quality profiles, custom formats and naming settings of Sonarr and Radarr in line with a configuration file, including the settings the TRaSH Guides recommend.
+
+    It has no web interface and syncs on the schedule you set. Nothing is synced until you write the configuration: Recyclarr creates recyclarr.yml in the app's folder on the first start; edit it, or create one from a template with docker exec <container> recyclarr config create --template <name>. In it, refer to the address and API key inputs with !env_var SONARR_URL and !env_var SONARR_API_KEY, and the same with RADARR for Radarr.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     CRON_SCHEDULE:

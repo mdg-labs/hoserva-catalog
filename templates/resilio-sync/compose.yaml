@@ -26,12 +26,18 @@ services:
 x-hoserva:
   schema: 1
   id: resilio-sync
-  revision: 1
+  revision: 2
   title: Resilio Sync
   categories: [files, sync]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-resilio-sync/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    Peer-to-peer file synchronisation between your devices without a cloud service: the folders you add stay in step across the computers, phones and servers that run Resilio Sync.
+
+    Open the web interface to create the account and configure it; there is no preset login. Add the folders to sync under /sync, the sync folder. The sync port is the one Resilio Sync uses to connect to other devices, over TCP and UDP.
+
+    The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     SYNC:

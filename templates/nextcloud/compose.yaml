@@ -71,12 +71,18 @@ services:
 x-hoserva:
   schema: 1
   id: nextcloud
-  revision: 2
+  revision: 3
   title: Nextcloud
   categories: [files, productivity]
   icon: icon.svg
   docs: https://hub.docker.com/_/nextcloud
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A self-hosted file sync and sharing platform: keep your files, calendars and contacts on your own server and reach them from the web, desktop and mobile apps.
+
+    It is the official Nextcloud image with PostgreSQL and Redis in the same stack. On the first visit Nextcloud asks for the administrator account; the database is already set up. The web port is plain HTTP, meant for the local network or a reverse proxy; to open it under another host name, add that name to NEXTCLOUD_TRUSTED_DOMAINS as the image documentation describes. No background-jobs (cron) container is included.
+
+    Nextcloud can only be upgraded one major version at a time and cannot be downgraded, so back up the app's folder and the data folder before applying an update.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     DATA:

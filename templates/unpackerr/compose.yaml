@@ -48,11 +48,15 @@ services:
 x-hoserva:
   schema: 1
   id: unpackerr
-  revision: 1
+  revision: 2
   title: Unpackerr
   categories: [downloads, automation]
   icon: icon.png
   docs: https://unpackerr.zip/docs/install/docker
+  description: |
+    A background service that extracts the archives in finished torrent downloads so Sonarr, Radarr, Lidarr and Whisparr can import them, then deletes the extracted files after the import.
+
+    It has no web interface. Fill in the address and API key of each app you use; an app left empty is skipped. An API key shorter than 32 characters stops Unpackerr from starting, so check its log. It looks for downloads under /data/torrents and leaves usenet downloads alone, because the download client extracts those itself.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     DATA:

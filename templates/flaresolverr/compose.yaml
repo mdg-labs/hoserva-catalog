@@ -29,11 +29,17 @@ services:
 x-hoserva:
   schema: 1
   id: flaresolverr
-  revision: 1
+  revision: 2
   title: FlareSolverr
   categories: [downloads, network]
   icon: icon.svg
   docs: https://github.com/FlareSolverr/FlareSolverr#readme
+  description: |
+    A proxy server that loads pages in a Chrome browser to get past the Cloudflare and DDoS-GUARD challenge pages some sites show, so that apps such as Prowlarr can reach indexers behind them.
+
+    It has no web interface; Prowlarr sends it requests. In Prowlarr, add a FlareSolverr indexer proxy under Settings, Indexer Proxies, with the host http://<server>:<proxy port>, and give the proxy and the indexers that need it the same tag: a proxy without a tag is disabled.
+
+    Never forward its port on your router: the project warns against exposing it to the internet. Each request starts a browser that uses a lot of memory, so on a server with little memory avoid many requests at once.
   inputs:
     PROXY_PORT:
       kind: port

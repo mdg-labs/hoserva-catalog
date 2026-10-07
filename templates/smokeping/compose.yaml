@@ -25,12 +25,16 @@ services:
 x-hoserva:
   schema: 1
   id: smokeping
-  revision: 1
+  revision: 2
   title: SmokePing
   categories: [monitoring, network]
   icon: icon.png
   docs: https://docs.linuxserver.io/images/docker-smokeping/
   webui: http://{host}:${WEBUI_PORT}/smokeping/smokeping.cgi
+  description: |
+    A network latency monitor: it pings the hosts you choose at regular intervals and draws graphs of the delay and packet loss over time.
+
+    The page is at /smokeping/smokeping.cgi on the web UI port. To choose what it measures, edit the Targets file in the config folder (smokeping/config in the app's folder), restart the app, and wait about ten minutes for the first graphs. The default Targets file holds examples, some of which may not work on your network.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     WEBUI_PORT: { kind: port, default: 80, label: Web UI port }

@@ -20,12 +20,16 @@ services:
 x-hoserva:
   schema: 1
   id: uptime-kuma
-  revision: 1
+  revision: 2
   title: Uptime Kuma
   categories: [monitoring]
   icon: icon.svg
   docs: https://github.com/louislam/uptime-kuma/wiki/%F0%9F%94%A7-How-to-Install
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A self-hosted monitoring tool that checks whether your websites, services and servers are up, shows their status on a dashboard, and alerts you when one goes down.
+
+    On the first visit you create the administrator account. The data folder holds an SQLite database, so it must be on a local disk and not on a network share. The Docker socket that monitoring containers needs is not mounted. The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     WEBUI_PORT: { kind: port, default: 3001, label: Web UI port }
