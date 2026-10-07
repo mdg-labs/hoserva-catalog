@@ -32,10 +32,13 @@
 # is fixed so archive names stay the same across container rebuilds, which
 # pruning relies on. The image runs as root, so it reads every file in the
 # folder to back up, and restored files belong to root. BORG_PASSPHRASE
-# encrypts the repository; keep a copy of it, and of the Borg keys in the
-# appdata folder's borg-config, away from this server: the backup cannot be
-# restored without them. stop_grace_period gives a running backup time to
-# finish and release its lock when the app stops, as the README advises.
+# encrypts the repository. With the repokey-blake2 encryption created above
+# the key is stored in the repository itself, not in the appdata folder's
+# borg-config, so keep a copy of the passphrase, and of the key exported with
+# borgmatic key export, away from this server: the backup cannot be restored
+# without the passphrase, or without the key if the repository's copy is
+# damaged. stop_grace_period gives a running backup time to finish and release
+# its lock when the app stops, as the README advises.
 services:
   borgmatic:
     image: ghcr.io/borgmatic-collective/borgmatic:2.1.9
@@ -57,7 +60,7 @@ services:
 x-hoserva:
   schema: 1
   id: borgmatic
-  revision: 2
+  revision: 3
   title: borgmatic
   categories: [backup]
   icon: icon.svg
