@@ -1,5 +1,5 @@
-# Written from https://docs.linuxserver.io/images/docker-ubooquity/, https://github.com/linuxserver/docker-ubooquity, https://vaemendis.github.io/ubooquity-doc/pages/installation-guide.html and https://vaemendis.github.io/ubooquity-doc/pages/manual.html (D19).
-# Icon: none — no usable source. The project's website (https://vaemendis.net/ubooquity/) states no license for its logo, and its license page (https://vaemendis.net/ubooquity/static12/license) allows no redistribution or modification of the software; the selfhst/icons set (https://github.com/selfhst/icons) has no Ubooquity file; the linuxserver.io project_logo is not allowed.
+# Written from https://docs.linuxserver.io/images/docker-ubooquity/, https://github.com/linuxserver/docker-ubooquity, https://vaemendis.github.io/ubooquity-doc/pages/installation-guide.html, https://vaemendis.github.io/ubooquity-doc/pages/manual.html and https://vaemendis.net/ubooquity/static12/license (D19).
+# Icon: https://github.com/homarr-labs/dashboard-icons/blob/adca944175c9a3eb0471f78a4da87f237476d585/png/ubooquity.png, Apache-2.0 (the license of that repository), none
 #
 # The library (port 2202 in the container) and the admin page (port 2203) are
 # two separate web servers. On the first visit open the admin page at
@@ -37,6 +37,7 @@ x-hoserva:
   revision: 1
   title: Ubooquity
   categories: [media, books]
+  icon: icon.png
   docs: https://docs.linuxserver.io/images/docker-ubooquity/
   webui: http://{host}:${LIBRARY_PORT}/ubooquity/
   links:
