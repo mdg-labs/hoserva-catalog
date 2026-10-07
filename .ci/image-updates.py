@@ -618,6 +618,8 @@ def body(tpl, changes, majors):
         ]
     links = []
     for service, image in tpl.images.items():
+        if service not in changes and service not in majors:
+            continue
         page = registry_page(parse_ref(image))
         links.append(f"- Registry page of `{service}`: {page}" if page else f"- Image of `{service}`: `{image}`")
     lines += links + [f"- Image documentation: {tpl.docs}", ""]

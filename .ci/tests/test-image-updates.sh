@@ -447,14 +447,29 @@ rm -r "${T:?}/templates/dbonly" "${T:?}/templates/dbsame"
 tpl compnone "db=org/companion:1.0.0"
 tpl comprb "db=org/companion:1.0.0@$aaa"
 tpl compmix "app=org/compapp:1.0.0" "db=org/companion:1.0.0@$aaa"
+# An issue links the registry page only of the services it reports, in the
+# template's order, and always the image documentation: the companion with no row
+# gets no link, whether the other service has a version row or a major line.
+tpl compone "app=org/compapp:1.0.0" "db=org/companion:1.0.0"
+tpl compmajor "db=org/companion:1.0.0" "app=org/majoronly:2.1.0"
 run_updates
 assert_eq "$rc" 0 "companion run exit status"
 assert_none compnone
 assert_none comprb
 assert_open compmix "targets=app=1.1.0,db=1.0.0@$bbb"
+assert_open compone 'targets=app=1.1.0'
+assert_open compmajor 'targets= majors=app=3.0.0'
+assert_eq "$(grep -E '^- (Registry page of|Image of) ' <<<"$(field "$(open_for compone)" .body)")" \
+  "- Registry page of \`app\`: https://hub.docker.com/r/org/compapp" "registry links of a version row beside a companion"
+assert_eq "$(grep -E '^- (Registry page of|Image of) ' <<<"$(field "$(open_for compmajor)" .body)")" \
+  "- Registry page of \`app\`: https://hub.docker.com/r/org/majoronly" "registry links of a major line beside a companion"
+assert_eq "$(grep -cE '^- (Registry page of|Image of) ' <<<"$(field "$(open_for compmix)" .body)")" 2 "registry links of two rows"
+for id in compone compmajor compmix; do
+  grep -qx -- "- Image documentation: https://docs.example/$id" <<<"$(field "$(open_for "$id")" .body)" || t_fail "$id: the image documentation is not linked"
+done
 run_updates
 assert_eq "$(cat "$writes")" "" "companion second run writes"
-rm -r "${T:?}/templates/compnone" "${T:?}/templates/comprb" "${T:?}/templates/compmix"
+rm -r "${T:?}/templates/compnone" "${T:?}/templates/comprb" "${T:?}/templates/compmix" "${T:?}/templates/compone" "${T:?}/templates/compmajor"
 
 # A rule with a channel follows the version tag the channel tag points at, not
 # the highest tag: the update is the channel's tag even when higher tags exist
@@ -493,6 +508,8 @@ tpl lookdig "app=lookup.example/org/lookapp:1.0.0@sha256:$(printf 'a%.0s' $(seq 
 run_updates
 assert_open lookapp 'targets=app=1.1.0'
 assert_open lookdig "targets=app=1.1.0@sha256:$(printf 'c%.0s' $(seq 64))"
+# The link names the pinned image, not the lookup image the tags come from.
+grep -qxF -- "- Image of \`app\`: \`lookup.example/org/lookapp:1.0.0\`" <<<"$(field "$(open_for lookapp)" .body)" || t_fail "the pinned image is not the one linked"
 run_updates
 assert_eq "$(cat "$writes")" "" "lookup second run writes"
 for id in lookapp lookdig; do rm -r "${T:?}/templates/$id"; done
