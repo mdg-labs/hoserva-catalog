@@ -1,0 +1,64 @@
+# Written from https://docs.linuxserver.io/images/docker-faster-whisper/, https://github.com/linuxserver/docker-faster-whisper, https://github.com/SYSTRAN/faster-whisper, https://github.com/rhasspy/wyoming-faster-whisper and https://www.home-assistant.io/integrations/wyoming/ (D19).
+# Icon: none — the faster-whisper repository (https://github.com/SYSTRAN/faster-whisper, MIT) holds no logo, and selfhst/icons (https://github.com/selfhst/icons) has no faster-whisper file (its OpenAI icons are the company's logo, not this application's).
+#
+# The server speaks the Wyoming protocol on port 10300 over TCP and has no
+# login: anyone who can reach the port can send it audio, so keep it on your
+# local network and never forward it from the router. In Home Assistant add the
+# Wyoming integration with this server's address and the Wyoming port, then
+# pick it as the speech-to-text service of a voice assistant.
+#
+# The first start downloads the chosen model from Hugging Face into the app's
+# folder (the image's /config) and loads it before the port opens, so the
+# first start takes a while; later starts read it from disk. The model names
+# are the ones faster-whisper lists, such as tiny, base, small, medium, turbo or
+# large-v3, with ".en" variants for English only; larger models are more
+# accurate and slower on a CPU.
+#
+# This is the CPU image. The image's gpu tag is for NVIDIA GPUs only and needs
+# the NVIDIA Container Toolkit on the server; it is not set up here.
+services:
+  faster-whisper:
+    image: lscr.io/linuxserver/faster-whisper:v3.8.1-ls8
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+      WHISPER_MODEL: ${WHISPER_MODEL}
+      WHISPER_LANG: ${WHISPER_LANG}
+    volumes:
+      - ${APPDATA}/faster-whisper:/config
+    ports:
+      - ${WYOMING_PORT}:10300
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: faster-whisper
+  revision: 1
+  title: faster-whisper
+  categories: [ai, home-automation]
+  docs: https://docs.linuxserver.io/images/docker-faster-whisper/
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    WYOMING_PORT:
+      kind: port
+      default: 10300
+      label: Wyoming port
+      description: The port Home Assistant connects to. It has no login, so keep it on your home network.
+    WHISPER_MODEL:
+      kind: string
+      default: auto
+      label: Speech model
+      description: The model that turns speech into text, for example tiny, base, small, medium, turbo or large-v3. Larger models are more accurate and slower. The default, auto, leaves the choice to the server. The model is downloaded on first start.
+    WHISPER_LANG:
+      kind: string
+      default: auto
+      label: Language
+      description: The two-letter code of the language you speak, for example en or de. The default, auto, lets the server work out the language.
+    TZ: { kind: timezone }
+  description: |
+    A local speech-to-text server for Home Assistant's voice assistant: it turns what you say into text on your own server, so no audio leaves your network. It runs faster-whisper, a fast implementation of OpenAI's Whisper models, behind the Wyoming protocol that Home Assistant speaks.
+
+    This template uses the CPU image; the image's gpu tag is for NVIDIA GPUs only and is not used here. The model you choose is downloaded the first time it starts, which can take a few minutes, and is kept in the app's folder.
+
+    To connect it, open Home Assistant, go to Settings, Devices & services, add the Wyoming Protocol integration and enter this server's address and the Wyoming port (10300 by default). Then choose it as the speech-to-text service in your voice assistant. The server has no login, so keep it on your local network.
