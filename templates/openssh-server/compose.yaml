@@ -1,10 +1,11 @@
 # Written from https://docs.linuxserver.io/images/docker-openssh-server/ and https://www.openssh.com/ (D19).
 # Icon: https://github.com/selfhst/icons/blob/main/webp/openssh.webp, CC-BY-4.0 (https://creativecommons.org/licenses/by/4.0/), none
 #
-# A sandboxed SSH and SFTP login: the user only reaches the processes in this
-# container and the folder mapped below, which is at /data once connected
-# (for example sftp -P 2222 USER_NAME@server, then cd /data). It is not a
-# login to the server itself.
+# A sandboxed SSH and SFTP login: the user reaches the processes in this
+# container and the two folders mapped below, the app's settings at /config
+# and the shared folder at /data once connected (for example
+# sftp -P 2222 USER_NAME@server, then cd /data). It is not a login to the
+# server itself.
 #
 # Sign-in needs a public key, a password, or both. Keys in PUBLIC_KEY are added
 # to the user's authorized_keys at start; removing the value later does not
@@ -39,7 +40,7 @@ x-hoserva:
   icon: icon.webp
   docs: https://docs.linuxserver.io/images/docker-openssh-server/
   description: |
-    An SSH and SFTP server that gives one user a sandboxed login: they reach only the shared folder and the processes inside the container, not the server itself.
+    An SSH and SFTP server that gives one user a sandboxed login: they reach the shared folder, the app's own settings folder and the processes inside the container, not the rest of the server.
 
     Connect with, for example, sftp -P 2222 <user>@<server> and open /data, the shared folder. Sudo access is not enabled. Public keys given at install are added to the user's authorized keys when the app starts, and removing the value later does not remove them.
   inputs:
