@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # The workflow's structure: the needs chain from validation to build to
-# deploy, the triggers, where the signing secret is reachable, and that the
+# deploy, the triggers, where the secrets are reachable, and that the
 # tooling tests and validation run on every pull request and push.
 # shellcheck source=helpers.sh
 source "$(dirname "${BASH_SOURCE[0]}")/helpers.sh"
@@ -93,15 +93,18 @@ check("tooling-tests" in needs("build"), "build does not need the tooling tests"
 check("build" in needs("release"), "release does not need build")
 check("build" in needs("deploy"), "deploy does not need build")
 check("release" in needs("deploy"), "deploy does not need release")
+check("deploy" in needs("notify"), "notify does not need deploy")
+check("build" in needs("notify"), "notify does not need build")
 check("validate" not in jobs["validate"].get("needs", []) and not needs("validate"), "validate must run first")
 
 # Validation and the tooling tests run on every change; publishing never on a PR.
 for job in ("validate", "tooling-tests"):
     check("if" not in jobs[job], f"{job} is conditional")
-for job in ("build", "release", "deploy"):
+for job in ("build", "release", "deploy", "notify"):
     check("event_name != 'pull_request'" in jobs[job].get("if", ""), f"{job} may run on a pull request")
-for job in ("release", "deploy"):
+for job in ("release", "deploy", "notify"):
     check("refs/heads/main" in jobs[job].get("if", ""), f"{job} is not limited to main")
+    check("github.repository == 'mdg-labs/hoserva-catalog'" in jobs[job].get("if", ""), f"{job} is not limited to the catalog repository")
 check("refs/heads/main" not in jobs["build"].get("if", ""), "the dev dry run would not build")
 
 # The jobs run the scripts the tests cover.
@@ -122,12 +125,18 @@ check(".ci/release.sh" in runs("release"), "release does not run release.sh")
 check(".ci/check-tip.sh" in runs("release"), "release does not run check-tip.sh")
 check(".ci/check-tip.sh" in runs("deploy"), "deploy does not run check-tip.sh")
 
-# The signing secret is reachable from the build job only.
+# The signing secret is reachable from the build job only, and the token for
+# the site-rebuild dispatch from the notify job's one step only.
 check("secrets." not in str(doc.get("env", "")), "a workflow-level env reads a secret")
 for name, job in jobs.items():
     uses_secret = "secrets." in str(job)
-    check(uses_secret == (name == "build"), f"job {name}: secret access {'present' if uses_secret else 'absent'}")
-check(text.count("secrets.HOSERVA_CATALOG_SIGNING_KEY") == 2 and text.count("secrets.") == 2, "unexpected secret references")
+    check(uses_secret == (name in ("build", "notify")), f"job {name}: secret access {'present' if uses_secret else 'absent'}")
+check(text.count("secrets.HOSERVA_CATALOG_SIGNING_KEY") == 2 and text.count("secrets.GH_TOKEN") == 1 and text.count("secrets.") == 3, "unexpected secret references")
+check("secrets." not in str([s for s in jobs["notify"]["steps"] if ".ci/notify-published.sh" not in s.get("run", "")]), "notify: a step other than the dispatch reads a secret")
+for s in jobs["notify"]["steps"]:
+    if ".ci/notify-published.sh" in s.get("run", ""):
+        check(s.get("env", {}).get("GH_TOKEN") == "${{ secrets.GH_TOKEN }}", "notify: the dispatch step does not take GH_TOKEN from the secret")
+        check("secrets." not in s["run"] and "GH_TOKEN" not in s["run"], "notify: the token is on the dispatch step's command line")
 
 # Only the deploy job may write Pages or mint an id token, and only the
 # release job may write contents.
@@ -170,6 +179,12 @@ for i, s in enumerate(steps):
     if "check-published.sh" in s.get("run", ""):
         idx["fetchback"] = i
 check(len(idx) == 4 and idx["guard"] < idx["tip"] < idx["deploy"] < idx["fetchback"], "deploy steps are not guard, tip check, deploy, fetch-back")
+
+# The dispatch is the notify job's last step and runs for the serial that was built.
+nsteps = jobs["notify"]["steps"]
+check(".ci/notify-published.sh" in nsteps[-1].get("run", ""), "the dispatch is not the notify job's last step")
+check("mdg-labs/hoserva " in nsteps[-1].get("run", "") and nsteps[-1].get("env", {}).get("SERIAL") == "${{ needs.build.outputs.serial }}", "the dispatch does not go to mdg-labs/hoserva with the built serial")
+check("if" not in nsteps[-1] and "continue-on-error" not in nsteps[-1], "the dispatch step is conditional or ignores failure outside the script")
 
 # Build order: build, key check, sign, verify, then upload.
 steps = jobs["build"]["steps"]

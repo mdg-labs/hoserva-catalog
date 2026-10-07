@@ -69,12 +69,13 @@ branch and `main` is release-only, moved by a pull request from `dev`.
 |---|---|
 | Pull request | tooling tests and validation; no secret is available |
 | Push to `dev` | those, then build and sign as a dry run; the result is the `catalog-dist` workflow artifact and nothing is deployed |
-| Push to `main` | those, then the GitHub Release `serial-<serial>`, then the GitHub Pages deploy and a fetch-back check |
+| Push to `main` | those, then the GitHub Release `serial-<serial>`, then the GitHub Pages deploy and a fetch-back check, then a request to rebuild hoserva.dev |
 | `workflow_dispatch` | as a push to the branch it is run on; only `main` releases and deploys |
 
 The build job runs only after validation and the tooling tests pass, the
 release job only after the build job and the deploy job only after both, so a
-template that fails validation never reaches a published archive.
+template that fails validation never reaches a published archive. The last job,
+the site rebuild request below, runs only after the deploy and its fetch-back.
 
 ## The archive
 
@@ -185,6 +186,25 @@ one, or an old run re-run) therefore never publishes over a newer one, even
 though its serial, taken at build time, would be higher. The release and deploy
 jobs also share one `catalog-pages` concurrency group, so they run one at a
 time.
+
+### Asking hoserva.dev to rebuild
+
+hoserva.dev lists the catalog at `/apps`. After a successful deploy and
+fetch-back, the `notify` job sends one `repository_dispatch` event of type
+`catalog-published` to `mdg-labs/hoserva`, with the new serial in
+`client_payload`, so the site picks up the archive within minutes instead of at
+its daily rebuild (`.ci/notify-published.sh`).
+
+- It uses the repository secret `GH_TOKEN`, a personal access token. The
+  minimum it needs is permission to send `repository_dispatch` to
+  `mdg-labs/hoserva`: for a classic token the `repo` scope, for a fine-grained
+  one `Contents: write` on that repository alone. Nothing else in this
+  repository's CI uses it.
+- Only that one step of the `notify` job sees the token. It never runs for a pull
+  request or a push to `dev`, and the token is never printed.
+- This request never fails a publish. A missing `GH_TOKEN` or a failed call is
+  a `::warning::` in the job log and the job succeeds; the catalog is already
+  served, and the site's daily rebuild catches up.
 
 ## Running the tooling tests
 
