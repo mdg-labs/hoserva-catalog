@@ -3,8 +3,11 @@
 token flow described by a JSON file, re-read on every request.
 
   {"<host>": {"<repo>": {"tags": [...], "pageSize": 3, "status": 500,
-                         "throttle": 2, "retryAfter": "0",
+                         "throttle": 2, "retryAfter": "0", "manifestStatus": 429,
                          "anonymous": true, "digests": {"<tag>": "sha256:..." | "=<other tag>"}}}}
+
+manifestStatus answers every manifest request with that status while the tag
+list stays served.
 
 throttle answers that many authenticated requests per repository with HTTP 429
 (and a Retry-After header when retryAfter is set) before serving normally.
@@ -82,6 +85,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 more = urllib.parse.urlencode({"last": page[-1], "n": query.get("n", ["1000"])[0]})
                 headers["Link"] = f'</{host}/v2/{name}/tags/list?{more}>; rel="next"'
             return self.json(200, {"name": name, "tags": page}, headers)
+        if repo.get("manifestStatus"):
+            return self.json(repo["manifestStatus"], {"errors": [{"code": "TOOMANYREQUESTS"}]})
         tag = route.group(4)
         if tag not in tags and tag not in repo.get("digests", {}):
             return self.json(404, {"errors": [{"code": "MANIFEST_UNKNOWN"}]})

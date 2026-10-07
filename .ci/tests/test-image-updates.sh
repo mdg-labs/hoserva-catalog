@@ -456,6 +456,47 @@ run_updates
 assert_eq "$(cat "$writes")" "" "companion second run writes"
 rm -r "${T:?}/templates/compnone" "${T:?}/templates/comprb" "${T:?}/templates/compmix"
 
+# A rule with a channel follows the version tag the channel tag points at, not
+# the highest tag: the update is the channel's tag even when higher tags exist
+# (prereleases under plain version tags). A channel equal to the pin is no
+# update, a larger first number is a major (held back by majors: false), and a
+# channel that matches no candidate is a listed failure that leaves the open
+# issue alone.
+tpl chan "app=org/chan:1.0.0"
+tpl chaneq "app=org/chaneq:1.2.0"
+tpl chanmajor "app=org/chanmajor:1.2.0"
+tpl chanmajorno "app=org/chanmajorno:1.2.0"
+tpl chanmiss "app=org/chanmiss:1.0.0"
+seed 860 image-update '<!-- image-update id=chanmiss targets=app=1.1.0 -->
+Body.'
+: >"$GITHUB_STEP_SUMMARY"
+run_updates
+[ "$rc" -ne 0 ] || t_fail "a channel that matches no tag must fail the run"
+assert_open chan 'targets=app=1.2.0'
+assert_none chaneq
+assert_open chanmajor 'targets= majors=app=2.0.0'
+assert_none chanmajorno
+assert_eq "$(open_for chanmiss)" 860 "chanmiss issue"
+if grep -q '#860\|chanmiss' "$writes"; then t_fail "a template whose channel matched no tag was written to"; fi
+grep -q 'chanmiss: service app: stable matches none of the 1 newest tags newer than the pinned 1.0.0' "$GITHUB_STEP_SUMMARY" \
+  || t_fail "the unmatched channel is not in the job summary: $(cat "$GITHUB_STEP_SUMMARY")"
+run_updates
+assert_eq "$(cat "$writes")" "" "channel second run writes"
+for id in chan chaneq chanmajor chanmajorno chanmiss; do rm -r "${T:?}/templates/$id"; done
+
+# A rule with a lookup reads tags and manifests from that image: the pinned
+# image's registry here refuses every manifest request, and the issue still
+# proposes a tag of the pinned image (with the digest of the same tag read from
+# the lookup image when the pin carries one).
+tpl lookapp "app=lookup.example/org/lookapp:1.0.0"
+tpl lookdig "app=lookup.example/org/lookapp:1.0.0@sha256:$(printf 'a%.0s' $(seq 64))"
+run_updates
+assert_open lookapp 'targets=app=1.1.0'
+assert_open lookdig "targets=app=1.1.0@sha256:$(printf 'c%.0s' $(seq 64))"
+run_updates
+assert_eq "$(cat "$writes")" "" "lookup second run writes"
+for id in lookapp lookdig; do rm -r "${T:?}/templates/$id"; done
+
 # The first matching rule wins, and a rule added elsewhere changes nothing for
 # the images another rule already covers.
 {
@@ -501,6 +542,29 @@ while IFS='|' read -r want bad; do
 done <<'RULESETS'
 rules\[1\].versions: must be true or false|rules: [{match: "x/*", versions: "no"}]
 defaults.versions: must be true or false|defaults: {versions: 0}
+RULESETS
+# A channel is a tag name on a semver rule, a lookup a tag-less registry image
+# on a rule that names one image, and neither is set in the defaults.
+n=0
+while IFS='|' read -r want bad; do
+  n=$((n + 1))
+  printf '%s\n' "$bad" >"$T/rules-option-$n.yaml"
+  IMAGE_UPDATES_RULES="$T/rules-option-$n.yaml" run_updates
+  [ "$rc" -ne 0 ] || t_fail "the ruleset $bad must stop the run"
+  grep -q "$want" "$T/out" || t_fail "the ruleset $bad is not refused for $want: $(cat "$T/out")"
+  assert_eq "$(cat "$writes")" "" "writes under the ruleset $bad"
+done <<'RULESETS'
+rules\[1\].channel: must be a tag name|rules: [{match: "x/*", channel: 5}]
+rules\[1\].channel: must be a tag name|rules: [{match: "x/*", channel: "a b"}]
+rules\[1\].channel: only the semver scheme follows a channel, not linuxserver|rules: [{match: "x/*", scheme: linuxserver, channel: stable}]
+rules\[1\].channel: only the semver scheme follows a channel, not calver|rules: [{match: "x/*", scheme: calver, channel: stable}]
+defaults.channel: is set per rule|defaults: {channel: stable}
+rules\[1\].lookup: must be a registry image without a tag|rules: [{match: "x/y", lookup: 5}]
+rules\[1\].lookup: must be a registry image without a tag|rules: [{match: "x/y", lookup: "docker.io/org/app:1.0"}]
+rules\[1\].lookup: must be a registry image without a tag|rules: [{match: "x/y", lookup: "docker.io/org/app@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}]
+rules\[1\].lookup: must be a registry image without a tag|rules: [{match: "x/y", lookup: "Not A Repo"}]
+rules\[1\].lookup: needs a `match` naming one image|rules: [{match: "docker.io/org/*", lookup: "docker.io/org/app"}]
+defaults.lookup: is set per rule|defaults: {lookup: "docker.io/org/app"}
 RULESETS
 IMAGE_UPDATES_RULES="$T/missing.yaml" run_updates
 [ "$rc" -ne 0 ] || t_fail "a missing ruleset must stop the run"
@@ -616,6 +680,7 @@ tpl realkopia "app=docker.io/kopia/kopia:0.23.1"
 tpl realha "app=ghcr.io/home-assistant/home-assistant:2026.9.4"
 tpl realjackett "app=lscr.io/linuxserver/jackett:v0.24.2793-ls49"
 tpl realpg "app=docker.io/library/postgres:18.6"
+tpl realn8n "app=docker.n8n.io/n8nio/n8n:2.41.6" "runners=docker.io/n8nio/runners:2.41.6"
 ddd="sha256:$(printf 'd%.0s' $(seq 64))"
 ccc="sha256:$(printf 'c%.0s' $(seq 64))"
 immich_db="ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0"
@@ -628,6 +693,7 @@ assert_open realkopia 'targets=app=0.23.2'
 assert_open realha 'targets=app=2027.1.0'
 assert_open realjackett 'targets=app=v0.24.2798-ls50'
 assert_none realpg
+assert_open realn8n 'targets=app=2.42.4,runners=2.42.4'
 # immich's database and valkey images follow immich-server's release: no version
 # row for a newer VectorChord, pgvecto.rs or PostgreSQL tag, and a rebuild is
 # listed only next to the server's own update.

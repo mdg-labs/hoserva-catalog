@@ -26,6 +26,18 @@
 #          companion image whose tag the upstream release of a sibling service
 #          fixes. A changed digest behind its pinned tag is still listed as a
 #          rebuild (default true).
+# channel  semver only: the update is the version tag, newer than the pinned
+#          one and of its shape, that has the digest of this moving tag (for
+#          example `stable`). For images that publish prereleases under plain
+#          version tags, where the highest tag is not the stable release. The
+#          newest 20 candidates are probed; a channel that matches none is a
+#          listed failure. Not inherited from `defaults`.
+# lookup   a registry image (host/repository, no tag) whose tags and manifests
+#          are read instead of the pinned image's, for an image whose own
+#          registry refuses the manifest requests the check makes. It changes
+#          only where the check looks: the template's pin, and the tags an issue
+#          proposes, stay those of the pinned image. The rule's `match` must
+#          name one image, and `lookup` is not inherited from `defaults`.
 # majors   false: a newer major is never reported for these images (default
 #          true). Updates within the pinned major still are.
 #
@@ -67,6 +79,16 @@ rules:
     versions: false
   - match: docker.io/valkey/valkey
     versions: false
+
+  # Publishes each weekly prerelease under a plain version tag; `stable` is the
+  # channel n8n documents for production. docker.n8n.io answers the tag list but
+  # rate-limits every manifest request by its own address, so the check reads
+  # n8n's tags and digests from Docker Hub, which serves the same images.
+  - match: docker.n8n.io/n8nio/n8n
+    channel: stable
+    lookup: docker.io/n8nio/n8n
+  - match: docker.io/n8nio/runners
+    channel: stable
 
   # Database servers are kept per major (one template per major, or a pinned
   # major per template): a newer major is a migration, never an update.

@@ -27,6 +27,7 @@ LABEL_COLOR = "0e8a16"
 NO_UPDATE_COMMENT = "No newer version is reported any more for this template; closing."
 TAGS_PAGE = 1000
 LSIO_PROBES = 20
+CHANNEL_PROBES = 20
 SCHEMES = ("linuxserver", "semver", "calver")
 TIMEOUT = 20
 RETRY_STATUS = (429, 503)
@@ -112,9 +113,9 @@ class Rule:
     """One versioning rule: which images it covers, the scheme that decides what
     is newer, and the tag filters applied before any comparison."""
 
-    def __init__(self, match, scheme, include, exclude, majors, versions):
+    def __init__(self, match, scheme, include, exclude, majors, versions, channel, lookup):
         self.match, self.scheme, self.include, self.exclude, self.majors = match, scheme, include, exclude, majors
-        self.versions = versions
+        self.versions, self.channel, self.lookup = versions, channel, lookup
 
     def covers(self, ref):
         return fnmatch.fnmatchcase(f"{ref.host}/{ref.repo}", self.match)
@@ -142,10 +143,29 @@ def filters(where, items):
     return out
 
 
+def lookup_of(where, spec, match):
+    """The registry image a rule reads tags and manifests from instead of the
+    pinned one, as (host, repository)."""
+    lookup = spec.get("lookup")
+    if lookup is None:
+        return None
+    if where == "defaults":
+        raise ValueError(f"{where}.lookup: is set per rule, not in the defaults")
+    if any(c in match for c in "*?["):
+        raise ValueError(f"{where}.lookup: needs a `match` naming one image, not the pattern {match!r}")
+    try:
+        if not isinstance(lookup, str):
+            raise Failure("not a string")
+        ref = parse_ref(lookup + ":x")
+    except Failure as e:
+        raise ValueError(f"{where}.lookup: must be a registry image without a tag, such as docker.io/org/app ({e})") from e
+    return ref.host, ref.repo
+
+
 def build_rule(where, spec, match, fallback):
     if not isinstance(spec, dict):
         raise ValueError(f"{where}: must be a mapping")
-    unknown = set(spec) - {"match", "scheme", "include", "exclude", "majors", "versions"}
+    unknown = set(spec) - {"match", "scheme", "include", "exclude", "majors", "versions", "channel", "lookup"}
     if unknown:
         raise ValueError(f"{where}: unknown keys {sorted(unknown)}")
     scheme = spec.get("scheme", fallback.scheme if fallback else "semver")
@@ -159,7 +179,15 @@ def build_rule(where, spec, match, fallback):
     versions = spec.get("versions", fallback.versions if fallback else True)
     if not isinstance(versions, bool):
         raise ValueError(f"{where}.versions: must be true or false")
-    return Rule(match, scheme, include, exclude, majors, versions)
+    channel = spec.get("channel")
+    if channel is not None:
+        if where == "defaults":
+            raise ValueError(f"{where}.channel: is set per rule, not in the defaults")
+        if not isinstance(channel, str) or not TAG_RE.match(channel):
+            raise ValueError(f"{where}.channel: must be a tag name")
+        if scheme != "semver":
+            raise ValueError(f"{where}.channel: only the semver scheme follows a channel, not {scheme}")
+    return Rule(match, scheme, include, exclude, majors, versions, channel, lookup_of(where, spec, match))
 
 
 def load_rules(path):
@@ -408,6 +436,38 @@ def first_width(tag):
     return len(re.search(r"\d+", tag).group())
 
 
+def newer_channel(reg, rule, ref):
+    """semver, following a moving tag: for images that publish prereleases under
+    plain version tags, so only the channel tag says which build is stable. The
+    update is the version tag of the pinned shape, newer than the pin, that has
+    the channel tag's digest; a larger first number is a major unless the rule
+    sets `majors: false`. The newest candidates are probed, and a channel that
+    matches none of them is a listed failure."""
+    pinned = numbers(ref.tag)
+    if not pinned:
+        raise Failure(f"{ref.tag} has no number to compare")
+    channel = reg.digest(ref, rule.channel)
+    if reg.digest(ref, ref.tag) == channel:
+        return None, None
+    width = first_width(ref.tag)
+    newer = sorted(
+        (
+            (numbers(t), t)
+            for t in usable_tags(rule, ref, reg.tags(ref))
+            if shape(t) == shape(ref.tag) and first_width(t) == width and numbers(t) > pinned
+        ),
+        reverse=True,
+    )
+    probes = [t for _, t in newer[:CHANNEL_PROBES]]
+    for tag in probes:
+        if reg.digest(ref, tag) != channel:
+            continue
+        if numbers(tag)[0] > pinned[0]:
+            return None, tag if rule.majors else None
+        return tag, None
+    raise Failure(f"{rule.channel} matches none of the {len(probes)} newest tags newer than the pinned {ref.tag}")
+
+
 def newer_numeric(reg, rule, ref):
     """semver: the newest tag with the pinned tag's first number is the update, a
     larger first number of the same width is a major unless the rule sets
@@ -431,14 +491,17 @@ def newer_numeric(reg, rule, ref):
 
 def evaluate(reg, rules, ref):
     rule = rules.for_ref(ref)
+    read = Ref(*rule.lookup, ref.tag, ref.digest) if rule.lookup else ref
     if not rule.versions:
         new_tag, major = None, None
     elif rule.scheme == "linuxserver":
-        new_tag, major = newer_linuxserver(reg, rule, ref)
+        new_tag, major = newer_linuxserver(reg, rule, read)
+    elif rule.channel:
+        new_tag, major = newer_channel(reg, rule, read)
     else:
-        new_tag, major = newer_numeric(reg, rule, ref)
+        new_tag, major = newer_numeric(reg, rule, read)
     if ref.digest:
-        digest = reg.digest(ref, new_tag or ref.tag)
+        digest = reg.digest(read, new_tag or ref.tag)
         if new_tag:
             return Change(kind_of(new_tag, ref.tag), f"{new_tag}@{digest}", ref.pinned), major
         if digest != ref.digest:
