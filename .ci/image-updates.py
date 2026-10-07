@@ -24,6 +24,7 @@ import yaml
 
 LABEL = "image-update"
 LABEL_COLOR = "0e8a16"
+NO_UPDATE_COMMENT = "No newer version is reported any more for this template; closing."
 TAGS_PAGE = 1000
 LSIO_PROBES = 20
 SCHEMES = ("linuxserver", "semver", "calver")
@@ -647,26 +648,49 @@ class GitHub:
             {"title": title(tpl.id, changes, majors), "body": body(tpl, changes, majors)},
         )
 
+    def close(self, number, comment):
+        self.api(f"repos/{self.repo}/issues/{number}/comments", "POST", {"body": comment})
+        self.api(f"repos/{self.repo}/issues/{number}", "PATCH", {"state": "closed", "state_reason": "not_planned"})
+
     def supersede(self, old, new):
-        self.api(f"repos/{self.repo}/issues/{old}/comments", "POST", {"body": f"Superseded by #{new}."})
-        self.api(f"repos/{self.repo}/issues/{old}", "PATCH", {"state": "closed", "state_reason": "not_planned"})
+        self.close(old, f"Superseded by #{new}.")
+
+
+def version_of(tag_and_digest):
+    return strip_ls(tag_and_digest.split("@")[0])
+
+
+def behind(pin, target):
+    """True when the version dev pins is older than the target's; tags of another shape are not comparable."""
+    pin, target = version_of(pin), version_of(target)
+    return shape(pin) == shape(target) and numbers(pin) < numbers(target)
+
+
+def ahead(pin, target):
+    pin, target = version_of(pin), version_of(target)
+    return shape(pin) == shape(target) and numbers(pin) > numbers(target)
 
 
 def decide(pinned, changes, majors, keep):
-    """One of none, create, edit, supersede, given the newest open issue (or None)."""
+    """One of none, create, edit, supersede, close, given the newest open issue (or None)."""
+    wants = bool(majors) or any(c.kind == "version" for c in changes.values())
     if keep is None:
-        wants = bool(majors) or any(c.kind == "version" for c in changes.values())
         return "create" if wants else "none"
+    pending = {s: t for s, t in keep["targets"].items() if pinned.get(s) != t}
+    held = [(pinned[s], t) for s, t in pending.items() if s in pinned]
+    if not wants and any(behind(p, t) for p, t in held) and not any(ahead(p, t) for p, t in held):
+        return "close"
+    if not wants and any(ahead(p, t) for p, t in held):
+        return "none"
     if not changes and not majors:
         return "none"
-    pending = {s: t for s, t in keep["targets"].items() if pinned.get(s) != t}
     new = {s: c.target for s, c in changes.items()}
     if new == pending and majors == keep["majors"]:
         return "none"
     version_diff = False
     for service, change in changes.items():
         if service in pending:
-            version_diff |= strip_ls(change.target.split("@")[0]) != strip_ls(pending[service].split("@")[0])
+            version_diff |= version_of(change.target) != version_of(pending[service])
         else:
             version_diff |= change.kind == "version"
     version_diff |= any(service not in changes for service in pending)
@@ -677,6 +701,11 @@ def reconcile(gh, tpl, pinned, changes, majors, issues):
     keep = issues[-1] if issues else None
     action = decide(pinned, changes, majors, keep)
     notes = []
+    if action == "close":
+        for old in issues:
+            gh.close(old["number"], NO_UPDATE_COMMENT)
+            notes.append(f"closed #{old['number']}: no newer version reported")
+        return notes
     if action in ("create", "supersede"):
         new = gh.create(tpl, changes, majors)
         notes.append(f"opened #{new}")

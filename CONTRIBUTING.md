@@ -54,6 +54,14 @@ documentation, with `Fixes #<n>` in the commit message.
 - A newer version than the open issue names supersedes it: the workflow opens the
   new issue first, then comments `Superseded by #<n>.` on the old one and closes
   it as not planned.
+- An open issue whose version change is no longer reported (a rule changed, or
+  upstream withdrew the tag, while `dev` still pins a version older than the
+  issue's) is commented on (`No newer version is reported any more for this
+  template; closing.`) and closed as not planned, and the job summary lists the
+  close. A rebuild left over does not keep it open or open a new one. An issue
+  whose version `dev` already pins, or pins a newer one than, is left alone, even
+  when a rebuild of that pin is reported, and closes with the commit that reaches
+  `main`.
 - A rebuild-only bump (a new `-ls<N>` suffix on the same version, or a new digest
   behind a pinned tag) never opens an issue. When an issue is already open, it is
   edited in place to name the newest rebuild: same number, no comment, nothing

@@ -246,6 +246,67 @@ assert_eq "$(cat "$writes")" "COMMENT #810 Superseded by #811.
 PATCH #810 {\"state\":\"closed\",\"state_reason\":\"not_planned\"}" "dupes writes"
 assert_eq "$(field 810 .state_reason)" not_planned "dupes reason"
 
+# An open issue whose version change is no longer reported is closed as not
+# planned, and nothing is opened for what is left: a rebuild of another
+# service, a rebuild of the same service, or nothing at all.
+aaa="sha256:$(printf 'a%.0s' $(seq 64))"
+bbb="sha256:$(printf 'b%.0s' $(seq 64))"
+mutate '.["docker.io"]["org/gone"] = {"tags": ["1.0.0"]} | .["docker.io"]["org/newer"] = {"tags": ["1.1.0", "1.2.0"]}'
+tpl goneother "a=org/gone:1.0.0" "b=org/digrebuild:2.0.1@$aaa"
+seed 850 image-update '<!-- image-update id=goneother targets=a=1.1.0 -->
+Body.'
+tpl gonesame "app=org/digrebuild:2.0.1@$aaa"
+seed 851 image-update "<!-- image-update id=gonesame targets=app=2.0.2@$bbb -->
+Body."
+tpl gonenone "app=org/gone:1.0.0"
+seed 852 image-update '<!-- image-update id=gonenone targets=app=1.1.0 -->
+Older.'
+seed 853 image-update '<!-- image-update id=gonenone targets=app=1.2.0 -->
+Newer.'
+tpl rbpinned "app=org/digrebuild:2.0.1@$aaa"
+seed 854 image-update "<!-- image-update id=rbpinned targets=app=2.0.1@$bbb -->
+Body."
+tpl pinahead "app=org/newer:1.2.0"
+seed 855 image-update '<!-- image-update id=pinahead targets=app=1.1.0 -->
+Body.'
+mutate '.["lscr.io"]["linuxserver/lsahead"] = {"tags": ["latest", "1.1.0-ls3", "1.2.0-ls5", "1.2.0-ls6"], "digests": {"latest": "=1.2.0-ls6"}}
+  | .["docker.io"]["org/digahead"] = {"tags": ["1.1.0", "1.2.0"], "digests": {"1.2.0": "'"$bbb"'"}}'
+tpl lsahead "app=lscr.io/linuxserver/lsahead:1.2.0-ls5"
+seed 856 image-update '<!-- image-update id=lsahead targets=app=1.1.0-ls3 -->
+Body.'
+tpl digahead "app=org/digahead:1.2.0@$aaa"
+seed 857 image-update '<!-- image-update id=digahead targets=app=1.1.0 -->
+Body.'
+cp "$issues" "$T/before.json"
+: >"$GITHUB_STEP_SUMMARY"
+run_updates
+assert_eq "$rc" 0 "gone-version run exit status"
+if grep -q '^CREATE' "$writes"; then t_fail "a rebuild-only or empty result opened an issue: $(cat "$writes")"; fi
+for n in 850 851 852 853; do
+  assert_eq "$(field $n .state)" closed "#$n state"
+  assert_eq "$(field $n .state_reason)" not_planned "#$n reason"
+  assert_eq "$(field $n '.comments | join("|")')" "No newer version is reported any more for this template; closing." "#$n comment"
+  grep -q "^COMMENT #$n " "$writes" || t_fail "#$n was not commented on"
+  grep -q "^PATCH #$n {\"state\":\"closed\",\"state_reason\":\"not_planned\"}\$" "$writes" || t_fail "#$n was not closed"
+  grep -q "closed #$n: no newer version reported" "$GITHUB_STEP_SUMMARY" || t_fail "the job summary does not list the close of #$n"
+done
+assert_eq "$(open_for goneother)$(open_for gonesame)$(open_for gonenone)" "" "closed templates have no open issue"
+assert_eq "$(grep -c . "$writes")" 8 "writes of the close run"
+# The same version already pinned on dev, with only a rebuild reported, stays open untouched.
+assert_eq "$(open_for rbpinned)" 854 "pinned-version issue"
+assert_eq "$(jq -c '.[] | select(.number == 854)' "$issues")" "$(jq -c '.[] | select(.number == 854)' "$T/before.json")" "pinned-version issue changed"
+# A version dev already pins past the one the issue names is the updated template waiting for promotion: untouched.
+assert_eq "$(open_for pinahead)" 855 "pinned-ahead issue"
+assert_eq "$(jq -c '.[] | select(.number == 855)' "$issues")" "$(jq -c '.[] | select(.number == 855)' "$T/before.json")" "pinned-ahead issue changed"
+# The same, with a rebuild of dev's newer pin reported: still untouched, and no rebuild-only issue replaces it.
+for n in 856 857; do
+  assert_eq "$(jq -c ".[] | select(.number == $n)" "$issues")" "$(jq -c ".[] | select(.number == $n)" "$T/before.json")" "#$n changed"
+done
+assert_eq "$(open_for lsahead) $(open_for digahead)" "856 857" "pinned-ahead issues with a rebuild"
+run_updates
+assert_eq "$(cat "$writes")" "" "run after the closes writes"
+for id in goneother gonesame gonenone rbpinned pinahead lsahead digahead; do rm -r "${T:?}/templates/$id"; done
+
 # A registry failure leaves the template's open issue alone and fails the run
 # after every other template has been processed; so does a template that
 # cannot be compared at all.
