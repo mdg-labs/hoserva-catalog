@@ -1,0 +1,117 @@
+# Written from https://docs.linuxserver.io/images/docker-swag/ and https://github.com/linuxserver/docker-swag (D19).
+# Icon: none — searched the project's repository (linuxserver/docker-swag holds no logo file; the only logo its metadata names is the linuxserver.io project_logo, which the guide forbids), the linuxserver.io image page and selfhst/icons (no swag entry; only unrelated swagger and linuxserver-io files), so no source with a stated redistributable license exists.
+#
+# SWAG is an Nginx web server and reverse proxy with a built-in certificate
+# client (Let's Encrypt or ZeroSSL) and fail2ban. It needs ports 80 and 443 on
+# the server, so it cannot run together with Nginx Proxy Manager, which uses
+# the same ports; stop one of them or give one of them different ports.
+#
+# Before the first start, the domain and the subdomains must point to this
+# server, and your router must forward port 443 (and, for the http validation
+# method, port 80) to it. With the dns validation method, enter the DNS
+# provider's name in the DNS provider field and put its credentials into the
+# provider's file in the app's folder, swag/dns-conf (the image documentation
+# says what it holds).
+# For a certificate that covers every subdomain (wildcard), enter exactly
+# "wildcard" as the subdomains and use the dns validation method. Try the
+# staging setting first when setting up: it avoids the certificate provider's
+# rate limits, but the certificate it issues is not trusted by browsers.
+#
+# To serve an app, rename its sample file in swag/nginx/proxy_confs in the
+# app's folder (the README.md there explains how), or write your own file in
+# swag/nginx/site-confs. After setup the default page is at
+# https://<your domain>. QUIC (HTTP/3, port 443 over UDP) is left out: the
+# image documentation says it must be switched on in the default and every
+# site config as well as published, and that switching it on without
+# publishing the UDP port can break connections with some browsers.
+services:
+  swag:
+    image: lscr.io/linuxserver/swag:5.8.0-ls488
+    # NET_ADMIN: the image documentation says fail2ban needs it to change
+    # iptables rules.
+    cap_add:
+      - NET_ADMIN
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+      URL: ${DOMAIN}
+      VALIDATION: ${VALIDATION}
+      DNSPLUGIN: ${DNSPLUGIN}
+      SUBDOMAINS: ${SUBDOMAINS}
+      ONLY_SUBDOMAINS: ${ONLY_SUBDOMAINS}
+      CERTPROVIDER: ${CERTPROVIDER}
+      EMAIL: ${EMAIL}
+      STAGING: ${STAGING}
+    volumes:
+      - ${APPDATA}/swag:/config
+    ports:
+      - ${HTTPS_PORT}:443
+      - ${HTTP_PORT}:80
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: swag
+  revision: 1
+  title: SWAG
+  categories: [network, proxy]
+  docs: https://docs.linuxserver.io/images/docker-swag/
+  links:
+    project: https://github.com/linuxserver/docker-swag
+  description: |
+    An Nginx web server and reverse proxy that gets and renews free certificates for your own domain (Let's Encrypt or ZeroSSL) and blocks repeated bad requests with fail2ban, so you can reach your apps from the internet over HTTPS.
+
+    It needs ports 80 and 443, the same ports Nginx Proxy Manager uses, so the two cannot run together on one server. Fail2ban needs the NET_ADMIN capability, which the install summary shows.
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    DOMAIN:
+      kind: string
+      label: Domain
+      description: The domain you own, for example example.com, or the name from a dynamic DNS provider, for example mynas.duckdns.org. It must point to this server.
+    VALIDATION:
+      kind: string
+      default: http
+      label: Validation method
+      description: How the certificate provider checks you control the domain. http needs port 80 forwarded to this server. dns works without opening port 80 and is needed for a wildcard certificate, but also needs the DNS provider below and its credentials in the app's folder.
+    DNSPLUGIN:
+      kind: string
+      optional: true
+      label: DNS provider
+      description: Only for the dns validation method. The provider's name as the image documentation lists it, for example cloudflare, duckdns or route53. Leave empty for http validation.
+    SUBDOMAINS:
+      kind: string
+      optional: true
+      label: Subdomains
+      description: The subdomains the certificate covers, separated by commas without spaces, for example www,cloud. Enter wildcard for every subdomain (dns validation only). Leave empty to cover the domain only.
+    ONLY_SUBDOMAINS:
+      kind: string
+      default: "false"
+      label: Only the subdomains
+      description: Enter true to get a certificate for the subdomains but not the domain itself, for example when the domain is served by another machine.
+    CERTPROVIDER:
+      kind: string
+      optional: true
+      label: Certificate provider
+      description: Leave empty for Let's Encrypt, or enter zerossl for ZeroSSL, which needs an account at zerossl.com and your email address below.
+    EMAIL:
+      kind: string
+      optional: true
+      label: Email address
+      description: The address the certificate provider sends expiry notices to. Required for ZeroSSL.
+    STAGING:
+      kind: string
+      default: "false"
+      label: Test certificates (staging)
+      description: Enter true to get test certificates while setting up. They avoid the provider's rate limits but browsers do not trust them. Change it back to false when everything works.
+    HTTPS_PORT:
+      kind: port
+      default: 443
+      label: HTTPS port
+      description: The port the proxy answers secure web requests on. Forward port 443 of your router here.
+    HTTP_PORT:
+      kind: port
+      default: 80
+      label: HTTP port
+      description: The port the proxy answers plain web requests on. Forward port 80 of your router here; the http validation method needs it.
+    TZ: { kind: timezone }
