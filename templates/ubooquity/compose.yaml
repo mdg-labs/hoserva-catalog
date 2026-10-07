@@ -1,0 +1,85 @@
+# Written from https://docs.linuxserver.io/images/docker-ubooquity/, https://github.com/linuxserver/docker-ubooquity, https://vaemendis.github.io/ubooquity-doc/pages/installation-guide.html and https://vaemendis.github.io/ubooquity-doc/pages/manual.html (D19).
+# Icon: none — no usable source. The project's website (https://vaemendis.net/ubooquity/) states no license for its logo, and its license page (https://vaemendis.net/ubooquity/static12/license) allows no redistribution or modification of the software; the selfhst/icons set (https://github.com/selfhst/icons) has no Ubooquity file; the linuxserver.io project_logo is not allowed.
+#
+# The library (port 2202 in the container) and the admin page (port 2203) are
+# two separate web servers. On the first visit open the admin page at
+# /ubooquity/admin, set the administrator password, then add the folders
+# /books, /comics and /files under Library and press Save and restart; the
+# library is at /ubooquity/. The image starts Ubooquity with remote
+# administration on, which the project turns off by default, so keep the admin
+# port on your home network. Both pages are served over plain HTTP: use them
+# only on your home network, or behind a reverse proxy that serves HTTPS.
+# Keep the ports in Ubooquity's own settings at 2202 and 2203: the container
+# publishes those, and the image reads the admin port from the settings.
+# The image scans the folders when it starts. Java is limited to 512 MB of
+# memory unless MAXMEM is set.
+services:
+  ubooquity:
+    image: lscr.io/linuxserver/ubooquity:3.1.0-ls95
+    environment:
+      PUID: "99"
+      PGID: "100"
+      TZ: ${TZ}
+      MAXMEM: ${MAXMEM}
+    volumes:
+      - ${APPDATA}/ubooquity:/config
+      - ${BOOKS}:/books
+      - ${COMICS}:/comics
+      - ${FILES}:/files
+    ports:
+      - ${LIBRARY_PORT}:2202
+      - ${ADMIN_PORT}:2203
+    restart: unless-stopped
+
+x-hoserva:
+  schema: 1
+  id: ubooquity
+  revision: 1
+  title: Ubooquity
+  categories: [media, books]
+  docs: https://docs.linuxserver.io/images/docker-ubooquity/
+  webui: http://{host}:${LIBRARY_PORT}/ubooquity/
+  links:
+    project: https://vaemendis.net/ubooquity/
+  description: |-
+    A home server for your comics and ebooks. Read them from a browser, tablet, phone or e-reader, at home or from anywhere you can reach your server. Ubooquity is free for non-commercial use.
+
+    It has two web addresses. The library, on the Library port, is where you and your family read; the admin page, on the Admin port at /ubooquity/admin, is where you set the administrator password on first use, add the folders to share and create user accounts. Add the folders /books, /comics and /files in the admin page under Library, then press Save and restart.
+
+    The pages are served over plain HTTP, so use them on your home network or behind a reverse proxy that serves HTTPS.
+  inputs:
+    APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
+    BOOKS:
+      kind: path
+      role: media
+      default: /mnt/user/data/media/books
+      label: Books folder
+      description: The folder that holds your ebooks. It is mounted at /books in Ubooquity, so add /books as a library folder in the admin page.
+    COMICS:
+      kind: path
+      role: media
+      default: /mnt/user/data/media/comics
+      label: Comics folder
+      description: The folder that holds your comics. It is mounted at /comics in Ubooquity, so add /comics as a library folder in the admin page.
+    FILES:
+      kind: path
+      role: media
+      default: /mnt/user/data/media/files
+      label: Other files folder
+      description: A folder of other files, such as documents, that is not a book or comic library. It is mounted at /files in Ubooquity, so add /files in the admin page to share it.
+    LIBRARY_PORT:
+      kind: port
+      default: 2202
+      label: Library port
+      description: The port of the library, where you read your books and comics.
+    ADMIN_PORT:
+      kind: port
+      default: 2203
+      label: Admin port
+      description: The port of the admin page, where you set the administrator password and choose the folders to share.
+    MAXMEM:
+      kind: string
+      optional: true
+      label: Memory limit
+      description: Optional. The most memory Ubooquity may use, as a number of megabytes without a unit, for example 1024 for 1 GB. Leave it empty for 512 MB; raise it if large libraries make the app run out of memory. Keep it below the memory your server has.
+    TZ: { kind: timezone }
