@@ -276,19 +276,23 @@ exists, as described below.
   Copy the file unchanged unless the license asks for more.
 - Otherwise use the application's file from
   [selfhst/icons](https://github.com/selfhst/icons), which is licensed
-  CC-BY-4.0 (the repository's `LICENSE`). The logos stay the trademarks of
-  their projects.
+  CC-BY-4.0 (the repository's `LICENSE`).
+- If selfhst/icons has none, use the application's file from
+  [homarr-labs/dashboard-icons](https://github.com/homarr-labs/dashboard-icons),
+  which is licensed Apache-2.0 (the repository's `LICENSE`), the SVG over a PNG.
+  Link the file at a commit, not at `main`.
+- The logos in both icon sets stay the trademarks of their projects.
 - Never use an image whose license is not stated, and never one from the
   linuxserver.io API (`project_logo`).
-- If neither source has a usable image, omit `x-hoserva.icon` and the icon
-  file. Hoserva then shows one neutral placeholder wherever the template's icon
+- If none of these sources has a usable image, omit `x-hoserva.icon` and the
+  icon file. Hoserva then shows one neutral placeholder wherever the template's icon
   would appear, and lint checks the icon file only when `icon` is set.
 - Keep the file under about 32 KB.
 - Record where it came from in a comment in `compose.yaml`, which ships in the
   archive so the attribution travels with the icon:
   `# Icon: <source URL>, <license>, <changes or none>`. A template without an
   icon records the sources you searched instead, for example
-  `# Icon: none, the project publishes no logo under a license that allows redistribution and selfhst/icons has none`.
+  `# Icon: none, the project publishes no logo under a license that allows redistribution, and neither selfhst/icons nor dashboard-icons has one`.
 
 ## Updating a template
 
