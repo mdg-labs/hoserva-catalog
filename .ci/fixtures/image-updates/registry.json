@@ -426,6 +426,33 @@
     "17.6",
     "18.0"
    ]
+  },
+  "org/compapp": {
+   "tags": [
+    "1.0.0",
+    "1.1.0"
+   ]
+  },
+  "org/companion": {
+   "tags": [
+    "1.0.0",
+    "1.1.0",
+    "2.0.0"
+   ],
+   "digests": {
+    "1.0.0": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+   }
+  },
+  "valkey/valkey": {
+   "tags": [
+    "9",
+    "9-alpine",
+    "9.1",
+    "10"
+   ],
+   "digests": {
+    "9": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+   }
   }
  },
  "open.example": {
@@ -446,6 +473,26 @@
     "2026.10.1",
     "2027.1.0",
     "20261005.0.1"
+   ]
+  },
+  "immich-app/postgres": {
+   "tags": [
+    "14-vectorchord0.3.0-pgvectors0.2.0",
+    "14-vectorchord0.4.3-pgvectors0.2.0",
+    "14-vectorchord0.4.3-pgvectors0.3.0",
+    "14-vectorchord0.4.4-pgvectors0.2.0",
+    "16-vectorchord0.4.3-pgvectors0.2.0",
+    "17-vectorchord0.4.3-pgvectors0.2.0"
+   ],
+   "digests": {
+    "14-vectorchord0.4.3-pgvectors0.2.0": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+   }
+  },
+  "immich-app/immich-server": {
+   "tags": [
+    "v3.2.3",
+    "v3.2.4",
+    "v3.2.5"
    ]
   }
  }

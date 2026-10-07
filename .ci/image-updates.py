@@ -112,8 +112,9 @@ class Rule:
     """One versioning rule: which images it covers, the scheme that decides what
     is newer, and the tag filters applied before any comparison."""
 
-    def __init__(self, match, scheme, include, exclude, majors):
+    def __init__(self, match, scheme, include, exclude, majors, versions):
         self.match, self.scheme, self.include, self.exclude, self.majors = match, scheme, include, exclude, majors
+        self.versions = versions
 
     def covers(self, ref):
         return fnmatch.fnmatchcase(f"{ref.host}/{ref.repo}", self.match)
@@ -144,7 +145,7 @@ def filters(where, items):
 def build_rule(where, spec, match, fallback):
     if not isinstance(spec, dict):
         raise ValueError(f"{where}: must be a mapping")
-    unknown = set(spec) - {"match", "scheme", "include", "exclude", "majors"}
+    unknown = set(spec) - {"match", "scheme", "include", "exclude", "majors", "versions"}
     if unknown:
         raise ValueError(f"{where}: unknown keys {sorted(unknown)}")
     scheme = spec.get("scheme", fallback.scheme if fallback else "semver")
@@ -155,7 +156,10 @@ def build_rule(where, spec, match, fallback):
     majors = spec.get("majors", fallback.majors if fallback else True)
     if not isinstance(majors, bool):
         raise ValueError(f"{where}.majors: must be true or false")
-    return Rule(match, scheme, include, exclude, majors)
+    versions = spec.get("versions", fallback.versions if fallback else True)
+    if not isinstance(versions, bool):
+        raise ValueError(f"{where}.versions: must be true or false")
+    return Rule(match, scheme, include, exclude, majors, versions)
 
 
 def load_rules(path):
@@ -427,7 +431,9 @@ def newer_numeric(reg, rule, ref):
 
 def evaluate(reg, rules, ref):
     rule = rules.for_ref(ref)
-    if rule.scheme == "linuxserver":
+    if not rule.versions:
+        new_tag, major = None, None
+    elif rule.scheme == "linuxserver":
         new_tag, major = newer_linuxserver(reg, rule, ref)
     else:
         new_tag, major = newer_numeric(reg, rule, ref)

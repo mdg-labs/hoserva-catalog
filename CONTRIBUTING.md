@@ -117,6 +117,15 @@ updates within the pinned major still open an issue. The ruleset sets it for the
 database servers (PostgreSQL, MariaDB, MySQL, MongoDB), which are kept per major:
 a newer major there is a migration, not an update.
 
+A rule with `versions: false` never reports a newer version or major for its
+images. It is for companion images whose tag the upstream release of a sibling
+service fixes: immich's compose file pins the database image
+(`ghcr.io/immich-app/postgres`: PostgreSQL, VectorChord and pgvecto.rs versions)
+and the valkey image, so a newer tag of either is not an update immich supports.
+A changed digest behind the pinned tag is still listed as a rebuild when an issue
+is open for the template anyway, and a rebuild alone opens none. A rule covers the
+image in every template that pins it.
+
 An image the check cannot classify under its rule, such as a pinned tag without a
 number, outside the registry's tag list or outside the rule's `include`, is a
 listed failure, never "no update". To teach the check a new image's versioning,

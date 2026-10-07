@@ -24,3 +24,5 @@ rules:
       - '^9\.'
   - match: docker.io/org/dbmajor
     majors: false
+  - match: docker.io/org/companion
+    versions: false

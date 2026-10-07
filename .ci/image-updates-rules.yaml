@@ -22,6 +22,10 @@
 # exclude  regular expressions: a tag matching one is not considered. A rule's
 #          list adds to the defaults'. A filter the pinned tag itself matches
 #          is not applied, so a pin on a prerelease line follows that line.
+# versions false: the image never gets a version row or a major line. For a
+#          companion image whose tag the upstream release of a sibling service
+#          fixes. A changed digest behind its pinned tag is still listed as a
+#          rebuild (default true).
 # majors   false: a newer major is never reported for these images (default
 #          true). Updates within the pinned major still are.
 #
@@ -53,11 +57,20 @@ rules:
     exclude:
       - '^\d{8}\.'
 
+  # Companion images whose tag the upstream release of the service they belong
+  # to fixes: immich's compose file pins the database image's PostgreSQL,
+  # VectorChord and pgvecto.rs versions and the valkey image, and a newer tag of
+  # either is not one immich supports. They get no version row and no major
+  # line, and the update issue of immich-server leads to that compose file. A
+  # rule covers the image in every template that pins it.
+  - match: ghcr.io/immich-app/postgres
+    versions: false
+  - match: docker.io/valkey/valkey
+    versions: false
+
   # Database servers are kept per major (one template per major, or a pinned
   # major per template): a newer major is a migration, never an update.
   - match: docker.io/library/postgres
-    majors: false
-  - match: ghcr.io/immich-app/postgres
     majors: false
   - match: docker.io/library/mariadb
     majors: false

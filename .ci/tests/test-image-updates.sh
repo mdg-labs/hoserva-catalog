@@ -440,6 +440,22 @@ run_updates
 assert_eq "$(cat "$writes")" "" "database major second run writes"
 rm -r "${T:?}/templates/dbonly" "${T:?}/templates/dbsame"
 
+# A rule with versions: false (a companion image whose tag another service's
+# release fixes) gets no version row and no major line however many newer tags
+# exist; a changed digest behind its pinned tag is still a rebuild row, and a
+# rebuild alone opens no issue.
+tpl compnone "db=org/companion:1.0.0"
+tpl comprb "db=org/companion:1.0.0@$aaa"
+tpl compmix "app=org/compapp:1.0.0" "db=org/companion:1.0.0@$aaa"
+run_updates
+assert_eq "$rc" 0 "companion run exit status"
+assert_none compnone
+assert_none comprb
+assert_open compmix "targets=app=1.1.0,db=1.0.0@$bbb"
+run_updates
+assert_eq "$(cat "$writes")" "" "companion second run writes"
+rm -r "${T:?}/templates/compnone" "${T:?}/templates/comprb" "${T:?}/templates/compmix"
+
 # The first matching rule wins, and a rule added elsewhere changes nothing for
 # the images another rule already covers.
 {
@@ -473,6 +489,19 @@ for bad in 'rules: [{match: "x/*", scheme: rolling}]' \
   [ "$rc" -ne 0 ] || t_fail "the ruleset $bad must stop the run"
   assert_eq "$(cat "$writes")" "" "writes under the ruleset $bad"
 done
+# versions is a boolean, in a rule and in the defaults.
+n=0
+while IFS='|' read -r want bad; do
+  n=$((n + 1))
+  printf '%s\n' "$bad" >"$T/rules-type-$n.yaml"
+  IMAGE_UPDATES_RULES="$T/rules-type-$n.yaml" run_updates
+  [ "$rc" -ne 0 ] || t_fail "the ruleset $bad must stop the run"
+  grep -Eq "$want" "$T/out" || t_fail "the ruleset $bad is not refused with '$want': $(cat "$T/out")"
+  assert_eq "$(cat "$writes")" "" "writes under the ruleset $bad"
+done <<'RULESETS'
+rules\[1\].versions: must be true or false|rules: [{match: "x/*", versions: "no"}]
+defaults.versions: must be true or false|defaults: {versions: 0}
+RULESETS
 IMAGE_UPDATES_RULES="$T/missing.yaml" run_updates
 [ "$rc" -ne 0 ] || t_fail "a missing ruleset must stop the run"
 
@@ -580,18 +609,31 @@ grep -q 'deep: .*latest matches none of the 20 newest version tags' "$T/out" || 
 assert_none deep
 assert_eq "$(cat "$writes")" "" "writes next to a latest beyond the probes"
 
-# The catalog's own ruleset: kopia's nightlies and calver images.
+# The catalog's own ruleset: kopia's nightlies, calver images and immich's
+# companion images.
 rm -r "$T/templates"
 tpl realkopia "app=docker.io/kopia/kopia:0.23.1"
 tpl realha "app=ghcr.io/home-assistant/home-assistant:2026.9.4"
 tpl realjackett "app=lscr.io/linuxserver/jackett:v0.24.2793-ls49"
 tpl realpg "app=docker.io/library/postgres:18.6"
+ddd="sha256:$(printf 'd%.0s' $(seq 64))"
+ccc="sha256:$(printf 'c%.0s' $(seq 64))"
+immich_db="ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0"
+tpl realimmich "database=$immich_db" "redis=docker.io/valkey/valkey:9"
+tpl realimmichrb "database=$immich_db@$aaa" "redis=docker.io/valkey/valkey:9@$aaa"
+tpl realimmichnew "server=ghcr.io/immich-app/immich-server:v3.2.4" "database=$immich_db@$aaa" "redis=docker.io/valkey/valkey:9@$aaa"
 IMAGE_UPDATES_RULES="$ci_root/image-updates-rules.yaml" run_updates
 assert_eq "$rc" 0 "catalog ruleset exit status"
 assert_open realkopia 'targets=app=0.23.2'
 assert_open realha 'targets=app=2027.1.0'
 assert_open realjackett 'targets=app=v0.24.2798-ls50'
 assert_none realpg
+# immich's database and valkey images follow immich-server's release: no version
+# row for a newer VectorChord, pgvecto.rs or PostgreSQL tag, and a rebuild is
+# listed only next to the server's own update.
+assert_none realimmich
+assert_none realimmichrb
+assert_open realimmichnew "targets=server=v3.2.5,database=14-vectorchord0.4.3-pgvectors0.2.0@$ddd,redis=9@$ccc"
 mutate '.["docker.io"]["kopia/kopia"].tags += ["20261006.0.7"]'
 IMAGE_UPDATES_RULES="$ci_root/image-updates-rules.yaml" run_updates
 assert_eq "$(cat "$writes")" "" "a kopia nightly under the catalog ruleset writes"
