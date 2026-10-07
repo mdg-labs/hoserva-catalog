@@ -2,9 +2,10 @@
 
 The curated template catalog of [Hoserva](https://github.com/mdg-labs/hoserva),
 the home server platform for mixed-size disks. Each template is a directory
-holding a Compose file with an `x-hoserva` block and an icon. On every merge
-CI builds all of them into one signed archive and publishes it at
-`https://catalog.hoserva.dev`, from where Hoserva fetches and verifies it.
+holding a Compose file with an `x-hoserva` block and, where a usable source
+exists, an icon. On every merge CI builds all of them into one signed archive
+and publishes it at `https://catalog.hoserva.dev`, from where Hoserva fetches
+and verifies it.
 
 The `x-hoserva` schema, its validator and the code that fetches and verifies the
 archive live in the Hoserva repository (`internal/template/`,
@@ -15,7 +16,7 @@ the CI that publishes it.
 
 | Path | Holds |
 |---|---|
-| `templates/<id>/compose.yaml`, `templates/<id>/<icon>` | one template per directory, named by its id |
+| `templates/<id>/compose.yaml`, `templates/<id>/<icon>` | one template per directory, named by its id; the icon is present when a usable source exists |
 | `signing-key.pub.pem` | the catalog's Ed25519 public key |
 | `.ci/` | the build, signing and validation scripts, their tests and fixtures |
 | `.github/workflows/catalog.yml` | the CI |
@@ -36,7 +37,9 @@ In short:
 1. Create `templates/<id>/`. The id is lowercase letters, digits and
    single hyphens, and the directory name equals `x-hoserva.id`.
 2. Write `templates/<id>/compose.yaml` as a valid Compose file with an
-   `x-hoserva` block, and put the icon it names next to it.
+   `x-hoserva` block. Put the icon `x-hoserva.icon` names next to it; when no
+   usable source exists, leave out both and record the sources you searched in
+   the `# Icon:` comment (see [Icons](WRITING-TEMPLATES.md#icons)).
 3. Write the template from the application's upstream documentation, link that
    documentation in `x-hoserva.docs`, and pin an image tag rather than `latest`
    where upstream publishes versions.
@@ -80,8 +83,8 @@ the site rebuild request below, runs only after the deploy and its fetch-back.
 ## The archive
 
 `catalog.tar.zst` is a zstd-compressed tar containing `index.json` and every
-template directory (`<id>/compose.yaml` and its icon), and nothing else. The
-archive layout does not follow the repository layout: the contents of
+template directory (`<id>/compose.yaml` and its icon, where it has one), and
+nothing else. The archive layout does not follow the repository layout: the contents of
 `templates/` sit at the archive root, so an entry is `<id>/compose.yaml`, never
 `templates/<id>/compose.yaml`. Entries are sorted by name, with owner `0:0`, mode `0644` for files (whatever
 mode the checkout gave them) and `0755` for directories, and mtime equal to the
