@@ -33,7 +33,7 @@ x-hoserva:
   description: |
     A request tool for the people who use your media server: they search for movies and TV shows and ask for them, and Ombi passes each request on to Sonarr or Radarr.
 
-    The first visit starts a setup wizard. Afterwards connect your media server (Plex, Jellyfin or Emby) and Sonarr and Radarr. Each of those runs in its own stack, so enter them by the server's address, for example http://<server>:8989 for Sonarr.
+    The first visit starts a setup wizard. Afterwards connect your media server (Plex, Jellyfin or Emby) and Sonarr and Radarr. Each of those runs in its own stack, so enter them by the server's address, for example http://<server>:8989 for Sonarr. The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     WEBUI_PORT: { kind: port, default: 3579, label: Web UI port }
