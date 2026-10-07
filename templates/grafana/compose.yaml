@@ -30,7 +30,7 @@ services:
 x-hoserva:
   schema: 1
   id: grafana
-  revision: 2
+  revision: 3
   title: Grafana
   categories: [monitoring]
   icon: icon.svg
@@ -39,7 +39,7 @@ x-hoserva:
   description: |
     A dashboard and visualisation tool: connect data sources such as Prometheus and build dashboards and alerts from your metrics and logs.
 
-    No data source or dashboard is set up. Sign in as admin with the administrator password from the install form, which Grafana applies only on its first start, so change it afterwards in Grafana. Add Prometheus or another data source with an address that the app can reach, for example http://<host>:9090.
+    No data source or dashboard is set up. Sign in as admin with the administrator password from the install form, which Grafana applies only on its first start, so change it afterwards in Grafana. Add Prometheus or another data source with an address that the app can reach, for example http://<host>:9090. The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     ADMIN_PASSWORD:

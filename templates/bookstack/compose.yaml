@@ -64,7 +64,7 @@ services:
 x-hoserva:
   schema: 1
   id: bookstack
-  revision: 2
+  revision: 3
   title: BookStack
   categories: [documents, productivity]
   icon: icon.svg
@@ -73,7 +73,7 @@ x-hoserva:
   description: |
     A self-hosted wiki for organising and storing information: content is arranged in shelves, books, chapters and pages and edited in the browser, for notes, documentation or a family knowledge base.
 
-    It runs with its MariaDB database in the same stack. Before installing, generate the application key once with the command in that input's help text and keep it as it is afterwards. The first sign-in is admin@admin.com with the password password; change both straight away.
+    It runs with its MariaDB database in the same stack. Before installing, generate the application key once with the command in that input's help text and keep it as it is afterwards. The first sign-in is admin@admin.com with the password password; change both straight away. The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     APP_URL:

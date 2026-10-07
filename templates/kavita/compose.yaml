@@ -24,7 +24,7 @@ services:
 x-hoserva:
   schema: 1
   id: kavita
-  revision: 2
+  revision: 3
   title: Kavita
   categories: [media, books]
   icon: icon.svg
@@ -33,7 +33,7 @@ x-hoserva:
   description: |
     A self-hosted reading server for comics, manga and ebooks: browse and read your library in the browser, with reading progress and user accounts.
 
-    On the first visit follow Kavita's setup wizard, then add libraries from /data, for example /data/comics, /data/manga and /data/ebooks.
+    On the first visit follow Kavita's setup wizard, then add libraries from /data, for example /data/comics, /data/manga and /data/ebooks. The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     BOOKS:

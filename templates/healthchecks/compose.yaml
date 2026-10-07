@@ -43,7 +43,7 @@ services:
 x-hoserva:
   schema: 1
   id: healthchecks
-  revision: 2
+  revision: 3
   title: Healthchecks
   categories: [monitoring]
   icon: icon.svg
@@ -52,7 +52,7 @@ x-hoserva:
   description: |
     A monitor for cron jobs and other scheduled tasks: each job pings a unique URL when it runs, and Healthchecks alerts you when a ping does not arrive on time.
 
-    Open Healthchecks at exactly the address entered as the site address: it answers only requests to that host name and builds the ping URLs from it. The administrator account is created on the first start from the email address and password you give. Healthchecks can only send email alerts when a mail server is set.
+    Open Healthchecks at exactly the address entered as the site address: it answers only requests to that host name and builds the ping URLs from it. The administrator account is created on the first start from the email address and password you give. Healthchecks can only send email alerts when a mail server is set. The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     SITE_ROOT:

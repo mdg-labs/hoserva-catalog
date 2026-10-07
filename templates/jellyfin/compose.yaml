@@ -21,7 +21,7 @@ services:
 x-hoserva:
   schema: 1
   id: jellyfin
-  revision: 3
+  revision: 4
   title: Jellyfin
   categories: [media]
   icon: icon.svg
@@ -30,7 +30,7 @@ x-hoserva:
   description: |
     A free, open-source media server for your movies, TV shows and music: it organises the library and streams it to apps and browsers on your devices.
 
-    The optional client discovery (port 7359 over UDP), DLNA (port 1900 over UDP) and HTTPS port are not mapped, so add clients by the server's address. Add libraries from /data/media.
+    The optional client discovery (port 7359 over UDP), DLNA (port 1900 over UDP) and HTTPS port are not mapped, so add clients by the server's address. Add libraries from /data/media. The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     MEDIA:

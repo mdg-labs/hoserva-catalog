@@ -25,7 +25,7 @@ services:
 x-hoserva:
   schema: 1
   id: home-assistant
-  revision: 2
+  revision: 3
   title: Home Assistant
   categories: [home-automation]
   icon: icon.svg
@@ -34,7 +34,7 @@ x-hoserva:
   description: |
     An open-source home automation hub that connects smart devices from many brands in one place, with dashboards, automations and local control.
 
-    It runs on the host's network, which Home Assistant needs to discover devices on your network, so its web interface is on port 8123 of the server and the port cannot be changed here. USB devices such as a Zigbee adapter and Bluetooth are not set up by this template.
+    It runs on the host's network, which Home Assistant needs to discover devices on your network, so its web interface is on port 8123 of the server and the port cannot be changed here. USB devices such as a Zigbee adapter and Bluetooth are not set up by this template. The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     TZ:      { kind: timezone }

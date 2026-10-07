@@ -22,7 +22,7 @@ services:
 x-hoserva:
   schema: 1
   id: lidarr
-  revision: 2
+  revision: 3
   title: Lidarr
   categories: [media, automation]
   icon: icon.png
@@ -31,7 +31,7 @@ x-hoserva:
   description: |
     A music collection manager: add the artists you follow, and it watches for new albums, sends them to your download client and organises the downloaded files in your music library.
 
-    In Lidarr set the root folder to /data/media/music and, in the download client settings, use the paths under /data/torrents. It needs a download client and indexers, for example through Prowlarr.
+    In Lidarr set the root folder to /data/media/music and, in the download client settings, use the paths under /data/torrents. It needs a download client and indexers, for example through Prowlarr. The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     DATA:

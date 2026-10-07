@@ -28,7 +28,7 @@ services:
 x-hoserva:
   schema: 1
   id: gitea
-  revision: 2
+  revision: 3
   title: Gitea
   categories: [development]
   icon: icon.svg
@@ -37,7 +37,7 @@ x-hoserva:
   description: |
     A lightweight self-hosted Git service: host repositories, review code with pull requests, track issues and collaborate, from a web interface or over SSH.
 
-    In the first-run wizard keep the SQLite database and set the base URL to the address you open Gitea at, with the web port.
+    In the first-run wizard keep the SQLite database and set the base URL to the address you open Gitea at, with the web port. The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     WEBUI_PORT: { kind: port, default: 3000, label: Web UI port }

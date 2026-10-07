@@ -22,7 +22,7 @@ services:
 x-hoserva:
   schema: 1
   id: navidrome
-  revision: 2
+  revision: 3
   title: Navidrome
   categories: [media]
   icon: icon.svg
@@ -31,7 +31,7 @@ x-hoserva:
   description: |
     A music streaming server for your own collection: browse and play it from a browser or from any Subsonic-compatible app on your phone or computer.
 
-    The first visit asks you to create the administrator account. Navidrome reads the music folder and never changes it.
+    The first visit asks you to create the administrator account. Navidrome reads the music folder and never changes it. The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     MUSIC:

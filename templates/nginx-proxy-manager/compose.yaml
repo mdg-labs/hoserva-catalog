@@ -27,7 +27,7 @@ services:
 x-hoserva:
   schema: 1
   id: nginx-proxy-manager
-  revision: 2
+  revision: 3
   title: Nginx Proxy Manager
   categories: [network, proxy]
   icon: icon.svg
@@ -36,7 +36,7 @@ x-hoserva:
   description: |
     A reverse proxy with a web interface: give your apps host names, serve them over HTTPS with free Let's Encrypt certificates and manage all of it from one place, without editing Nginx files by hand.
 
-    Open the admin web UI port to set it up. It uses ports 80 and 443 by default, the same as SWAG and Heimdall, so they cannot run together unless one of them gets different ports; forward ports 80 and 443 of your router to it to serve sites from the internet, but not the admin port. Ports for TCP and UDP stream forwarding are not published.
+    Open the admin web UI port to set it up. It uses ports 80 and 443 by default, the same as SWAG and Heimdall, so they cannot run together unless one of them gets different ports; forward ports 80 and 443 of your router to it to serve sites from the internet, but not the admin port. Ports for TCP and UDP stream forwarding are not published. The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     HTTP_PORT:

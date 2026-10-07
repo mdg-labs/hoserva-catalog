@@ -36,7 +36,7 @@ services:
 x-hoserva:
   schema: 1
   id: calibre-web
-  revision: 3
+  revision: 4
   title: Calibre-Web
   categories: [media, books]
   icon: icon.svg
@@ -45,7 +45,7 @@ x-hoserva:
   description: |
     A web interface for browsing, reading and downloading the ebooks of a Calibre library, with separate user accounts for your family.
 
-    It serves an existing Calibre library, the folder that holds metadata.db, mounted at /books: on the first setup screen enter /books as the location of the Calibre database. The Calibre template manages the same library; do not edit it from both apps at the same time. The default login is admin with the password admin123; change it right after the first login.
+    It serves an existing Calibre library, the folder that holds metadata.db, mounted at /books: on the first setup screen enter /books as the location of the Calibre database. The Calibre template manages the same library; do not edit it from both apps at the same time. The default login is admin with the password admin123; change it right after the first login. The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     LIBRARY:

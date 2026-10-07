@@ -26,7 +26,7 @@ services:
 x-hoserva:
   schema: 1
   id: dokuwiki
-  revision: 2
+  revision: 3
   title: DokuWiki
   categories: [productivity]
   icon: icon.svg
@@ -35,7 +35,7 @@ x-hoserva:
   description: |
     A simple wiki that keeps its pages in plain text files, so it needs no database. Use it for notes and documentation, written in a lightweight markup syntax.
 
-    On the first start, open /install.php on the Web UI port, complete the installer, then restart the app. After that, in Admin, Configuration Settings, set Use nice URLs to .htaccess and tick Use slash as namespace separator in URLs, as the image documentation describes. Put a reverse proxy in front of the wiki for HTTPS.
+    On the first start, open /install.php on the Web UI port, complete the installer, then restart the app. After that, in Admin, Configuration Settings, set Use nice URLs to .htaccess and tick Use slash as namespace separator in URLs, as the image documentation describes. The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     WEBUI_PORT: { kind: port, default: 8085, label: Web UI port }

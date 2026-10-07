@@ -55,7 +55,7 @@ services:
 x-hoserva:
   schema: 1
   id: immich
-  revision: 2
+  revision: 3
   title: Immich
   categories: [photos, media]
   icon: icon.svg
@@ -64,7 +64,7 @@ x-hoserva:
   description: |
     A self-hosted photo and video library: back up from your phone with the mobile apps, browse a timeline, search, share albums and find people and objects, with the recognition running on your own server.
 
-    The stack has four services: the server, machine learning (the CPU variant), a cache and a PostgreSQL database. The database stays in the app's folder on the cache, never on the pool; only the uploaded library goes on the pool. The server and machine learning run the same release, so they are updated together. The first account you register becomes the administrator.
+    The stack has four services: the server, machine learning (the CPU variant), a cache and a PostgreSQL database. The database stays in the app's folder on the cache, never on the pool; only the uploaded library goes on the pool. The server and machine learning run the same release, so they are updated together. The first account you register becomes the administrator. The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     LIBRARY:

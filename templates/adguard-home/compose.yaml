@@ -26,7 +26,7 @@ services:
 x-hoserva:
   schema: 1
   id: adguard-home
-  revision: 2
+  revision: 3
   title: AdGuard Home
   categories: [network, dns]
   icon: icon.svg
@@ -38,6 +38,8 @@ x-hoserva:
     On the first start, open the first-run setup port once and run the setup wizard, keeping its ports at their defaults (DNS on 53, the admin interface on 80); afterwards the interface is on the Web UI port. Then set this server's address as the DNS server of your router or of single devices. The DHCP server and encrypted DNS (DNS-over-TLS, -QUIC and -HTTPS) are not set up. Without host networking, queries show the Docker gateway as their client instead of the device that sent them.
 
     The default DNS and Web UI ports, 53 and 80, are also Pi-hole's, so to run both, give one of them different ports.
+
+    The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     DNS_PORT:
