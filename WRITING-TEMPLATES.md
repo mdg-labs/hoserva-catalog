@@ -10,8 +10,10 @@ style — is in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## What a template is
 
-A template is one folder, `templates/<id>/`, holding two files — or one, when
-no usable icon exists (see [Icons](#icons)):
+A template is one folder, `templates/<id>/`. It always holds `compose.yaml`,
+holds the app's icon when a usable one exists (see [Icons](#icons)), and may
+also hold the image files its `screenshots` field lists (see
+[The `x-hoserva` block](#the-x-hoserva-block)):
 
 ```
 templates/sonarr/
