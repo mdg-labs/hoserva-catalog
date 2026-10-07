@@ -51,12 +51,18 @@ services:
 x-hoserva:
   schema: 1
   id: backrest
-  revision: 1
+  revision: 2
   title: Backrest
   categories: [backup]
   icon: icon.svg
   docs: https://github.com/garethgeorge/backrest#readme
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A web interface for restic backups: define backup plans for your folders, run them on a schedule, browse the snapshots and restore files, with repositories on a local folder or on remote storage.
+
+    The folder to back up is mounted read-only at /source and the local backup and restore folder at /backups. With the default folders /backups is also visible inside /source, so exclude it from every plan, or the backup copies itself. On the first visit Backrest asks for an instance ID, which cannot be changed later, and a username and password.
+
+    Keep a copy of each repository's password away from this server: the backup cannot be restored without it. A backup kept only on this server is lost with the server, so add a remote repository too.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     SOURCE:

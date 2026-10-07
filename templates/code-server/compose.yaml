@@ -35,12 +35,16 @@ services:
 x-hoserva:
   schema: 1
   id: code-server
-  revision: 1
+  revision: 2
   title: code-server
   categories: [development]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-code-server/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    Visual Studio Code in the browser: a full code editor with a terminal, extensions and git, running on your server so you can work on its files and projects from any device with a browser.
+
+    The web interface is served over plain HTTP, so the password and everything you open or type, terminal included, cross the network unencrypted. Keep it on your local network, and reach it from outside only through an HTTPS reverse proxy or an SSH tunnel: whoever signs in gets a terminal that can change the workspace folder.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     WORKSPACE:

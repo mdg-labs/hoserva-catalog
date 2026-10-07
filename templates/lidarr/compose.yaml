@@ -22,12 +22,16 @@ services:
 x-hoserva:
   schema: 1
   id: lidarr
-  revision: 1
+  revision: 2
   title: Lidarr
   categories: [media, automation]
   icon: icon.png
   docs: https://docs.linuxserver.io/images/docker-lidarr/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A music collection manager: add the artists you follow, and it watches for new albums, sends them to your download client and organises the downloaded files in your music library.
+
+    In Lidarr set the root folder to /data/media/music and, in the download client settings, use the paths under /data/torrents. It needs a download client and indexers, for example through Prowlarr.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     DATA:

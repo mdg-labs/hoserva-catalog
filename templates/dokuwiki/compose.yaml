@@ -26,12 +26,16 @@ services:
 x-hoserva:
   schema: 1
   id: dokuwiki
-  revision: 1
+  revision: 2
   title: DokuWiki
   categories: [productivity]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-dokuwiki/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A simple wiki that keeps its pages in plain text files, so it needs no database. Use it for notes and documentation, written in a lightweight markup syntax.
+
+    On the first start, open /install.php on the Web UI port, complete the installer, then restart the app. After that, in Admin, Configuration Settings, set Use nice URLs to .htaccess and tick Use slash as namespace separator in URLs, as the image documentation describes. Put a reverse proxy in front of the wiki for HTTPS.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     WEBUI_PORT: { kind: port, default: 8085, label: Web UI port }

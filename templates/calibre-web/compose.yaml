@@ -36,12 +36,16 @@ services:
 x-hoserva:
   schema: 1
   id: calibre-web
-  revision: 2
+  revision: 3
   title: Calibre-Web
   categories: [media, books]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-calibre-web/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A web interface for browsing, reading and downloading the ebooks of a Calibre library, with separate user accounts for your family.
+
+    It serves an existing Calibre library, the folder that holds metadata.db, mounted at /books: on the first setup screen enter /books as the location of the Calibre database. The Calibre template manages the same library; do not edit it from both apps at the same time. The default login is admin with the password admin123; change it right after the first login.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     LIBRARY:

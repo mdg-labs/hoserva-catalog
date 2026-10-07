@@ -23,12 +23,16 @@ services:
 x-hoserva:
   schema: 1
   id: emby
-  revision: 1
+  revision: 2
   title: Emby
   categories: [media]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-emby/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A media server for your movies, TV shows and music: it organises the library and streams it to apps and browsers on your devices, transcoding video when a device needs a different format.
+
+    The optional HTTPS port (8920) is not mapped, so add clients by the server's address. Add libraries from /data/media.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     MEDIA:

@@ -64,12 +64,16 @@ services:
 x-hoserva:
   schema: 1
   id: bookstack
-  revision: 1
+  revision: 2
   title: BookStack
   categories: [documents, productivity]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-bookstack/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A self-hosted wiki for organising and storing information: content is arranged in shelves, books, chapters and pages and edited in the browser, for notes, documentation or a family knowledge base.
+
+    It runs with its MariaDB database in the same stack. Before installing, generate the application key once with the command in that input's help text and keep it as it is afterwards. The first sign-in is admin@admin.com with the password password; change both straight away.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     APP_URL:

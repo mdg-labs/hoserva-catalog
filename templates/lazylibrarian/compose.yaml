@@ -33,12 +33,16 @@ services:
 x-hoserva:
   schema: 1
   id: lazylibrarian
-  revision: 2
+  revision: 3
   title: LazyLibrarian
   categories: [media, books, automation]
   icon: icon.png
   docs: https://docs.linuxserver.io/images/docker-lazylibrarian/
   webui: http://{host}:${WEBUI_PORT}/home
+  description: |
+    A book and audiobook library manager: it tracks the authors you follow, finds their new books, sends them to your download client and sorts the finished downloads into your library.
+
+    One data folder holds the downloads and the library, so moves can be hardlinks. In LazyLibrarian's settings, under Processing, set the book destination folder to /data/media/books and the audiobook destination folder to /data/media/audiobooks; under Downloaders, use the paths under /data/torrents or /data/usenet that your download client reports. Calibre import and audiobook conversion are not set up.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     DATA:

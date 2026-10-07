@@ -22,11 +22,15 @@ services:
 x-hoserva:
   schema: 1
   id: ddclient
-  revision: 1
+  revision: 2
   title: ddclient
   categories: [network, dns]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-ddclient/
+  description: |
+    A dynamic DNS client that keeps a DNS record pointing at your home network's current public IP address, updating your DNS provider whenever the address changes. It supports many providers.
+
+    It has no web interface and needs no ports. Set it up by editing ddclient.conf in the app's folder: uncomment your provider and fill in the login or token it asks for. ddclient reads the file again when it changes.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     TZ:      { kind: timezone }

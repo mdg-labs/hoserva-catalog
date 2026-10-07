@@ -71,12 +71,16 @@ services:
 x-hoserva:
   schema: 1
   id: netbox
-  revision: 1
+  revision: 2
   title: NetBox
   categories: [network, productivity]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-netbox/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A tool for documenting your network: keep IP addresses and prefixes, devices, racks, cables and VLANs in one place, with a web interface and an API.
+
+    It runs with its PostgreSQL database and Redis in the same stack. Sign in as admin with the admin password from the install form; the account is created on the first start. The image writes its configuration file on the first start only: to change the allowed host or the database or Redis connection later, edit configuration.py in the app's folder. A password you set yourself should contain only letters and digits.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     SUPERUSER_EMAIL:

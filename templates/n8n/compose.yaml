@@ -62,12 +62,18 @@ services:
 x-hoserva:
   schema: 1
   id: n8n
-  revision: 2
+  revision: 3
   title: n8n
   categories: [automation, productivity]
   icon: icon.svg
   docs: https://docs.n8n.io/deploy/host-n8n/install-options/install-with-docker
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A workflow automation tool: connect apps and services by building workflows in a visual editor, with triggers such as schedules and webhooks and code steps where you need them.
+
+    On the first visit n8n asks you to create the owner account. It keeps the encryption key for stored credentials in the app's folder: keep that folder, or the credentials cannot be decrypted. Code steps run in a separate task runner in the same stack.
+
+    The web interface is served over plain HTTP, so keep it on your home network or put an HTTPS reverse proxy in front. Webhooks that outside services call need the public https address set at install.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     WEBHOOK_URL:

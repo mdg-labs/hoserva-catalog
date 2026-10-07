@@ -29,12 +29,18 @@ services:
 x-hoserva:
   schema: 1
   id: homepage
-  revision: 1
+  revision: 2
   title: Homepage
   categories: [productivity, monitoring]
   icon: icon.png
   docs: https://gethomepage.dev/installation/docker/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A customisable dashboard for your server: a start page with links to your apps and services and widgets showing their status, configured with YAML files.
+
+    Homepage answers only on the addresses you list as allowed: enter the address you open it at, with the port, exactly as the browser shows it. If the page shows a host validation error, the log names the host to add. It creates example configuration files in the app's folder; edit services.yaml, widgets.yaml and the others there.
+
+    The page has no login, and the optional Docker integration is not set up.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     ALLOWED_HOSTS:

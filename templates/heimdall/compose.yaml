@@ -33,12 +33,16 @@ services:
 x-hoserva:
   schema: 1
   id: heimdall
-  revision: 1
+  revision: 2
   title: Heimdall
   categories: [productivity]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-heimdall/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    An application dashboard: a start page of tiles that link to your self-hosted apps and websites, with live status information for some of them.
+
+    A fresh install asks for no login. To require one, give the user a password on the Users page and turn off Allow public access to front there. The HTTPS address uses a certificate the image generates itself, so a browser warns about it. The default ports 80 and 443 are also those of Nginx Proxy Manager and SWAG; change them to run these together.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     WEBUI_PORT: { kind: port, default: 80, label: Web UI port (HTTP) }

@@ -26,12 +26,16 @@ services:
 x-hoserva:
   schema: 1
   id: audiobookshelf
-  revision: 1
+  revision: 2
   title: Audiobookshelf
   categories: [media]
   icon: icon.svg
   docs: https://www.audiobookshelf.org/docs/documentation/install/docker/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A self-hosted audiobook and podcast server: listen to your audiobooks and podcasts from a browser or the Audiobookshelf mobile apps, with listening progress kept for each user.
+
+    On the first visit it asks you to create the administrator account; then add libraries from /audiobooks and /podcasts.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     AUDIOBOOKS:

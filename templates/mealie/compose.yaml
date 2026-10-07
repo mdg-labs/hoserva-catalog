@@ -38,12 +38,16 @@ services:
 x-hoserva:
   schema: 1
   id: mealie
-  revision: 1
+  revision: 2
   title: Mealie
   categories: [productivity]
   icon: icon.png
   docs: https://docs.mealie.io/documentation/getting-started/installation/sqlite/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A self-hosted recipe manager and meal planner: import recipes from web pages, organise them, plan meals and build shopping lists.
+
+    Sign in with the default account, changeme@example.com with the password MyPassword, and change both straight away. Sign-up without an invitation is off, and email is not set up, so invitations and password resets by email are not available. Mealie makes backups in the app's folder; copy them somewhere off this server.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     BASE_URL:

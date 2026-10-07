@@ -33,12 +33,16 @@ services:
 x-hoserva:
   schema: 1
   id: librespeed
-  revision: 1
+  revision: 2
   title: LibreSpeed
   categories: [network, monitoring]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-librespeed/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A self-hosted network speed test that runs in the browser: it measures download and upload speed, ping and jitter between a device and your server.
+
+    The test page is open to anyone who can reach the port. The results are kept in the app's folder and shown at /results/stats.php, which asks for the results password.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     RESULTS_PASSWORD:

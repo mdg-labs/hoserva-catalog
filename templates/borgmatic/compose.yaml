@@ -57,11 +57,17 @@ services:
 x-hoserva:
   schema: 1
   id: borgmatic
-  revision: 1
+  revision: 2
   title: borgmatic
   categories: [backup]
   icon: icon.svg
   docs: https://github.com/borgmatic-collective/docker-borgmatic#readme
+  description: |
+    A configuration-driven backup tool for Borg: you describe what to back up in a YAML file, and borgmatic creates, prunes and checks deduplicated, optionally encrypted backups on a schedule.
+
+    It has no web interface. In the container, run borgmatic config generate -d /etc/borgmatic.d/config.yaml, set source_directories and repositories in that file, then create the repository with borgmatic repo-create --encryption repokey-blake2. The image runs the backup daily at 01:00.
+
+    The folder to back up is mounted read-only at /source and the local backup and restore folder at /backups; with the default folders /backups is also visible inside /source, so exclude it from the backup. With the repokey encryption above, the repository key is stored in the repository itself, so keep the repository passphrase and an exported copy of the key (run borgmatic key export) away from this server: the backup cannot be restored without the passphrase, or without the key if the repository's copy is damaged.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     SOURCE:

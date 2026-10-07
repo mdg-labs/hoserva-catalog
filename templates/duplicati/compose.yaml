@@ -45,12 +45,18 @@ services:
 x-hoserva:
   schema: 1
   id: duplicati
-  revision: 1
+  revision: 2
   title: Duplicati
   categories: [backup]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-duplicati/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A backup client with a web interface: it makes encrypted, incremental backups of your folders to local folders or to cloud and remote storage, on a schedule you set.
+
+    The folder to back up is mounted read-only at /source and the local backup and restore folder at /backups; pick /backups as a local destination. With the default folders /backups is also visible inside /source, so exclude it from every backup. Duplicati runs as user 99 and group 100, so a file that only another user may read is reported in the backup log.
+
+    Keep a copy of each backup's passphrase away from this server: the backup cannot be restored without it. Duplicati answers requests to the server's IP address; to open it by host name, set DUPLICATI__WEBSERVICE_ALLOWED_HOSTNAMES as the Duplicati documentation describes.
   inputs:
     APPDATA: { kind: path, role: appdata, default: /mnt/cache/appdata }
     SOURCE:

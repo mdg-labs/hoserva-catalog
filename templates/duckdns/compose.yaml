@@ -24,11 +24,15 @@ services:
 x-hoserva:
   schema: 1
   id: duckdns
-  revision: 1
+  revision: 2
   title: Duck DNS
   categories: [network, dns]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-duckdns/
+  description: |
+    A client for the free Duck DNS dynamic DNS service: it keeps your duckdns.org name pointing at your home network's current public IP address, updating it every five minutes.
+
+    Register the subdomain at duckdns.org first and copy the token shown on that page. It updates the IPv4 address only. It has no web interface and needs no ports.
   inputs:
     SUBDOMAINS:
       kind: string

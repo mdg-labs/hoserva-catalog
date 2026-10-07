@@ -32,12 +32,16 @@ services:
 x-hoserva:
   schema: 1
   id: deluge
-  revision: 1
+  revision: 2
   title: Deluge
   categories: [downloads]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-deluge/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A lightweight BitTorrent client with a web interface and plugins, for downloading and seeding torrents on your server from any browser.
+
+    The web interface login is the password deluge until you change it: do that first, under Preferences > Interface > WebUI Password. Under Preferences > Downloads set Download to to /data/torrents, and under Preferences > Network untick Use Random Port and set the incoming port to the torrent connection port chosen at install; otherwise Deluge listens on random ports that are not mapped.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     DATA:

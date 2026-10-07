@@ -24,12 +24,16 @@ services:
 x-hoserva:
   schema: 1
   id: freshrss
-  revision: 2
+  revision: 3
   title: FreshRSS
   categories: [productivity]
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-freshrss/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A self-hosted RSS and Atom feed reader that collects the sites you follow in one place, readable from any browser, with support for several users.
+
+    Open the web UI to run the setup wizard. SQLite, one of the databases FreshRSS supports, needs no further container; the wizard also accepts an external MySQL, MariaDB or PostgreSQL server. Extensions go in www/freshrss/extensions in the app's folder and are active after the app restarts.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     WEBUI_PORT: { kind: port, default: 8084, label: Web UI port }
