@@ -146,12 +146,12 @@ def main(argv):
         env_file(argv[2])
     elif len(argv) >= 4 and argv[1] == "index":
         index(argv[2], int(argv[3]), argv[4:])
-    elif len(argv) >= 3 and argv[1] == "check-description":
+    elif len(argv) >= 4 and argv[1] == "check-description":
         check_description(argv[2], argv[3:])
     else:
         sys.exit(
             "usage: catalog.py env <compose.yaml> | index <catalog-dir> <serial> [<id>...]"
-            " | check-description <catalog-dir> [<id>...]"
+            " | check-description <catalog-dir> <id>..."
         )
 
 

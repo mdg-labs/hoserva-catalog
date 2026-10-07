@@ -143,6 +143,11 @@ bad="$(case_catalog no-file '  description: fine')"
 rm "$bad/alpha/compose.yaml"
 expect_description_refused "$bad" alpha "cannot read $bad/alpha/compose.yaml"
 
+# check-description given no template ids refuses to run rather than
+# passing without reading a template.
+expect_fail python3 "$ci_root/catalog.py" check-description "$catalog"
+grep -q 'usage:' "$T/out" || t_fail "check-description with no ids does not print its usage"
+
 # A template directory means lint always runs, and a lint failure stops
 # everything before docker is called.
 reset
