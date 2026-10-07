@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 """Reads the x-hoserva block of catalog templates; applies none of the
 checker's rules (`hoserva template lint` has already passed by the time
-either command runs)."""
+either command runs), except that `check-description` enforces the rule
+only this catalog has: every template carries a short description."""
 
 import datetime
 import hashlib
 import json
 import os
+import re
 import sys
 
 import yaml
+
+MAX_SUMMARY = 300
 
 PLACEHOLDERS = {
     "path": "/placeholder",
@@ -25,6 +29,49 @@ def block(compose_path):
     with open(compose_path, encoding="utf-8") as f:
         doc = yaml.safe_load(f)
     return doc["x-hoserva"]
+
+
+def description_problem(compose_path):
+    """Returns why the template's description does not meet the catalog's
+    rule, or None. The first paragraph is the description with surrounding
+    whitespace stripped, up to the first blank line (a line holding only
+    spaces or tabs), measured in characters."""
+    try:
+        with open(compose_path, encoding="utf-8") as f:
+            doc = yaml.safe_load(f)
+    except (OSError, UnicodeDecodeError, yaml.YAMLError) as e:
+        return f"cannot read {compose_path}: {e}"
+    b = doc.get("x-hoserva") if isinstance(doc, dict) else None
+    if not isinstance(b, dict):
+        return "compose.yaml has no x-hoserva block"
+    description = b.get("description")
+    if description is None:
+        return "x-hoserva.description is missing"
+    if not isinstance(description, str):
+        return "x-hoserva.description is not text"
+    description = description.strip()
+    if not description:
+        return "x-hoserva.description is empty"
+    first = re.split(r"\n[ \t\r]*\n", description, maxsplit=1)[0].strip()
+    if len(first) > MAX_SUMMARY:
+        return (
+            f"the first paragraph of x-hoserva.description is {len(first)} characters, "
+            f"more than the {MAX_SUMMARY} allowed; end it at a blank line"
+        )
+    return None
+
+
+def check_description(catalog_dir, ids):
+    """Prints one line per template that fails, naming its id; exits non-zero
+    if any does."""
+    failed = False
+    for template_id in ids:
+        problem = description_problem(os.path.join(catalog_dir, template_id, "compose.yaml"))
+        if problem:
+            print(f"{template_id}: {problem}", file=sys.stderr)
+            failed = True
+    if failed:
+        sys.exit(1)
 
 
 def env_file(compose_path):
@@ -99,8 +146,13 @@ def main(argv):
         env_file(argv[2])
     elif len(argv) >= 4 and argv[1] == "index":
         index(argv[2], int(argv[3]), argv[4:])
+    elif len(argv) >= 3 and argv[1] == "check-description":
+        check_description(argv[2], argv[3:])
     else:
-        sys.exit("usage: catalog.py env <compose.yaml> | index <catalog-dir> <serial> [<id>...]")
+        sys.exit(
+            "usage: catalog.py env <compose.yaml> | index <catalog-dir> <serial> [<id>...]"
+            " | check-description <catalog-dir> [<id>...]"
+        )
 
 
 main(sys.argv)

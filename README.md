@@ -43,8 +43,12 @@ In short:
 3. Write the template from the application's upstream documentation, link that
    documentation in `x-hoserva.docs`, and pin an image tag rather than `latest`
    where upstream publishes versions.
-4. Increase `x-hoserva.revision` with every later change to the template.
-5. Open a pull request against `dev`. CI runs the checks below.
+4. Start `x-hoserva.description` with a short app description: one or two
+   sentences, at most 300 characters, saying what the app is and what it is used
+   for (see [Write the app
+   description](WRITING-TEMPLATES.md#5-write-the-app-description)).
+5. Increase `x-hoserva.revision` with every later change to the template.
+6. Open a pull request against `dev`. CI runs the checks below.
 
 ## What CI checks
 
@@ -54,7 +58,13 @@ On every pull request and push, the `Validate` job runs:
 - `hoserva template lint templates` from the Hoserva version pinned in
   `.ci/hoserva-version` (a full commit SHA), through
   `go run github.com/mdg-labs/hoserva/cmd/hoserva@<pin>`. Bumping the pin is a
-  normal commit. A catalog with an empty or missing `templates/` skips this step.
+  normal commit. A catalog with an empty or missing `templates/` skips this step
+  and every one after it.
+- That every template has a non-empty `x-hoserva.description` whose first
+  paragraph (the text up to the first blank line) is at most 300 characters,
+  checked by `python3 .ci/catalog.py check-description`. The Hoserva schema keeps
+  the field optional; only this catalog requires it. The failure names the
+  template and what is wrong. It runs after lint and before any `docker` call.
 - `docker compose config` for each template, with every `${VAR}` set from the
   `x-hoserva.inputs` defaults (a placeholder where an input has none).
 - That every image in each template exists, with a manifest query

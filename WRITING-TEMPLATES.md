@@ -97,6 +97,10 @@ x-hoserva:
   icon: icon.svg
   docs: https://docs.linuxserver.io/images/docker-sonarr/
   webui: http://{host}:${WEBUI_PORT}
+  description: |
+    A TV series collection manager: it watches your indexers for new episodes of the shows you follow, sends them to your download client, and renames and files them in your library.
+
+    One data folder holds both downloads and library, so imports are hardlinks or instant moves. In Sonarr set the root folder to /data/media/tv, and in the download client use the paths under /data/torrents. The web interface is served over plain HTTP, so use it on your home network or behind a reverse proxy that serves HTTPS.
   inputs:
     APPDATA:    { kind: path, role: appdata, default: /mnt/cache/appdata }
     DATA:
@@ -114,14 +118,47 @@ Declare one input for every `${NAME}` in the Compose part. Give an input a
 new to self-hosting what to enter. The [reference](#the-x-hoserva-block) below
 lists every field.
 
-### 5. Add the icon
+### 5. Write the app description
+
+Every template in this catalog carries a `description` in its `x-hoserva`
+block, written as in the Sonarr example above. Hoserva's own template format
+leaves the field optional, so a template you write for yourself stays valid
+without one; the catalog requires it, and CI refuses a template that has none.
+
+- **The first paragraph is the short app description:** one or two sentences, at
+  most 300 characters, saying what the app is and what someone uses it for, in
+  plain language for someone who runs a home server. Start with the app itself
+  ("A self-hosted …", "The … media server that …"), not with setup notes, version
+  support or caveats. The catalog card shows this paragraph clamped to a few
+  lines, and the website's app list and app page lead with it.
+- **The first paragraph is the text up to the first blank line**, with
+  surrounding whitespace removed, counted in characters. CI refuses a
+  description that is missing, empty or only whitespace, and one whose first
+  paragraph is longer than 300 characters; it names the template.
+- **Further paragraphs are optional.** Use them only for what someone must know
+  before installing and no input's help text already says: a port another
+  template also uses, a first-run step, a self-signed certificate, an end-of-life
+  date, a companion template. When the app's web login is served over plain
+  HTTP, always say so in one sentence: use it on your home network, or behind a
+  reverse proxy or tunnel that serves HTTPS.
+- **Write it in your own words from the app's upstream documentation**, as for
+  the rest of the template. Never copy a description from another catalog, an
+  Unraid template, Docker Hub or the linuxserver.io image descriptions.
+- **Keep it factual.** No superlatives, no "best", no "an alternative to X".
+  Name another product only where it is a fact about the app, such as "works
+  with Sonarr and Radarr", and never to run it down.
+- **Plain text, at most 2000 characters in all.** Line breaks are kept and the
+  text is never read as markup. Use a YAML block scalar (`|` or `|-`), as in the
+  example above.
+
+### 6. Add the icon
 
 Put the icon next to `compose.yaml` under the name `x-hoserva.icon` gives,
 following [Icons](#icons). Leave out `x-hoserva.icon` and the file only when no
 usable source exists; the `# Icon:` comment then records the sources you
 searched.
 
-### 6. Check it locally
+### 7. Check it locally
 
 Run what CI runs, from the repository root:
 
@@ -132,11 +169,13 @@ Run what CI runs, from the repository root:
 
 `validate.sh` runs `hoserva template lint` from the Hoserva version pinned in
 `.ci/hoserva-version` (through `go run`, so it needs Go), then
+that every template has a description meeting the rule in step 5, then
 `docker compose config` on each template and a registry query for each image
 (so it needs Docker and network access). A lint failure names the line and
-what is wrong with it.
+what is wrong with it; a description failure names the template and what is
+wrong with its description.
 
-### 7. Open a pull request
+### 8. Open a pull request
 
 Open it against `dev`. The pull request template has a short checklist of the
 points below.
@@ -155,7 +194,7 @@ points below.
 | `webui` | no | Address of the app's web interface. `{host}` stands for the server's address, `${NAME}` for an input: `http://{host}:${WEBUI_PORT}/web`. |
 | `inputs` | no | The values the install form asks for, described below. |
 | `maintainer` | no | Who maintains the template or the app: 1 to 100 characters on one line. It is shown on the catalog list and is what the catalog's maintainer filter uses. |
-| `description` | no | A longer plain text of at most 2000 characters, line breaks kept and never read as markup. It is shown on the catalog list and on the template's page. |
+| `description` | yes, in this catalog | Plain text of at most 2000 characters, line breaks kept and never read as markup. Its first paragraph, at most 300 characters, says what the app is (see [step 5](#5-write-the-app-description)). It is shown on the catalog list and on the template's page. Hoserva itself leaves the field optional, so only this catalog's CI requires it. |
 | `screenshots` | no | One to eight unique image files inside the template folder, as paths relative to `compose.yaml`, in the order the page shows them. Each path segment starts with a letter or digit, and the extension is `png`, `webp`, `jpg` or `jpeg`. Each file is at most 4 MiB. |
 | `links` | no | `project`, `support` and `donate`, each an absolute `https` address of at most 2048 bytes with a host, no user name or password, and no whitespace. Set any of the three. |
 

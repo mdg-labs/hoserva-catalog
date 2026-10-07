@@ -35,10 +35,13 @@ push again. There is no Contributor License Agreement.
 
 [WRITING-TEMPLATES.md](WRITING-TEMPLATES.md) walks through writing a template
 and lists every field, rule and convention: upstream documentation as the only
-source, pinned images, defaults, the media data layout and icons. Before
-opening a pull request, run the checks CI runs: `.ci/check-layout.sh` and
-`.ci/validate.sh templates` (needs Go and Docker, and queries the registries
-for each image).
+source, pinned images, defaults, the media data layout and icons. Every template
+needs a short app description of at most 300 characters as the first paragraph of
+`x-hoserva.description`; the guide's
+[Write the app description](WRITING-TEMPLATES.md#5-write-the-app-description)
+step says what it holds. Before opening a pull request, run the checks CI runs:
+`.ci/check-layout.sh` and `.ci/validate.sh templates` (needs Go and Docker, and
+queries the registries for each image).
 
 ### Image updates
 
