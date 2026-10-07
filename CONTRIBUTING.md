@@ -54,6 +54,14 @@ documentation, with `Fixes #<n>` in the commit message.
 - A newer version than the open issue names supersedes it: the workflow opens the
   new issue first, then comments `Superseded by #<n>.` on the old one and closes
   it as not planned.
+- An open issue whose version change is no longer reported (a rule changed, or
+  upstream withdrew the tag, while `dev` still pins a version older than the
+  issue's) is commented on (`No newer version is reported any more for this
+  template; closing.`) and closed as not planned, and the job summary lists the
+  close. A rebuild left over does not keep it open or open a new one. An issue
+  whose version `dev` already pins, or pins a newer one than, is left alone, even
+  when a rebuild of that pin is reported, and closes with the commit that reaches
+  `main`.
 - A rebuild-only bump (a new `-ls<N>` suffix on the same version, or a new digest
   behind a pinned tag) never opens an issue. When an issue is already open, it is
   edited in place to name the newest rebuild: same number, no comment, nothing
@@ -108,6 +116,33 @@ A rule with `majors: false` never reports a newer major for its images, while
 updates within the pinned major still open an issue. The ruleset sets it for the
 database servers (PostgreSQL, MariaDB, MySQL, MongoDB), which are kept per major:
 a newer major there is a migration, not an update.
+
+A rule with `versions: false` never reports a newer version or major for its
+images. It is for companion images whose tag the upstream release of a sibling
+service fixes: immich's compose file pins the database image
+(`ghcr.io/immich-app/postgres`: PostgreSQL, VectorChord and pgvecto.rs versions)
+and the valkey image, so a newer tag of either is not an update immich supports.
+A changed digest behind the pinned tag is still listed as a rebuild when an issue
+is open for the template anyway, and a rebuild alone opens none. A rule covers the
+image in every template that pins it.
+
+A `semver` rule with `channel: <tag>` is for images that publish prereleases under
+plain version tags (n8n's weekly betas), where the highest tag is not the stable
+release and only a moving tag says which one is. The update is then the version
+tag of the pinned shape, newer than the pinned one, that has the digest of the
+channel tag (`stable` for n8n): not the highest tag. No update when the pinned tag
+already has that digest; a larger first number is a major, subject to `majors`;
+and a channel that matches none of the 20 newest candidates is a listed failure,
+never "no update". Only the rules that set it follow a channel, and `channel` is
+refused on a `linuxserver` or `calver` rule and in `defaults`.
+
+A rule with `lookup: <host/repository>` reads the tags and manifests of that image
+instead of the pinned one, for an image whose own registry refuses the requests the
+check makes: `docker.n8n.io` answers the tag list but rate-limits every manifest
+request by its own address, so the n8n rule reads `docker.io/n8nio/n8n`, which
+serves the same images. It changes only where the check looks. The template's pin,
+and the tags an issue proposes, stay those of the pinned image, and only a rule
+whose `match` names one image can set it (not in `defaults`, not on a pattern).
 
 An image the check cannot classify under its rule, such as a pinned tag without a
 number, outside the registry's tag list or outside the rule's `include`, is a

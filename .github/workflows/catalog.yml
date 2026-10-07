@@ -9,7 +9,9 @@ name: Catalog
 #                        deployed.
 #   push to main         the same, then the GitHub Release serial-<serial>,
 #                        then the GitHub Pages deploy at catalog.hoserva.dev
-#                        and a fetch-back check.
+#                        and a fetch-back check, then a request to
+#                        mdg-labs/hoserva to rebuild hoserva.dev (never fails
+#                        a publish).
 #   workflow_dispatch    like a push to the branch it is run on.
 #
 # main only moves through the maintainer's dev -> main pull request (Q46),
@@ -194,3 +196,25 @@ jobs:
         env:
           SERIAL: ${{ needs.build.outputs.serial }}
         run: .ci/check-published.sh "$CATALOG_URL" "$SERIAL" signing-key.pub.pem
+
+  # Asks the Hoserva repository to rebuild hoserva.dev so /apps lists this
+  # archive. It runs only after the deploy and its fetch-back succeeded, and
+  # is the one job that never fails a publish: a missing GH_TOKEN or a failed
+  # call is a warning (.ci/notify-published.sh). GH_TOKEN is a personal access
+  # token that may send repository_dispatch to mdg-labs/hoserva; the dispatch
+  # is not authorised by the workflow's own token.
+  notify:
+    name: Request the site rebuild
+    needs: [build, deploy]
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && github.repository == 'mdg-labs/hoserva-catalog'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Request a hoserva.dev rebuild
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          SERIAL: ${{ needs.build.outputs.serial }}
+        run: .ci/notify-published.sh mdg-labs/hoserva "$SERIAL"

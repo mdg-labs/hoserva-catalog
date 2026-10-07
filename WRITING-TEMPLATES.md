@@ -10,12 +10,15 @@ style — is in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## What a template is
 
-A template is one folder, `templates/<id>/`, holding two files:
+A template is one folder, `templates/<id>/`. It always holds `compose.yaml`,
+holds the app's icon when a usable one exists (see [Icons](#icons)), and may
+also hold the image files its `screenshots` field lists (see
+[The `x-hoserva` block](#the-x-hoserva-block)):
 
 ```
 templates/sonarr/
 ├── compose.yaml   a normal Docker Compose file, plus an x-hoserva block
-└── icon.svg       the app's icon
+└── icon.svg       the app's icon, when a usable one exists
 ```
 
 `compose.yaml` is a valid Compose file you could run by hand with
@@ -76,7 +79,8 @@ services:
 
 - The first line names every page you wrote the template from.
 - The second line says where the icon came from, under which license, and
-  whether you changed it (see [Icons](#icons)).
+  whether you changed it — or, with no icon, which sources you searched (see
+  [Icons](#icons)).
 - Anything a user needs to know after installing — like which folder to pick
   inside the app — goes in a short comment below.
 - Everything the user chooses is a `${NAME}`; everything else is spelled out.
@@ -113,7 +117,9 @@ lists every field.
 ### 5. Add the icon
 
 Put the icon next to `compose.yaml` under the name `x-hoserva.icon` gives,
-following [Icons](#icons).
+following [Icons](#icons). Leave out `x-hoserva.icon` and the file only when no
+usable source exists; the `# Icon:` comment then records the sources you
+searched.
 
 ### 6. Check it locally
 
@@ -144,7 +150,7 @@ points below.
 | `revision` | yes | Starts at `1` and increases with every change to the template. Installed apps compare it to offer an update. |
 | `title` | yes | The app's name as shown in the catalog. |
 | `categories` | yes | One or more lowercase categories, for example `[media, automation]`. Reuse the ones existing templates use where they fit. |
-| `icon` | yes | File name of the icon next to `compose.yaml`. |
+| `icon` | no | File name of the icon next to `compose.yaml`. Omit it only when no usable source exists (see [Icons](#icons)); Hoserva then shows a neutral placeholder. When set, the file must exist. |
 | `docs` | yes | The main upstream documentation page the template was written from (`http://` or `https://`). |
 | `webui` | no | Address of the app's web interface. `{host}` stands for the server's address, `${NAME}` for an input: `http://{host}:${WEBUI_PORT}/web`. |
 | `inputs` | no | The values the install form asks for, described below. |
@@ -165,13 +171,14 @@ underscores, starting with a letter — and each value describes it:
 | `default` | The preset value. |
 | `label` | A plain-language name shown in the form. |
 | `description` | Help text shown under the field. |
+| `format` | Only for `secret`: `hex` (the default) or `laravel-key`, the shape of a generated value. |
 
 | Kind | Use it for | Rules |
 |---|---|---|
 | `path` | A folder on the server mounted into the container. | Needs a `role`. A default is an absolute path. |
 | `port` | A port on the server mapped to the container. | A default is a number from 1 to 65535. |
 | `string` | Any other value the user types, such as a claim token. | |
-| `secret` | A password or key the app needs. | No default. The user may type a value; left empty, Hoserva generates a random one (48 hex characters). Either way it is written only to the stack's `.env`. A `secret` cannot be `optional`: one that must stay empty when unused, such as an optional SMTP password, is a `string` with `optional: true`. |
+| `secret` | A password or key the app needs. | No default. The user may type a value; left empty, Hoserva generates a random one (48 hex characters, or the shape the input's `format` names: `laravel-key` for a Laravel `APP_KEY`). Either way it is written only to the stack's `.env`. A `secret` cannot be `optional`: one that must stay empty when unused, such as an optional SMTP password, is a `string` with `optional: true`. |
 | `timezone` | The server's time zone, usually as `TZ`. | Left empty, it becomes `UTC`. |
 | `device` | A GPU for hardware transcoding or acceleration. | Role `gpu`. Not referenced anywhere: if the user picks a GPU, Hoserva maps its render device into every service and adds the render group. Leaving it empty installs without one. |
 
@@ -262,23 +269,32 @@ work (the Sonarr and Radarr image documentation explains why separate `/tv`,
 
 ### Icons
 
-Every template has an icon next to `compose.yaml`, named by `x-hoserva.icon`,
-used only to identify the application.
+A template has an icon next to `compose.yaml`, named by `x-hoserva.icon`, used
+only to identify the application. It omits the icon only when no usable source
+exists, as described below.
 
 - Use the application's own logo from its upstream repository or website where
   that source's stated license permits redistribution, and the SVG over a PNG.
   Copy the file unchanged unless the license asks for more.
 - Otherwise use the application's file from
   [selfhst/icons](https://github.com/selfhst/icons), which is licensed
-  CC-BY-4.0 (the repository's `LICENSE`). The logos stay the trademarks of
-  their projects.
+  CC-BY-4.0 (the repository's `LICENSE`).
+- If selfhst/icons has none, use the application's file from
+  [homarr-labs/dashboard-icons](https://github.com/homarr-labs/dashboard-icons),
+  which is licensed Apache-2.0 (the repository's `LICENSE`), the SVG over a PNG.
+  Link the file at a commit, not at `main`.
+- The logos in both icon sets stay the trademarks of their projects.
 - Never use an image whose license is not stated, and never one from the
-  linuxserver.io API (`project_logo`). If no source is usable, leave the
-  template for a later change.
+  linuxserver.io API (`project_logo`).
+- If none of these sources has a usable image, omit `x-hoserva.icon` and the
+  icon file. Hoserva then shows one neutral placeholder wherever the template's icon
+  would appear, and lint checks the icon file only when `icon` is set.
 - Keep the file under about 32 KB.
 - Record where it came from in a comment in `compose.yaml`, which ships in the
   archive so the attribution travels with the icon:
-  `# Icon: <source URL>, <license>, <changes or none>`.
+  `# Icon: <source URL>, <license>, <changes or none>`. A template without an
+  icon records the sources you searched instead, for example
+  `# Icon: none, the project publishes no logo under a license that allows redistribution, and neither selfhst/icons nor dashboard-icons has one`.
 
 ## Updating a template
 
@@ -294,7 +310,7 @@ The `x-hoserva` format and the checker that enforces it live in the
 [Hoserva repository](https://github.com/mdg-labs/hoserva) (`internal/template/`),
 and CI runs the version pinned in `.ci/hoserva-version`. This guide describes
 that version, and so does its JSON Schema:
-[`internal/template/schema/v1.json`](https://github.com/mdg-labs/hoserva/blob/3da8344b0bace51f77069ef83c779bc1f5011fe1/internal/template/schema/v1.json).
+[`internal/template/schema/v1.json`](https://github.com/mdg-labs/hoserva/blob/5f439c079cbfa95d4279a6e7c691a8ac79a7f29b/internal/template/schema/v1.json).
 An editor that understands JSON Schema can use it to check the `x-hoserva`
 block as you type. When the pin moves, this link moves with it. If lint and this
 guide ever disagree, lint is right — and please open an issue so the guide gets

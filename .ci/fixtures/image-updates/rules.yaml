@@ -24,3 +24,12 @@ rules:
       - '^9\.'
   - match: docker.io/org/dbmajor
     majors: false
+  - match: docker.io/org/companion
+    versions: false
+  - match: docker.io/org/chanmajorno
+    channel: stable
+    majors: false
+  - match: docker.io/org/chan*
+    channel: stable
+  - match: lookup.example/org/lookapp
+    lookup: docker.io/org/lookreal

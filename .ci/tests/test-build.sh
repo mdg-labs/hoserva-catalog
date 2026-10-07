@@ -52,6 +52,17 @@ assert_eq "$(index "$T/out-meta/catalog.tar.zst" | jq -c '[.templates[] | del(.c
 assert_eq "$(index "$T/out-meta/catalog.tar.zst" | jq -c '[.templates[] | keys | map(select(. == "maintainer" or . == "description"))]')" \
   '[["description"],[]]' "keys present in entries with one or no field"
 
+# A template whose block names no icon builds, and its entry has no icon key
+# while the other entries keep theirs.
+cp -R "$fixtures/catalog" "$T/noicon"
+sed -i '/^  icon: /d' "$T/noicon/alpha/compose.yaml"
+rm "$T/noicon/alpha/icon.svg"
+expect_ok "$ci_root/build.sh" "$T/noicon" "$T/out-noicon"
+assert_eq "$(index "$T/out-noicon/catalog.tar.zst" | jq -c '.templates[0] | del(.contentHash)')" \
+  '{"id":"alpha","revision":2,"title":"Alpha","categories":["tools"],"docs":"https://docs.example/alpha/"}' "entry without an icon"
+assert_eq "$(index "$T/out-noicon/catalog.tar.zst" | jq -c '.templates[1] | del(.contentHash)')" \
+  "$(index "$archive" | jq -c '.templates[1] | del(.contentHash)')" "entry next to one without an icon"
+
 # The repository layout keeps templates under templates/, but the archive is
 # unchanged: <id>/ at the archive root, never templates/<id>/, and the same
 # content hashes as the same templates built from a bare catalog directory.

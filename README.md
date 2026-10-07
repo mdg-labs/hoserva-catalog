@@ -2,9 +2,10 @@
 
 The curated template catalog of [Hoserva](https://github.com/mdg-labs/hoserva),
 the home server platform for mixed-size disks. Each template is a directory
-holding a Compose file with an `x-hoserva` block and an icon. On every merge
-CI builds all of them into one signed archive and publishes it at
-`https://catalog.hoserva.dev`, from where Hoserva fetches and verifies it.
+holding a Compose file with an `x-hoserva` block and, where a usable source
+exists, an icon. On every merge CI builds all of them into one signed archive
+and publishes it at `https://catalog.hoserva.dev`, from where Hoserva fetches
+and verifies it.
 
 The `x-hoserva` schema, its validator and the code that fetches and verifies the
 archive live in the Hoserva repository (`internal/template/`,
@@ -15,7 +16,7 @@ the CI that publishes it.
 
 | Path | Holds |
 |---|---|
-| `templates/<id>/compose.yaml`, `templates/<id>/<icon>` | one template per directory, named by its id |
+| `templates/<id>/compose.yaml`, `templates/<id>/<icon>` | one template per directory, named by its id; the icon is present when a usable source exists |
 | `signing-key.pub.pem` | the catalog's Ed25519 public key |
 | `.ci/` | the build, signing and validation scripts, their tests and fixtures |
 | `.github/workflows/catalog.yml` | the CI |
@@ -36,7 +37,9 @@ In short:
 1. Create `templates/<id>/`. The id is lowercase letters, digits and
    single hyphens, and the directory name equals `x-hoserva.id`.
 2. Write `templates/<id>/compose.yaml` as a valid Compose file with an
-   `x-hoserva` block, and put the icon it names next to it.
+   `x-hoserva` block. Put the icon `x-hoserva.icon` names next to it; when no
+   usable source exists, leave out both and record the sources you searched in
+   the `# Icon:` comment (see [Icons](WRITING-TEMPLATES.md#icons)).
 3. Write the template from the application's upstream documentation, link that
    documentation in `x-hoserva.docs`, and pin an image tag rather than `latest`
    where upstream publishes versions.
@@ -69,18 +72,19 @@ branch and `main` is release-only, moved by a pull request from `dev`.
 |---|---|
 | Pull request | tooling tests and validation; no secret is available |
 | Push to `dev` | those, then build and sign as a dry run; the result is the `catalog-dist` workflow artifact and nothing is deployed |
-| Push to `main` | those, then the GitHub Release `serial-<serial>`, then the GitHub Pages deploy and a fetch-back check |
+| Push to `main` | those, then the GitHub Release `serial-<serial>`, then the GitHub Pages deploy and a fetch-back check, then a request to rebuild hoserva.dev |
 | `workflow_dispatch` | as a push to the branch it is run on; only `main` releases and deploys |
 
 The build job runs only after validation and the tooling tests pass, the
 release job only after the build job and the deploy job only after both, so a
-template that fails validation never reaches a published archive.
+template that fails validation never reaches a published archive. The last job,
+the site rebuild request below, runs only after the deploy and its fetch-back.
 
 ## The archive
 
 `catalog.tar.zst` is a zstd-compressed tar containing `index.json` and every
-template directory (`<id>/compose.yaml` and its icon), and nothing else. The
-archive layout does not follow the repository layout: the contents of
+template directory (`<id>/compose.yaml` and its icon, where it has one), and
+nothing else. The archive layout does not follow the repository layout: the contents of
 `templates/` sit at the archive root, so an entry is `<id>/compose.yaml`, never
 `templates/<id>/compose.yaml`. Entries are sorted by name, with owner `0:0`, mode `0644` for files (whatever
 mode the checkout gave them) and `0755` for directories, and mtime equal to the
@@ -185,6 +189,25 @@ one, or an old run re-run) therefore never publishes over a newer one, even
 though its serial, taken at build time, would be higher. The release and deploy
 jobs also share one `catalog-pages` concurrency group, so they run one at a
 time.
+
+### Asking hoserva.dev to rebuild
+
+hoserva.dev lists the catalog at `/apps`. After a successful deploy and
+fetch-back, the `notify` job sends one `repository_dispatch` event of type
+`catalog-published` to `mdg-labs/hoserva`, with the new serial in
+`client_payload`, so the site picks up the archive within minutes instead of at
+its daily rebuild (`.ci/notify-published.sh`).
+
+- It uses the repository secret `GH_TOKEN`, a personal access token. The
+  minimum it needs is permission to send `repository_dispatch` to
+  `mdg-labs/hoserva`: for a classic token the `repo` scope, for a fine-grained
+  one `Contents: write` on that repository alone. Nothing else in this
+  repository's CI uses it.
+- Only that one step of the `notify` job sees the token. It never runs for a pull
+  request or a push to `dev`, and the token is never printed.
+- This request never fails a publish. A missing `GH_TOKEN` or a failed call is
+  a `::warning::` in the job log and the job succeeds; the catalog is already
+  served, and the site's daily rebuild catches up.
 
 ## Running the tooling tests
 
