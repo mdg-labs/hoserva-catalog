@@ -70,10 +70,11 @@ def index(catalog_dir, serial, ids):
             "revision": b["revision"],
             "title": b["title"],
             "categories": b["categories"],
-            "icon": b["icon"],
-            "docs": b["docs"],
-            "contentHash": content_hash(template_dir),
         }
+        if b.get("icon"):
+            entry["icon"] = b["icon"]
+        entry["docs"] = b["docs"]
+        entry["contentHash"] = content_hash(template_dir)
         for key in ("maintainer", "description"):
             if b.get(key):
                 entry[key] = b[key]
